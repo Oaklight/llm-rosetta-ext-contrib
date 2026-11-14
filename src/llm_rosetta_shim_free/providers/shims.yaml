@@ -1,0 +1,15 @@
+# The shims this package ships, and where each one lives.
+#
+# The gateway reads this file instead of scanning the tree: a directory it does
+# not list is never parsed, so a new pool is visible to a gateway only once it
+# is added here.  Paths are relative to this directory and cannot leave it.
+version: 1
+shims:
+  - name: kilo_free--chat_completions
+    path: kilo_free
+  - name: llm7--chat_completions
+    path: llm7
+  - name: opencode_zen_free--chat_completions
+    path: opencode_zen_free
+  - name: ovhcloud--chat_completions
+    path: ovhcloud
