@@ -3,6 +3,11 @@
 # The model plane accepts the runtime API key at /v1. Account sign-in and
 # Coding Plan allowance reads use a separate control plane and are not
 # supported by this package yet.
+#
+# The mark is vendored into assets/ and served from the repository, so the
+# admin panel never fetches a third-party host.
+logo: https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-opendesign@main/assets/opendesign.svg
+
 connection:
   base_url: https://amr-link.open-design.ai/v1
   api_key_env: OPENDESIGN_API_KEY
