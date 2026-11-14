@@ -26,7 +26,12 @@ jobs:
           # clones the repository root and finds no project there.
           pip install "llm-rosetta @ git+https://github.com/Oaklight/llm-rosetta.git@master#subdirectory=packages/llm-rosetta"
       - name: Install the shim package
-        run: pip install -e . pytest pyyaml
+        # The published floor names the first dev whose manifest loader reads
+        # identity from a manifest (a manifest-level logo); it is not on any
+        # index yet, and core is installed from git master above.
+        run: |
+          pip install --no-deps -e .
+          pip install pytest pyyaml
       - name: Run tests
         run: pytest tests -q
 

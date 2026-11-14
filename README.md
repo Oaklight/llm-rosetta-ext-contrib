@@ -41,6 +41,14 @@ Installing the distribution directly also works; llm-rosetta discovers the
 pip install llm-rosetta-shim-opendesign
 ```
 
+## Requirements
+
+- Python >= 3.10
+- `llm-rosetta >= 0.14.0.dev31` (the vendor manifest carries the mark as a
+  manifest-level `logo:`; dev30 and earlier refuse that file, so the entry point
+  fails to load instead of registering the shims — 0.14.0 and later are above
+  this floor too)
+
 ## Configure a provider
 
 ```jsonc

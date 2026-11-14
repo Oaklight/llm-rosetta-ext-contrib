@@ -29,15 +29,27 @@ def _load(path: Path) -> dict:
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
-def test_the_vendor_manifest_declares_only_connection_defaults():
+def test_the_vendor_manifest_declares_only_shared_defaults():
+    """The mark and the connection are the vendor's; a lane keeps its own facts."""
     cfg = _load(_VENDOR)
-    assert set(cfg) == {"connection"}
+    assert set(cfg) == {"logo", "connection"}
+    assert cfg["logo"] == (
+        "https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-opendesign@main/"
+        "assets/opendesign.svg"
+    )
     connection = cfg["connection"]
     assert connection["base_url"] == "https://amr-link.open-design.ai/v1"
     assert connection["api_key_env"] == "OPENDESIGN_API_KEY"
     assert connection["models_path"] == "https://amr-link.open-design.ai/v1/models"
     assert connection["manage_usage_url"] == "https://open-design.ai/cloud/usage"
     assert "quota" not in cfg
+
+
+@pytest.mark.parametrize("fmt,path", sorted(_LEAVES.items()))
+def test_no_leaf_restates_the_shared_identity(fmt: str, path: Path):
+    """A second lane inherits the mark; restating it is how the copies drift."""
+    cfg = _load(path)
+    assert {"logo", "group", "group_label"}.isdisjoint(cfg)
 
 
 @pytest.mark.parametrize("fmt,path", sorted(_LEAVES.items()))
