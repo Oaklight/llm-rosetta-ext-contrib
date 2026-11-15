@@ -38,8 +38,9 @@ def _registered():
 
 
 def _config(vendor: str) -> dict:
+    """The leaf this vendor's single lane declares; the manifest sits above it."""
     return yaml.safe_load(
-        (_PROVIDERS / vendor / "provider.yaml").read_text(encoding="utf-8")
+        (_PROVIDERS / vendor / "llm" / "provider.yaml").read_text(encoding="utf-8")
     )
 
 
@@ -51,7 +52,9 @@ def test_registers_every_shim(_registered):
 def test_each_shim_is_a_keyless_free_source(_registered, name, base_url):
     shim = get_shim(name)
     assert shim is not None
-    assert shim.manifest is None
+    # The vendor manifest is a marker: every connection fact is on the leaf.
+    assert shim.manifest is not None
+    assert shim.manifest.connection == {}
     assert shim.base == "chat_completions"
     assert shim.free_source is True
     assert shim.connection.keyless

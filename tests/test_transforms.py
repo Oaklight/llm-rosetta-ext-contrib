@@ -9,7 +9,7 @@ from llm_rosetta.shims import get_shim
 from llm_rosetta.shims.provider_shim import _reset_registry
 
 from llm_rosetta_shim_free import register_shims
-from llm_rosetta_shim_free.providers.opencode_zen_free import (
+from llm_rosetta_shim_free.providers.opencode_zen_free.llm import (
     transforms as _TRANSFORMS,
 )
 
