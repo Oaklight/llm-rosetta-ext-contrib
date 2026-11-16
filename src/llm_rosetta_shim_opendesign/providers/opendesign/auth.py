@@ -618,6 +618,12 @@ def login(ctx: AuthContext) -> dict[str, Any]:
     raise AuthExchangeError("the sign-in expired; start again")
 
 
+#: The role the allowance reader names.  ``"control"`` is this vendor's word
+#: for the key the control plane accepts; ``quota.py`` declares the same
+#: string, because two flat modules cannot share one constant.
+CONTROL_ROLE = "control"
+
+
 def _credential(ctx: AuthContext) -> str:
     """Return the stored runtime key.
 
@@ -626,6 +632,22 @@ def _credential(ctx: AuthContext) -> str:
     again.
     """
     return str(_read_record(ctx)["runtime"])
+
+
+def _control(ctx: AuthContext) -> str:
+    """Return the stored control key, the one the control plane accepts.
+
+    A record written before the control key was kept, or one installed from a
+    partial paste, says so rather than sending the runtime key to a plane
+    that answers it with 401.
+    """
+    record = _read_record(ctx)
+    control = record.get("control")
+    if not _valid_control(control):
+        raise AuthExchangeError(
+            "the credential record holds no control key; sign in again"
+        )
+    return str(control)
 
 
 class OpenDesignSignIn(BaseAuthExchange):
@@ -641,6 +663,16 @@ class OpenDesignSignIn(BaseAuthExchange):
     async def credential(self, ctx: AuthContext) -> str:
         """Return the runtime key the model plane accepts."""
         return _credential(ctx)
+
+    async def credential_for(self, ctx: AuthContext, role: str) -> str:
+        """Return the credential *role* names.
+
+        The allowance reader asks for ``"control"``; every other role is the
+        model credential, which is also what a caller that names none gets.
+        """
+        if role == CONTROL_ROLE:
+            return _control(ctx)
+        return await self.credential(ctx)
 
     def account_id(self, ctx: AuthContext) -> str | None:
         """Return the account email, or its id when no email was issued.

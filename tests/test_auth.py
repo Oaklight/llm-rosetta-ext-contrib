@@ -459,3 +459,37 @@ def test_the_exchange_is_a_device_flow_that_owns_no_input_key(auth):
         "can_revoke",
     ):
         assert getattr(exchange, capability)() is True, capability
+
+
+# ---------------------------------------------------------------------------
+# The second credential
+# ---------------------------------------------------------------------------
+
+
+def test_the_control_role_returns_the_control_key(auth, ctx):
+    """The allowance reader asks for "control"; the model asks for nothing."""
+    auth.EXCHANGE.install(
+        ctx, {"runtime": _RUNTIME, "control": _CONTROL, "user": {}}
+    )
+
+    exchange = auth.EXCHANGE
+
+    assert asyncio.run(exchange.credential_for(ctx, "control")) == _CONTROL
+    assert asyncio.run(exchange.credential_for(ctx, "api_key")) == _RUNTIME
+    assert asyncio.run(exchange.credential_for(ctx, "")) == _RUNTIME
+
+
+def test_a_record_without_a_control_key_is_refused_for_that_role(auth, ctx):
+    """Sending the runtime key to the control plane is the 401 this avoids."""
+    record = {
+        "runtime": _RUNTIME,
+        "user": {"email": "operator@example.test"},
+    }
+    _record_path(ctx).parent.mkdir(parents=True, exist_ok=True)
+    _record_path(ctx).write_text(json.dumps(record))
+
+    with pytest.raises(AuthExchangeError, match="no control key"):
+        asyncio.run(auth.EXCHANGE.credential_for(ctx, "control"))
+
+    # The model credential is unaffected: it is present and valid.
+    assert asyncio.run(auth.EXCHANGE.credential_for(ctx, "api_key")) == _RUNTIME
