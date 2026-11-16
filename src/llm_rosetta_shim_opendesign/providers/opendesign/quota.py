@@ -29,12 +29,27 @@ from __future__ import annotations
 from typing import Any
 
 from llm_rosetta.shims.quota_probe import (
-    ProbeRefused,
     QuotaProbeError,
     QuotaWindow,
     parse_iso,
     vendor_message,
 )
+
+#: Whether the core carries the second-credential contract (``credential_role``
+#: and multi-step ``fetch``).  A core without it would read this probe with the
+#: runtime key, which the control plane answers with 401, so the probe reports
+#: the lane as having no endpoint instead: the panel then says the allowance is
+#: unsupported, which is the truth on that core.  The dependency floor moves to
+#: the dev that carries the contract; until then this file has to import.
+try:
+    from llm_rosetta.shims.quota_probe import ProbeRefused
+
+    CONTRACT_AVAILABLE = True
+except ImportError:  # pragma: no cover - taken only on a core older than the contract
+    CONTRACT_AVAILABLE = False
+
+    class ProbeRefused(Exception):  # type: ignore[no-redef]
+        """Stand-in: nothing raises it when the contract is absent."""
 
 CONTROL_PLANE = "https://amr-api.open-design.ai"
 
@@ -133,8 +148,15 @@ class OpenDesignQuota:
 
         The control plane is not derivable from the model plane's host — it is
         a separate origin — so a recognised lane answers ``default_url``.
+
+        A core without the second-credential contract answers ``""`` instead:
+        it would read this probe with the runtime key, and the control plane
+        refuses that with 401.  Reporting "no keyed endpoint" is the honest
+        answer there, and it keeps the lane usable.
         """
-        return CONTROL_PLANE if "open-design" in (base_url or "") else None
+        if "open-design" not in (base_url or ""):
+            return None
+        return CONTROL_PLANE if CONTRACT_AVAILABLE else ""
 
     def headers(self, key: str) -> dict[str, str]:
         """Authenticate the control-plane read.

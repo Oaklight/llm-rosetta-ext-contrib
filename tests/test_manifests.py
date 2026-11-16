@@ -32,7 +32,7 @@ def _load(path: Path) -> dict:
 def test_the_vendor_manifest_declares_only_shared_defaults():
     """The mark and the connection are the vendor's; a lane keeps its own facts."""
     cfg = _load(_VENDOR)
-    assert set(cfg) == {"logo", "connection", "quota"}
+    assert set(cfg) == {"logo", "connection"}
     assert cfg["logo"] == (
         "https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-opendesign@main/"
         "assets/opendesign.svg"
@@ -44,12 +44,9 @@ def test_the_vendor_manifest_declares_only_shared_defaults():
     assert "api_key_env" not in connection
     assert connection["models_path"] == "https://amr-link.open-design.ai/v1/models"
     assert connection["manage_usage_url"] == "https://open-design.ai/cloud/usage"
-    # The allowance is the account's, and every lane reads the same control
-    # plane, so it is declared once here rather than on each leaf.
-    assert cfg["quota"] == {
-        "probe": "opendesign",
-        "url": "https://amr-api.open-design.ai",
-    }
+    # The allowance is the account's, but it sits on the leaves for now: a
+    # core older than the manifest's `quota:` key refuses this file outright.
+    assert "quota" not in cfg
 
 
 @pytest.mark.parametrize("fmt,path", sorted(_LEAVES.items()))
@@ -76,8 +73,8 @@ def test_each_hint_is_bilingual(fmt: str, path: Path):
 
 
 @pytest.mark.parametrize("fmt,path", sorted(_LEAVES.items()))
-def test_no_leaf_declares_a_credential_or_quota(fmt: str, path: Path):
-    """The vendor manifest is the only credential home; quota is deferred."""
+def test_no_leaf_declares_a_credential(fmt: str, path: Path):
+    """The vendor manifest is the only credential home."""
     cfg = _load(path)
     credential_keys = {
         "api_key",
@@ -89,4 +86,9 @@ def test_no_leaf_declares_a_credential_or_quota(fmt: str, path: Path):
     }
     assert credential_keys.isdisjoint(cfg)
     assert credential_keys.isdisjoint(cfg.get("connection") or {})
-    assert "quota" not in cfg
+    # The allowance is declared per leaf until the dependency floor moves to a
+    # core that reads it from the manifest; every lane reads the same plane.
+    assert cfg["quota"] == {
+        "probe": "opendesign",
+        "url": "https://amr-api.open-design.ai",
+    }

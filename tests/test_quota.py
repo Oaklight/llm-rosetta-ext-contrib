@@ -10,6 +10,7 @@ model credential.
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import pytest
@@ -20,11 +21,26 @@ from llm_rosetta_shim_opendesign.providers.opendesign.quota import (
     OpenDesignQuota,
 )
 from llm_rosetta.shims.quota_probe import (
-    PROBE_ROLE_API_KEY,
-    ProbeRefused,
     QuotaProbeError,
-    probe_credential_role,
-    probe_fetch,
+)
+
+# The contract these tests exercise is newer than some cores the package can
+# still import on; without it the probe reports "no keyed endpoint" and the
+# module below is inert, so the module is skipped rather than failing.
+try:
+    from llm_rosetta.shims.quota_probe import (  # noqa: F401
+        PROBE_ROLE_API_KEY,
+        ProbeRefused,
+        probe_credential_role,
+        probe_fetch,
+    )
+
+    HAVE_CONTRACT = True
+except ImportError:  # pragma: no cover - a core older than the contract
+    HAVE_CONTRACT = False
+
+pytestmark = pytest.mark.skipif(
+    not HAVE_CONTRACT, reason="this core predates the second-credential contract"
 )
 
 _CONTROL = "vela_ctrl_" + "0" * 32
@@ -45,6 +61,12 @@ class _Reads:
         return 404, {"error": {"message": "no such route"}}
 
 
+def _iso(hours: int) -> str:
+    """A reset *hours* from now: a fixed date turns stale the day it passes."""
+    moment = datetime.now(timezone.utc) + timedelta(hours=hours)
+    return moment.isoformat().replace("+00:00", "Z")
+
+
 def _preflight(**overrides: Any) -> dict[str, Any]:
     body = {
         "codingPlan": {
@@ -53,14 +75,14 @@ def _preflight(**overrides: Any) -> dict[str, Any]:
                     "durationSeconds": 18000,
                     "usedCredits": 25,
                     "limitCredits": 100,
-                    "resetsAt": "2026-11-16T18:00:00Z",
+                    "resetsAt": _iso(2),
                     "eligible": True,
                 },
                 {
                     "durationSeconds": 604800,
                     "usedCredits": 90,
                     "limitCredits": 100,
-                    "resetsAt": "2026-11-20T00:00:00Z",
+                    "resetsAt": _iso(96),
                     "eligible": True,
                 },
             ]
@@ -194,3 +216,18 @@ class TestWhatItWillNotDo:
         described = OpenDesignQuota().describe_error(401, {"error": "invalid key"})
 
         assert "sign in again" in described
+
+
+def test_a_core_without_the_contract_gets_no_endpoint(monkeypatch):
+    """An older core would read this probe with the runtime key and get 401.
+
+    Reporting "no keyed endpoint" keeps the lane usable and the panel honest
+    on a core that cannot carry the second credential at all.
+    """
+    import llm_rosetta_shim_opendesign.providers.opendesign.quota as quota
+
+    monkeypatch.setattr(quota, "CONTRACT_AVAILABLE", False)
+
+    probe = quota.OpenDesignQuota()
+    assert probe.match("https://amr-link.open-design.ai/v1") == ""
+    assert probe.match("https://api.example.test/v1") is None

@@ -156,11 +156,16 @@ quota:
   url: https://amr-api.open-design.ai
 ```
 
-**Release ordering.** `credential_role` and `fetch` are core contract
-additions; this package needs a core that carries them. The dependency floor
-is raised when that core is test-released, and until then a gateway on an
-older core reads the probe with the runtime key, which the control plane
-refuses with 401 — so the allowance card only works after both ship.
+**Release ordering, and what an older core sees.** `credential_role` and
+`fetch` are core contract additions. On a core that carries them the card
+works; on an older one the probe imports (the two names are imported
+defensively) and reports the lane as having no keyed endpoint, so the panel
+says the allowance is unsupported and the lane keeps serving — it never sends
+the runtime key to a plane that would answer 401. The `quota:` block is
+likewise declared on each leaf rather than in the manifest, because a core
+older than the manifest's `quota:` key refuses that file outright. Both move
+up — the block to the manifest, the dependency floor to that dev release —
+when the core ships, and the two are one edit.
 
 ## Archive and mirror
 
