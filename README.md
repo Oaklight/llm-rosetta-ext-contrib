@@ -56,8 +56,7 @@ pip install llm-rosetta-shim-opendesign
   "shims": { "presets": ["opendesign"] },
   "providers": {
     "opendesign": {
-      "type": "opendesign--chat_completions",
-      "api_key": "${OPENDESIGN_API_KEY}"
+      "type": "opendesign--chat_completions"
     }
   },
   "models": {
@@ -66,9 +65,49 @@ pip install llm-rosetta-shim-opendesign
 }
 ```
 
-The vendor manifest supplies the base URL, the `OPENDESIGN_API_KEY` environment
-default, and the model-list URL. A provider entry may still override any of
-them.
+The vendor manifest supplies the base URL and the model-list URL, and a
+provider entry may override them. There is deliberately no `api_key` in the
+entry: the shim ships a credential exchange (`auth.py`), and the gateway
+refuses a static key beside an exchange it does not consume. The provider
+therefore starts out needing a sign-in.
+
+## Sign in
+
+Open Design splits one account across two planes:
+
+- the **model plane** serves model traffic with the runtime key (`sk-amr-…`);
+- the **control plane** serves account and Coding Plan reads with the control
+  key (`vela_ctrl_…`).
+
+The web UI never shows the control key. The only way to obtain it is the
+device-authorization flow, which this package implements in
+`src/llm_rosetta_shim_opendesign/providers/opendesign/auth.py`:
+
+1. The gateway starts a device authorization and shows an activation URL and
+   a short user code.
+2. A human opens the URL, signs in, and approves the device.
+3. The next poll returns both keys at once. The record is written with mode
+   `0600` under the gateway's `<data_dir>/shim-auth/<provider>` (or, when the
+   gateway has no data directory, under `~/.config/llm-rosetta/opendesign/`).
+4. `credential()` serves the runtime key. The control key is stored beside it
+   for the allowance reader.
+
+From a machine with a browser, run the sign-in locally and hand the record to
+the gateway:
+
+```bash
+llm-rosetta-gateway credential opendesign --out /tmp/opendesign-record.json
+# then: admin panel → Providers → opendesign → Credential, or
+#       PUT /admin/api/config/providers/opendesign/credential
+```
+
+The admin panel's own sign-in button runs the same flow server-side: it starts
+the device authorization, and each "complete" call polls once until approved.
+
+The keys do not expire and the vendor issues no refresh token, so there is no
+rotation. `revoke()` removes the record and returns `False`: the vendor
+documents no revocation endpoint, so the keys stay live until Open Design
+rotates them.
 
 ## The shims
 
@@ -87,12 +126,41 @@ client speaks; the shim signs the request the way that endpoint expects.
 
 ## Quota
 
-This release does **not** read the Coding Plan allowance. Open Design reports
-that allowance on a separate control plane that does not accept a runtime API
-key. Quota support needs a second credential and is tracked in [Oaklight/llm-rosetta#1499](https://github.com/Oaklight/llm-rosetta/issues/1499).
+The Coding Plan allowance is read on the **control plane**, with the control
+key (`vela_ctrl_…`) the same sign-in stores beside the runtime key.
+`providers/opendesign/quota.py` implements the probe, and it declares
+`credential_role = "control"`: the gateway asks `auth.py` for that credential
+and marks the reading **advisory** — shown on the panel, able to weight the
+lane's share, and never evidence for a demotion, an exclusion or a recovery
+time, because none of those is about the control key.
 
-The gateway therefore reports the provider's quota as unsupported, and the
-provider hint says the same.
+The read takes three requests — `workspaces/current`, the workspace's
+`billing/preflight`, then `billing/summary` for the tier — so the probe uses
+the contract's multi-step `fetch` instead of the default single GET:
+
+- two windows, `durationSeconds` 18000 (5 hours) and 604800 (7 days);
+- `used_percent` clamped to 100 — the 7-day window can report more used than
+  its limit while `remainingCredits` is already `"0"`;
+- `resets_at` in ISO 8601, and the membership tier as the plan name.
+
+Without a control key the gateway reports the provider's quota as unsupported
+and makes no billing request: there is no fallback to the runtime key, which
+the control plane answers with 401.
+
+The manifest declares the block once, because the allowance is the account's
+rather than a lane's:
+
+```yaml
+quota:
+  probe: opendesign
+  url: https://amr-api.open-design.ai
+```
+
+**Release ordering.** `credential_role` and `fetch` are core contract
+additions; this package needs a core that carries them. The dependency floor
+is raised when that core is test-released, and until then a gateway on an
+older core reads the probe with the runtime key, which the control plane
+refuses with 401 — so the allowance card only works after both ship.
 
 ## Archive and mirror
 
@@ -126,10 +194,26 @@ The archive's root is `providers/`, the layout the package ships under
 
 ## Live behavior
 
-The endpoint, header split, and model-list path follow the documented Open
-Design cloud surface. They have not been exercised against a live account in
-this repository's tests; the test suite covers package registration and the
-bundled manifests only.
+The endpoint, header split, model-list path, device flow, and the three
+control-plane reads were exercised against a live Open Design account on
+2026-11-14:
+
+- `GET /v1/models` with the runtime key answers 200 (14 models);
+- the runtime key on the control plane answers 401, and the control key on the
+  model plane answers 401 (`invalid_api_key`) — the two are not
+  interchangeable;
+- `workspaces/current`, the workspace's `billing/preflight`, and
+  `billing/summary` answer 200 and match the shapes the probe normalises,
+  including a 7-day window whose `usedCredits` (150218) exceeded its
+  `limitCredits` (150000) with `remainingCredits` already `"0"`.
+
+One measured gotcha is encoded in both modules: the control plane sits behind
+a CDN that rejects urllib's default user agent outright (Cloudflare error
+1010), so every request sends `User-Agent: open-design-cli/<cliVersion>`.
+
+No credential is stored in this repository; the test suite fakes the HTTP
+layer and covers registration, the bundled manifests, the device-flow state
+machine, and the quota normalisation.
 
 ## Development
 

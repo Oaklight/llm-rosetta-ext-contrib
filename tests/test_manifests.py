@@ -32,17 +32,24 @@ def _load(path: Path) -> dict:
 def test_the_vendor_manifest_declares_only_shared_defaults():
     """The mark and the connection are the vendor's; a lane keeps its own facts."""
     cfg = _load(_VENDOR)
-    assert set(cfg) == {"logo", "connection"}
+    assert set(cfg) == {"logo", "connection", "quota"}
     assert cfg["logo"] == (
         "https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-opendesign@main/"
         "assets/opendesign.svg"
     )
     connection = cfg["connection"]
     assert connection["base_url"] == "https://amr-link.open-design.ai/v1"
-    assert connection["api_key_env"] == "OPENDESIGN_API_KEY"
+    # auth.py owns the credential slot; an environment default beside it
+    # would advertise a source the gateway refuses.
+    assert "api_key_env" not in connection
     assert connection["models_path"] == "https://amr-link.open-design.ai/v1/models"
     assert connection["manage_usage_url"] == "https://open-design.ai/cloud/usage"
-    assert "quota" not in cfg
+    # The allowance is the account's, and every lane reads the same control
+    # plane, so it is declared once here rather than on each leaf.
+    assert cfg["quota"] == {
+        "probe": "opendesign",
+        "url": "https://amr-api.open-design.ai",
+    }
 
 
 @pytest.mark.parametrize("fmt,path", sorted(_LEAVES.items()))

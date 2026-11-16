@@ -1,8 +1,16 @@
-# Open Design Cloud model gateway.
+# Open Design Cloud — the model gateway and the account control plane.
 #
-# The model plane accepts the runtime API key at /v1. Account sign-in and
-# Coding Plan allowance reads use a separate control plane and are not
-# supported by this package yet.
+# Model traffic goes to the model plane (https://amr-link.open-design.ai/v1)
+# with the runtime key (sk-amr-…). Account and Coding Plan reads live on a
+# separate control plane (https://amr-api.open-design.ai) and need the control
+# key (vela_ctrl_…), which the web UI never shows. Both keys come from the
+# device sign-in this vendor ships in auth.py; the allowance reader beside it
+# (quota.py) knows how to read them.
+#
+# There is deliberately no api_key_env here: auth.py owns the credential slot,
+# and the loader refuses a static api_key beside an exchange it does not take
+# as input. Inheriting an environment default would only advertise a source
+# the gateway cannot use.
 #
 # The mark is vendored into assets/ and served from the repository, so the
 # admin panel never fetches a third-party host.
@@ -10,6 +18,12 @@ logo: https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-opendesign@main/asse
 
 connection:
   base_url: https://amr-link.open-design.ai/v1
-  api_key_env: OPENDESIGN_API_KEY
   models_path: https://amr-link.open-design.ai/v1/models
   manage_usage_url: https://open-design.ai/cloud/usage
+
+# The Coding Plan allowance is read on the control plane with the second
+# credential the sign-in stores.  The probe declares that role, so the gateway
+# marks its reading advisory: shown on the panel, never a demotion.
+quota:
+  probe: opendesign
+  url: https://amr-api.open-design.ai

@@ -37,7 +37,7 @@ version = { attr = "llm_rosetta_shim_opendesign.__version__" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-llm_rosetta_shim_opendesign = ["providers/**/*.yaml"]
+llm_rosetta_shim_opendesign = ["providers/**/*.yaml", "providers/**/*.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
