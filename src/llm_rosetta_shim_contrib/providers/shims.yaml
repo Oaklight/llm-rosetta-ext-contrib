@@ -27,6 +27,8 @@ shims:
     path: minimax/llm/messages
   - name: modelscope--chat_completions
     path: modelscope/llm
+  - name: moonshot
+    path: moonshot/llm
   - name: nvidia--chat_completions
     path: nvidia/llm
   - name: openai_chatgpt--open_responses
@@ -55,6 +57,8 @@ shims:
     path: openrouter/rerank
   - name: ovhcloud--chat_completions
     path: ovhcloud/llm
+  - name: qwen
+    path: qwen/llm
   - name: siliconflow--embedding
     path: siliconflow/embeddings
   - name: siliconflow--chat_completions
@@ -67,6 +71,8 @@ shims:
     path: volcengine/llm/chat_completions
   - name: volcengine--open_responses
     path: volcengine/llm/open_responses
+  - name: xai
+    path: xai/llm
   - name: zai--embedding
     path: zai/embeddings
   - name: zai--chat_completions
@@ -75,3 +81,9 @@ shims:
     path: zai/llm/messages
   - name: zai--rerank
     path: zai/rerank
+  - name: zhipu--embedding
+    path: zhipu/embeddings
+  - name: zhipu
+    path: zhipu/llm
+  - name: zhipu--rerank
+    path: zhipu/rerank

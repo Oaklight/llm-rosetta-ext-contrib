@@ -8,10 +8,14 @@ groq
 kilo
 minimax
 modelscope
+moonshot
 nvidia
 openai_chatgpt
 opencode
 openrouter
+qwen
 siliconflow
 volcengine
+xai
 zai
+zhipu

@@ -98,7 +98,15 @@ def test_tags_and_maturity_come_from_vendors_toml():
     # The model makers' own APIs moved from core are the promotion candidates
     # (Oaklight/llm-rosetta#1660, "Placement"); everything else is beta.
     stable = {v for v, e in vendors.items() if e["versions"][0]["maturity"] == "stable"}
-    assert stable == {"minimax", "volcengine", "zai"}
+    assert stable == {
+        "minimax",
+        "moonshot",
+        "qwen",
+        "volcengine",
+        "xai",
+        "zai",
+        "zhipu",
+    }
     assert {
         e["versions"][0]["maturity"] for v, e in vendors.items() if v not in stable
     } == {"beta"}
@@ -256,7 +264,19 @@ def test_write_outputs_lays_out_the_dist_tree(tree: Path, tmp_path: Path):
         (
             ("vendors", "llm7", "versions", 0, "shims"),
             ["ovhcloud--chat_completions"],
-            "start with the vendor",
+            "must be 'llm7' or start with 'llm7--'",
+        ),
+        (
+            # A shared prefix is not the vendor: ``llm7x`` is neither the key
+            # nor ``llm7--...``.
+            ("vendors", "llm7", "versions", 0, "shims"),
+            ["llm7x--chat_completions"],
+            "must be 'llm7' or start with 'llm7--'",
+        ),
+        (
+            ("vendors", "llm7", "versions", 0, "shims"),
+            ["ovhcloud"],
+            "must be 'llm7' or start with 'llm7--'",
         ),
         (
             ("vendors", "llm7", "versions", 0, "conformance"),
@@ -398,3 +418,15 @@ def test_a_vendor_directory_shared_with_core_fails(monkeypatch, capsys):
     assert (
         "vendor directory 'opendesign' is also a core vendor" in capsys.readouterr().err
     )
+
+
+@needs_tomllib
+def test_a_bare_vendor_key_is_a_shim_name():
+    """Vendors moved from core keep bare chat shim names (``zhipu``); the rule
+    is the one core's manifest check adopts: the vendor key, or ``<vendor>--``.
+    """
+    manifest = _build()[0]
+    record = manifest["vendors"]["llm7"]["versions"][0]
+    record["shims"] = ["llm7", "llm7--chat_completions"]
+    assert builder.validate_manifest(manifest) == []
+    assert "zhipu" in manifest["vendors"]["zhipu"]["versions"][0]["shims"]

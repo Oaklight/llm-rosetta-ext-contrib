@@ -68,7 +68,10 @@ _HEX64 = re.compile(r"^[0-9a-f]{64}$")
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _TIMESTAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 _PROMOTED = re.compile(r"^core@\d+\.\d+\.\d+")
-_SHIM_NAME = re.compile(r"^[a-z0-9_]+--[a-z0-9_]+$")
+#: A shim name is the vendor key itself or ``<vendor>--<name>``: the vendors
+#: moved from core keep bare names (``zhipu``, ``xai``, ``qwen``, ``moonshot``).
+#: Mirrors core's manifest rule (Oaklight/llm-rosetta#1660 S7).
+_SHIM_NAME = re.compile(r"^[a-z0-9_]+(--[a-z0-9_]+)?$")
 
 
 class ManifestError(RuntimeError):
@@ -270,9 +273,9 @@ def _check_record(vendor: str, index: int, rec: Any) -> list[str]:
         problems.append(
             f"{where}.shims: must be a non-empty list of distinct shim names"
         )
-    elif not all(s.startswith(vendor) for s in shims):
+    elif not all(s == vendor or s.startswith(f"{vendor}--") for s in shims):
         problems.append(
-            f"{where}.shims: every name must start with the vendor {vendor!r}"
+            f"{where}.shims: every name must be {vendor!r} or start with '{vendor}--'"
         )
     tags = rec.get("tags")
     if not isinstance(tags, list) or not all(isinstance(t, str) and t for t in tags):

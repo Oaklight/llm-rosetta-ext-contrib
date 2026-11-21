@@ -101,14 +101,17 @@ def test_every_leaf_is_named_after_its_vendor(vendor):
 
     The part after ``--`` is usually the format, but not always: a vendor
     moved from core keeps the name core gave it (``minimax--embedding`` has
-    format ``minimax``, ``zai--rerank`` format ``cohere``), because a shim
-    name never changes when the vendor moves.
+    format ``minimax``, ``zai--rerank`` format ``cohere``, and ``zhipu`` is
+    the bare vendor key), because a shim name never changes when the vendor
+    moves.  Same rule as core's manifest check: the vendor key, or
+    ``<vendor>--`` followed by anything.
     """
     leaves = _leaves(vendor)
     assert leaves, vendor
     for leaf in leaves:
         cfg = _load(leaf)
-        assert cfg["name"].startswith(f"{vendor}--"), leaf
+        name = cfg["name"]
+        assert name == vendor or name.startswith(f"{vendor}--"), leaf
 
 
 def test_vendors_toml_has_one_table_per_vendor():

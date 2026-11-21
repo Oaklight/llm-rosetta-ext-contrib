@@ -25,8 +25,12 @@ This repository was `llm-rosetta-shim-free` (renamed 2026-11-21; history, issues
 | `minimax` | `minimax--chat_completions`, `minimax--messages`, `minimax--embedding` | `tier:paid`, `region:cn` | stable | promotion candidate |
 | `zai` | `zai--chat_completions`, `zai--messages`, `zai--embedding`, `zai--rerank` | `tier:paid` | stable | promotion candidate |
 | `volcengine` | `volcengine--chat_completions`, `volcengine--open_responses`, `volcengine--embedding` | `tier:paid`, `region:cn` | stable | promotion candidate |
+| `zhipu` | `zhipu`, `zhipu--embedding`, `zhipu--rerank` | `tier:paid`, `region:cn` | stable | promotion candidate; mainland region of `zai` |
+| `xai` | `xai` | `tier:paid` | stable | promotion candidate |
+| `qwen` | `qwen` | `tier:paid`, `region:cn` | stable | promotion candidate |
+| `moonshot` | `moonshot` | `tier:paid`, `region:cn` | stable | promotion candidate |
 
-The vendors from `opencode` down moved out of llm-rosetta core (Oaklight/llm-rosetta#1660 S7) with their shim names unchanged; `tier:paid` there means a keyed account, some with a free allowance. `zhipu`, `xai`, `qwen` and `moonshot` follow once a manifest can carry their bare shim names.
+The vendors from `opencode` down moved out of llm-rosetta core (Oaklight/llm-rosetta#1660 S7) with their shim names unchanged; `tier:paid` there means a keyed account, some with a free allowance. `zhipu`, `xai`, `qwen` and `moonshot` keep their bare chat shim names (a shim name is the vendor key or starts with `<vendor>--`).
 
 The free-tier vendors are third-party services collected from public sources. Read the disclaimer in [docs/vendors/free-tier.md](docs/vendors/free-tier.md) before you use them: nothing here guarantees data retention terms, and the upstream owns its terms and limits.
 
@@ -105,7 +109,7 @@ Package code imports core only through `llm_rosetta.contracts`: core runs the en
 
 ### Add a vendor
 
-1. Copy the vendor directory to `src/llm_rosetta_shim_contrib/providers/<vendor>/`. Every leaf must be named `<vendor>--<name>`: a new vendor uses the format as `<name>`; a vendor moved from core keeps the name core gave it.
+1. Copy the vendor directory to `src/llm_rosetta_shim_contrib/providers/<vendor>/`. Every leaf must be named `<vendor>--<name>` (a new vendor uses the format as `<name>`) or, for a vendor moved from core, the name core gave it, which may be the bare vendor key.
 2. Add a `[vendors.<vendor>]` table to `vendors.toml` (`version`, `maturity`, `since`, `tags`; optional `conformance`, `requires`, `promoted_to`).
 3. Add one line to `[project.entry-points."llm_rosetta.shim_providers"]` in `pyproject.toml`: `<vendor> = "llm_rosetta_shim_contrib.vendors:<vendor>"`.
 4. Move its tests to `tests/<vendor>/`.
