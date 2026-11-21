@@ -34,7 +34,7 @@ def test_the_vendor_manifest_declares_only_shared_defaults():
     cfg = _load(_VENDOR)
     assert set(cfg) == {"logo", "connection"}
     assert cfg["logo"] == (
-        "https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-opendesign@main/"
+        "https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-contrib@v0.5.0/"
         "assets/opendesign.svg"
     )
     connection = cfg["connection"]

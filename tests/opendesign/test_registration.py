@@ -41,7 +41,7 @@ def test_registers_the_three_formats(_registered):
 def test_the_vendor_manifest_supplies_the_mark(_registered):
     """Every lane shows the vendor's mark without restating it."""
     expected = (
-        "https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-opendesign@main/"
+        "https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-contrib@v0.5.0/"
         "assets/opendesign.svg"
     )
     for name in _SHIMS:

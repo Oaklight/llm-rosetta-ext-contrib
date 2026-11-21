@@ -12,9 +12,10 @@
 # as input. Inheriting an environment default would only advertise a source
 # the gateway cannot use.
 #
-# The mark is vendored into assets/ and served from the repository, so the
+# The mark is vendored into assets/ and served from this repository at a
+# release tag (the per-vendor repository it came from is archived), so the
 # admin panel never fetches a third-party host.
-logo: https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-opendesign@main/assets/opendesign.svg
+logo: https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-contrib@v0.5.0/assets/opendesign.svg
 
 connection:
   base_url: https://amr-link.open-design.ai/v1
