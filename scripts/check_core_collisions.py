@@ -22,7 +22,7 @@ Usage::
     pip install "llm-rosetta @ git+https://github.com/Oaklight/llm-rosetta.git@master#subdirectory=packages/llm-rosetta"
     python scripts/check_core_collisions.py
     python scripts/check_core_collisions.py --allow opencode   # a planned move, core still has it
-    python scripts/check_core_collisions.py --allow-file scripts/moving_from_core.txt
+    python scripts/check_core_collisions.py --allow-file moves.txt   # one vendor per line
 
 An allowed vendor that no longer overlaps core is reported on stderr (the
 check still passes), so the allow list shrinks as core drops the vendors.

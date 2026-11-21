@@ -153,10 +153,8 @@ pip install . pytest pyyaml
 pytest
 python scripts/build_shim_archive.py         # archive layout check
 python scripts/build_manifest.py --dry-run   # build and validate, print the manifest
-python scripts/check_core_collisions.py --allow-file scripts/moving_from_core.txt
+python scripts/check_core_collisions.py
 ```
-
-`scripts/moving_from_core.txt` lists the vendors core master still ships while their move (#1660 S7) is in flight; the check names an entry once it stops overlapping, and the file goes when it is empty.
 
 Requires Python >= 3.10 and `llm-rosetta >= 0.14.0.dev35` (the first core with `llm_rosetta.contracts`). The manifest builder needs Python 3.11+ (`tomllib`).
 

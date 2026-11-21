@@ -22,7 +22,6 @@ import pytest
 
 _ROOT = Path(__file__).resolve().parents[1]
 _SCRIPTS = _ROOT / "scripts"
-_MOVING = _SCRIPTS / "moving_from_core.txt"
 _COMMIT = "0" * 40
 _STAMP = "2026-11-21T00:00:00Z"
 
@@ -375,15 +374,22 @@ def test_each_archive_loads_with_core_in_a_fresh_interpreter(vendor, tmp_path: P
 
 
 def test_contrib_shares_no_shim_name_with_the_installed_core(capsys):
-    """CI's call: the vendors still moving out of core are allowed to overlap."""
-    assert collisions.main(["--allow-file", str(_MOVING)]) == 0
+    """CI's call: no allowances."""
+    assert collisions.main([]) == 0
     assert "no collisions" in capsys.readouterr().out
 
 
-def test_the_allow_file_names_only_contrib_vendors():
-    allowed = collisions.read_allow_file(_MOVING)
-    assert allowed, "an empty allow file should be deleted, with its CI flag"
-    assert set(allowed) <= set(VENDORS)
+def test_an_allow_file_is_read_one_vendor_per_line(tmp_path, monkeypatch, capsys):
+    allow = tmp_path / "moves.txt"
+    allow.write_text("# a planned move\nllm7\n\n", encoding="utf-8")
+    assert collisions.read_allow_file(allow) == ["llm7"]
+    monkeypatch.setattr(
+        collisions,
+        "core_shim_names",
+        lambda: ("0.0.0", {"llm7--chat_completions", "x--y"}, {"x"}),
+    )
+    assert collisions.main([]) == 1
+    assert collisions.main(["--allow-file", str(allow)]) == 0
 
 
 def test_an_allowed_vendor_that_no_longer_overlaps_is_reported(monkeypatch, capsys):

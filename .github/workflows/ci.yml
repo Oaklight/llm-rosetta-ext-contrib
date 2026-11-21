@@ -81,30 +81,7 @@ jobs:
               raise SystemExit(0)
           import jsonschema
 
-          doc = json.load(open("manifest.json"))
-          errors = list(
-              jsonschema.Draft202012Validator(json.loads(schema.read_text())).iter_errors(doc)
-          )
-          # Temporary (Oaklight/llm-rosetta#1660 S7): core master's schema still
-          # requires `<vendor>--<name>`; the core PR that moves these vendors
-          # out accepts the bare vendor key too.  Only a shim name equal to its
-          # own vendor key is tolerated; drop this filter once that PR merges.
-          def _bare_vendor_name(err):
-              path = list(err.absolute_path)
-              return (
-                  len(path) == 6
-                  and path[0] == "vendors"
-                  and path[4] == "shims"
-                  and err.instance == path[1]
-              )
-          pending = [e for e in errors if _bare_vendor_name(e)]
-          others = [e for e in errors if not _bare_vendor_name(e)]
-          for e in pending:
-              print(f"pending core change: {e.instance!r} is a bare vendor-key shim name")
-          for e in others:
-              print(f"invalid: {list(e.absolute_path)}: {e.message}")
-          if others:
-              raise SystemExit(1)
+          jsonschema.validate(json.load(open("manifest.json")), json.loads(schema.read_text()))
           print("manifest.json validates against core's schema")
           PY
 
@@ -122,8 +99,4 @@ jobs:
           git config --global url."https://github.com/".insteadOf "git@github.com:"
           pip install "$CORE"
       - name: Check contrib's shim names against core's
-        # Temporary allow list (Oaklight/llm-rosetta#1660 S7): the vendors
-        # moving out of core collide until the core PR that removes them
-        # merges.  The check names each entry that stops overlapping; delete
-        # the file and this flag once it is empty.
-        run: python scripts/check_core_collisions.py --allow-file scripts/moving_from_core.txt
+        run: python scripts/check_core_collisions.py
