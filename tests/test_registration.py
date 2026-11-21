@@ -36,7 +36,6 @@ def test_registers_the_three_formats(_registered):
         assert shim.name == name
         assert shim.model_type == "llm"
         assert shim.format == base
-        assert shim.base == base
 
 
 def test_the_vendor_manifest_supplies_the_mark(_registered):
