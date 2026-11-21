@@ -63,6 +63,10 @@ jobs:
             git checkout -q --orphan dist
           fi
 
+      - name: Check out core over HTTPS
+        # The parent's test-fixture submodule is addressed as git@github.com:;
+        # rewrite it to HTTPS, which the runner can clone without a key.
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
       - name: Install the builder's dependencies
         # build_manifest.py reads each vendor manifest with PyYAML and
         # validates the built manifest against core's
