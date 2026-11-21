@@ -1,3 +1,5 @@
 # Vendor manifest: the defaults every ovhcloud shim shares.
 # A leaf inherits every field here and may override any of them.
+group_label: OVHcloud
+logo: https://cdn.jsdelivr.net/npm/simple-icons@16.38.0/icons/ovh.svg
 connection: {}

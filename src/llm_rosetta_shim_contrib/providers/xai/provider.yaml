@@ -1,2 +1,6 @@
+# The vendor's display name and mark (the panel, and the manifest's
+# ``label`` / ``logo``); every leaf inherits them.
+group_label: xAI
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/xai.svg
 connection:
   api_key_env: XAI_API_KEY

@@ -32,7 +32,7 @@ def _load(path: Path) -> dict:
 def test_the_vendor_manifest_declares_only_shared_defaults():
     """The mark and the connection are the vendor's; a lane keeps its own facts."""
     cfg = _load(_VENDOR)
-    assert set(cfg) == {"logo", "connection"}
+    assert set(cfg) == {"logo", "group_label", "connection"}
     assert cfg["logo"] == (
         "https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-contrib@v0.5.0/"
         "assets/opendesign.svg"

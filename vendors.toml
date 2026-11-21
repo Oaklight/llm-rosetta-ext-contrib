@@ -27,26 +27,26 @@ ir = 1
 
 # Free tier: keyless pools, live-checked 2026-11-13 ("Measured" in each leaf).
 [vendors.kilo_free]
-version = "0.4.0"
+version = "0.4.1"
 maturity = "beta"
 since = "2026-11-13"
 tags = ["tier:free"]
 
 [vendors.llm7]
-version = "0.4.0"
+version = "0.4.1"
 maturity = "beta"
 since = "2026-11-13"
 tags = ["tier:free"]
 
 # The lane's client gate was measured live on 2026-10-16 (llm/transforms.py, #884).
 [vendors.opencode_zen_free]
-version = "0.4.0"
+version = "0.4.1"
 maturity = "beta"
 since = "2026-10-16"
 tags = ["tier:free"]
 
 [vendors.ovhcloud]
-version = "0.4.0"
+version = "0.4.1"
 maturity = "beta"
 since = "2026-11-13"
 tags = ["tier:free"]
@@ -77,7 +77,7 @@ tags = ["tier:subscription", "auth:device"]
 # allowance probe is quota.py.  Probed live 2026-10-13 (llm/messages); about
 # 99k production requests 2026-10-11..2026-11-21 (#1660 usage evidence).
 [vendors.opencode]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "beta"
 since = "2026-10-13"
 tags = ["tier:subscription", "tier:paid"]
@@ -87,7 +87,7 @@ tags = ["tier:subscription", "tier:paid"]
 # live record in the tree; 125 production requests 2026-10-11..2026-11-21
 # (#1660 usage evidence), read on 2026-11-21.
 [vendors.openai_chatgpt]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "beta"
 since = "2026-11-21"
 tags = ["tier:subscription", "auth:oauth"]
@@ -97,7 +97,7 @@ tags = ["tier:subscription", "auth:oauth"]
 # made against agy 1.5.13 (core commit of 2026-11-19); never configured on the
 # production gateway.
 [vendors.antigravity]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "beta"
 since = "2026-11-19"
 tags = ["tier:subscription", "auth:cli"]
@@ -105,14 +105,14 @@ tags = ["tier:subscription", "auth:cli"]
 # The paid gateway (the keyless pool is kilo_free).  No dated live record in
 # the tree; production requests 2026-10-11..2026-11-21 (#1660 usage evidence).
 [vendors.kilo]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "beta"
 since = "2026-11-21"
 tags = ["tier:paid"]
 
 # Measured live 2026-11-19 (llm/open_responses).
 [vendors.openrouter]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "beta"
 since = "2026-11-19"
 tags = ["tier:paid"]
@@ -120,28 +120,28 @@ tags = ["tier:paid"]
 # Measured 2026-11-13: /models answers 401 without a key; chat itself has not
 # been probed (llm/transforms.py).
 [vendors.groq]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "beta"
 since = "2026-11-13"
 tags = ["tier:paid"]
 
 # Measured 2026-11-13: /v1/models answers 200 (83 entries).
 [vendors.nvidia]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "beta"
 since = "2026-11-13"
 tags = ["tier:paid"]
 
 # Measured 2026-11-13: chat, embeddings and rerank answer 200.
 [vendors.siliconflow]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "beta"
 since = "2026-11-13"
 tags = ["tier:paid", "region:cn"]
 
 # Measured 2026-11-13: /v1/models answers 200 (38 entries).
 [vendors.modelscope]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "beta"
 since = "2026-11-13"
 tags = ["tier:paid", "region:cn"]
@@ -156,40 +156,40 @@ tags = ["tier:paid", "region:cn"]
 
 # Zhipu AI's mainland platform (open.bigmodel.cn); zai is the international one.
 [vendors.zhipu]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "stable"
 since = "2026-11-21"
 tags = ["tier:paid", "region:cn"]
 
 # Zhipu AI's international platform (api.z.ai); zhipu is the mainland one.
 [vendors.zai]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "stable"
 since = "2026-11-21"
 tags = ["tier:paid"]
 
 [vendors.volcengine]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "stable"
 since = "2026-11-21"
 tags = ["tier:paid", "region:cn"]
 
 [vendors.xai]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "stable"
 since = "2026-11-21"
 tags = ["tier:paid"]
 
 # DashScope compatible mode, mainland endpoint by default.
 [vendors.qwen]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "stable"
 since = "2026-11-21"
 tags = ["tier:paid", "region:cn"]
 
 # api.moonshot.cn by default (api.moonshot.ai is the international host).
 [vendors.moonshot]
-version = "0.5.0"
+version = "0.5.1"
 maturity = "stable"
 since = "2026-11-21"
 tags = ["tier:paid", "region:cn"]

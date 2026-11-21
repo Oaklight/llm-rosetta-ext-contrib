@@ -1,7 +1,6 @@
 name: siliconflow--chat_completions
 model_type: llm
 format: chat_completions
-logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/siliconcloud.svg
 
 # Measured 2026-11-13: chat answers 200 in the OpenAI shape.
 #

@@ -1,4 +1,8 @@
 # Groq — LPU inference on an OpenAI-compatible endpoint.
+# The vendor's display name and mark (the panel, and the manifest's
+# ``label`` / ``logo``); every leaf inherits them.
+group_label: Groq
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/groq.svg
 connection:
   base_url: https://api.groq.com/openai/v1
   api_key_env: GROQ_API_KEY

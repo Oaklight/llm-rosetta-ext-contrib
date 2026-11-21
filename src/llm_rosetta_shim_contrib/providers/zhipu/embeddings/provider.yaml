@@ -1,7 +1,6 @@
 name: zhipu--embedding
 model_type: embeddings
 format: openai
-logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/zhipu.svg
 
 # Measured against embedding-3: a string or a list input answers one vector
 # per item, data[].embedding is a float list, and `dimensions` is honoured

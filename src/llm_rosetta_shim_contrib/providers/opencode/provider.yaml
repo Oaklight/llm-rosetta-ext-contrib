@@ -6,6 +6,10 @@
 # The Go lane requires a stable ``x-opencode-session`` on every inference
 # request (a missing one is a 400); the gateway derives a per-conversation
 # value.  Zen ignores the header.
+# The vendor's display name and mark (the panel, and the manifest's
+# ``label`` / ``logo``); every leaf inherits them.
+group_label: OpenCode
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/opencode.svg
 connection:
   base_url: https://opencode.ai/zen/go/v1
   api_key_env: OPENCODE_API_KEY

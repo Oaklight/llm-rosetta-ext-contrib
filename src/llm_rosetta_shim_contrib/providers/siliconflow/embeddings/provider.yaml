@@ -1,7 +1,6 @@
 name: siliconflow--embedding
 model_type: embeddings
 format: openai
-logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/siliconcloud.svg
 
 # Measured 2026-11-13: BAAI/bge-m3 answers 200 in the OpenAI shape
 # (``data[].embedding`` is a float list).

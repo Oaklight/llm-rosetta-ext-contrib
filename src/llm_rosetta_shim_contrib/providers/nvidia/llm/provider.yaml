@@ -1,7 +1,6 @@
 name: nvidia--chat_completions
 model_type: llm
 format: chat_completions
-logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/nvidia.svg
 
 # Measured 2026-11-13: GET /v1/models answers 200 and lists 83 entries in the
 # OpenAI shape with no type field, so the whole catalogue is offered.  Hosted

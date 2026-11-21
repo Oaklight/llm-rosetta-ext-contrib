@@ -1,7 +1,6 @@
 name: openrouter--rerank
 model_type: rerank
 format: cohere
-logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/openrouter.svg
 
 # Measured against rerank-v3.5 (served by Cohere through OpenRouter): the
 # Cohere request and response shape, top_n and max_tokens_per_doc accepted.

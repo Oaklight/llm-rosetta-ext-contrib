@@ -6,12 +6,11 @@
 # preview route refuses.
 name: openai_chatgpt--open_responses
 # The picker files this under the ``openai_chatgpt`` group its name already
-# implies; the title is declared because the fallback is the mangled key
+# implies; the title and the mark are declared in the vendor manifest
+# (../provider.yaml), because the fallback is the mangled key
 # (``Openai_chatgpt``) and this one is read by operators.
-group_label: OpenAI (ChatGPT plan)
 model_type: llm
 format: open_responses
-logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/openai.svg
 
 connection:
   base_url: https://api.openai.com/v1

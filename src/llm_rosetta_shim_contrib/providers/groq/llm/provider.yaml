@@ -1,7 +1,6 @@
 name: groq--chat_completions
 model_type: llm
 format: chat_completions
-logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/groq.svg
 
 # Measured 2026-11-13: GET /openai/v1/models answers 401 without a key, so
 # the endpoint exists and authenticates as documented.  The free plan gives

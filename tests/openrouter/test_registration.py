@@ -52,10 +52,10 @@ def test_default_shim_is_not_free_source(_registered):
     assert shim.display_name is None
 
 
-def test_the_vendor_declares_no_group(_registered):
+def test_the_vendor_declares_its_label_and_no_group(_registered):
     for name in _SHIMS:
         shim = get_shim(name)
-        assert shim.group is None and shim.group_label is None, name
+        assert shim.group is None and shim.group_label == "OpenRouter", name
 
 
 def test_openrouter_declares_no_profile_traits(_registered):

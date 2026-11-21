@@ -33,7 +33,7 @@ def test_registers_every_lane(_registered):
         )
 
 
-def test_the_vendor_declares_no_group(_registered):
+def test_the_vendor_declares_its_label_and_no_group(_registered):
     for name in _SHIMS:
         shim = get_shim(name)
-        assert shim.group is None and shim.group_label is None, name
+        assert shim.group is None and shim.group_label == "SiliconFlow", name

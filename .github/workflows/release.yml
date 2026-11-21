@@ -63,6 +63,12 @@ jobs:
             git checkout -q --orphan dist
           fi
 
+      - name: Install the builder's dependencies
+        # build_manifest.py reads each vendor manifest with PyYAML and
+        # validates the built manifest against core's
+        # llm_rosetta.contracts.shim_manifest (Oaklight/llm-rosetta#1671).
+        run: pip install pyyaml "llm-rosetta @ git+https://github.com/Oaklight/llm-rosetta.git@master#subdirectory=packages/llm-rosetta"
+
       - name: Build the archives and the manifest
         run: |
           set -euo pipefail

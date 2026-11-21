@@ -18,7 +18,7 @@ from pathlib import Path
 
 from llm_rosetta.contracts.shim import ProviderShim, load_providers_from_dir
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 
 #: The root of every vendor directory this package ships.
 PROVIDERS_DIR = Path(__file__).parent / "providers"

@@ -24,7 +24,7 @@
 # entry that overrides ``acp_argv`` gets none of this and can re-enable the
 # tools, at the operator's own risk.
 group_label: Google (Antigravity)
-logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/antigravity.svg
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/antigravity.svg
 
 connection:
   # This lane sends no credential: agy authenticates itself and the gateway

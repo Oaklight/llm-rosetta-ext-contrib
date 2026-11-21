@@ -201,15 +201,15 @@ def test_a_bumped_vendor_is_prepended(tree: Path):
     toml = tree / "vendors.toml"
     toml.write_text(
         toml.read_text().replace(
-            '[vendors.llm7]\nversion = "0.4.0"', '[vendors.llm7]\nversion = "0.4.1"'
+            '[vendors.llm7]\nversion = "0.4.1"', '[vendors.llm7]\nversion = "0.4.2"'
         )
     )
     leaf = archives.providers_dir(tree) / "llm7" / "llm" / "provider.yaml"
     leaf.write_text(leaf.read_text() + "\n# changed\n")
     manifest, added = _build(tree, previous=previous)
     versions = [r["version"] for r in manifest["vendors"]["llm7"]["versions"]]
-    assert versions == ["0.4.1", "0.4.0"]
-    assert list(added) == ["0.4.1/llm7.tar.gz"]
+    assert versions == ["0.4.2", "0.4.1"]
+    assert list(added) == ["0.4.2/llm7.tar.gz"]
     assert (
         manifest["vendors"]["llm7"]["versions"][1]
         == previous["vendors"]["llm7"]["versions"][0]
@@ -473,3 +473,120 @@ def test_the_longest_vendor_key_of_the_manifest_owns_a_name():
 def test_shim_owner(name, owner):
     keys = ["kilo", "kilo_free", "opencode", "opencode_zen_free", "zhipu"]
     assert builder.shim_owner(name, keys) == owner
+
+
+#: The display fields a few vendors publish (every vendor is checked by the
+#: release rule below).
+EXPECTED_DISPLAY = {
+    "kilo": {"label": "Kilo", "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/kilocode.svg"},
+    "kilo_free": {"label": "Kilo (Free)", "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/kilocode.svg"},
+    "antigravity": {"label": "Google (Antigravity)", "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/antigravity.svg"},
+    "zai": {"label": "Z.ai", "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/zhipu.svg"},
+    "groq": {"label": "Groq", "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/groq.svg"},
+    "ovhcloud": {"label": "OVHcloud", "logo": "https://cdn.jsdelivr.net/npm/simple-icons@16.38.0/icons/ovh.svg"},
+    "opendesign": {"label": "OpenDesign", "logo": "https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-contrib@v0.5.0/assets/opendesign.svg"},
+    "llm7": {"label": "LLM7.io", "logo": None},
+}
+#: Per-vendor repositories that are archived; no mark may point at them.
+ARCHIVED = ("llm-rosetta-shim-opendesign", "llm-rosetta-shim-free")
+
+
+# -- Display fields (Oaklight/llm-rosetta#1671) ------------------------------
+
+
+def _vendor_root(root: Path, vendor: str) -> Path:
+    return archives.vendor_dir(vendor, root) / "provider.yaml"
+
+
+@needs_tomllib
+def test_every_vendor_record_carries_its_label_and_logo_from_provider_yaml():
+    manifest, _ = _build()
+    for vendor, expected in EXPECTED_DISPLAY.items():
+        record = manifest["vendors"][vendor]["versions"][0]
+        assert {k: record.get(k) for k in ("label", "logo")} == expected, vendor
+    for entry in manifest["vendors"].values():
+        logo = entry["versions"][0].get("logo")
+        if logo:
+            # Pinned: an immutable record's mark cannot change underneath it.
+            assert "@latest" not in logo and "@main" not in logo, logo
+            assert not any(old in logo for old in ARCHIVED), logo
+
+
+def test_the_vendor_root_is_read_with_a_yaml_parser(tmp_path: Path):
+    """Quoting, a folded line and a comment the old regex reader missed."""
+    vendor_root = _vendor_root(_ROOT, "groq")
+    text = vendor_root.read_text()
+    folded = (
+        'group_label: >-\n  Folded\n  Name\nlogo: "https://a.example/x.svg"  # pinned\n'
+    )
+    work = tmp_path / "repo"
+    shutil.copytree(_ROOT, work, ignore=shutil.ignore_patterns(".git", "dist", "__pycache__"))
+    target = _vendor_root(work, "groq")
+    target.write_text(folded + "\n".join(
+        line for line in text.splitlines() if not line.startswith(("group_label:", "logo:"))
+    ) + "\n")
+    assert builder.vendor_display("groq", work) == {
+        "label": "Folded Name",
+        "logo": "https://a.example/x.svg",
+    }
+
+
+@needs_tomllib
+def test_a_vendor_without_a_label_or_logo_fails_the_release(tmp_path: Path):
+    work = tmp_path / "repo"
+    shutil.copytree(_ROOT, work, ignore=shutil.ignore_patterns(".git", "dist", "__pycache__"))
+    target = _vendor_root(work, "groq")
+    target.write_text("\n".join(
+        line for line in target.read_text().splitlines()
+        if not line.startswith(("group_label:", "logo:"))
+    ) + "\n")
+    with pytest.raises(builder.ManifestError) as caught:
+        builder.build_manifest(work, commit="c" * 40, generated_at="2026-11-21T00:00:00Z")
+    message = str(caught.value)
+    assert "groq: no group_label" in message
+    assert "groq: no logo" in message
+
+
+def test_the_no_logo_list_is_checked_both_ways(monkeypatch):
+    records = {"acme": {"label": "Acme", "logo": "https://a.example/a.svg"}, "bare": {"label": "Bare"}}
+    monkeypatch.setattr(builder, "NO_LOGO", frozenset({"bare"}))
+    assert builder.display_problems(records) == []
+    monkeypatch.setattr(builder, "NO_LOGO", frozenset({"acme", "ghost"}))
+    problems = builder.display_problems(records)
+    assert "acme: has a logo; drop it from NO_LOGO" in problems
+    assert any("bare: no logo" in p for p in problems)
+    assert any("'ghost'" in p for p in problems)
+
+
+def test_the_display_rule_is_cores_not_a_copy():
+    """A bad value is refused by core's schema; the builder keeps no copy."""
+    contract = pytest.importorskip("llm_rosetta.contracts.shim_manifest")
+    if "label" not in contract.load_manifest_schema()["$defs"]["release"]["properties"]:
+        pytest.skip("this core predates the display fields")
+    assert not any(hasattr(builder, n) for n in ("_LABEL", "_LOGO", "_LABEL_MAX", "_LOGO_MAX"))
+    record = {
+        "version": "0.1.0",
+        "commit": "c" * 40,
+        "archive": "0.1.0/acme.tar.gz",
+        "sha256": "0" * 64,
+        "requires": {"surface": 1, "ir": 1},
+        "shims": ["acme--chat_completions"],
+        "tags": [],
+        "maturity": "beta",
+        "since": "2026-11-21",
+        "conformance": {"date": None, "result": "none"},
+        "promoted_to": None,
+    }
+    doc = {
+        "manifest_version": 1,
+        "source": builder.SOURCE,
+        "repo": builder.REPO,
+        "generated_at": "2026-11-21T00:00:00Z",
+        "vendors": {"acme": {"versions": [record]}},
+    }
+    assert builder.validate_manifest(doc) == []
+    for field, value in (("logo", "http://insecure.example/x.svg"), ("label", "x" * 81)):
+        bad = copy.deepcopy(doc)
+        bad["vendors"]["acme"]["versions"][0][field] = value
+        problems = builder.validate_manifest(bad)
+        assert any(p.startswith("core schema:") and field in p for p in problems), problems

@@ -1,2 +1,6 @@
+# The vendor's display name and mark (the panel, and the manifest's
+# ``label`` / ``logo``); every leaf inherits them.
+group_label: Qwen
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/qwen.svg
 connection:
   api_key_env: DASHSCOPE_API_KEY

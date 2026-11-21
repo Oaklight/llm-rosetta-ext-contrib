@@ -1,3 +1,7 @@
 # Vendor manifest: the defaults every opencode_zen_free shim shares.
 # A leaf inherits every field here and may override any of them.
+# The vendor's display name and mark (the panel, and the manifest's
+# ``label`` / ``logo``); every leaf inherits them.
+group_label: OpenCode Zen
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/opencode.svg
 connection: {}

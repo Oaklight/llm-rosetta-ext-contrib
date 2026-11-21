@@ -1,8 +1,6 @@
 name: zai--messages
 model_type: llm
 format: messages
-group_label: Z.ai
-logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/zhipu.svg
 
 # z.ai serves an Anthropic-compatible Messages lane on a path of its own.
 # Measured 2026-11-13: /v1/messages answers 200 with either ``x-api-key`` or

@@ -78,6 +78,10 @@ A gateway that reads manifests (Oaklight/llm-rosetta#1660 S2) takes a list of so
 
 For each selected vendor the gateway installs the newest version whose `requires` matches its core (`requires.surface == SURFACE_VERSION`, `requires.ir <= IR_VERSION`), pinned by the archive's sha256, and upgrades only when a newer compatible version is published. When core already registers a shim name, core wins and the gateway logs the source it ignored. The old `"presets": ["free"]` and `"presets": ["opendesign"]` keys map to `contrib` with `tag:free` and `opendesign`, so no config edit is needed.
 
+Each vendor is installed, removed and pinned on its own (Oaklight/llm-rosetta#1671): `"!contrib:llm7"` excludes one vendor from a tag or `*` selection, and `"contrib:groq@0.5.1"` holds that version. `llm-rosetta-migrate --config <file> --write` rewrites the old preset keys as `shims.install` entries.
+
+Each release record also carries the vendor's `label` and `logo`, read from its root `provider.yaml` (`group_label`, `logo`; else the first leaf that declares one), so a gateway draws a vendor that is not installed yet.
+
 The manifest is published on the `dist` branch:
 
 - `https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-contrib@dist/manifest.json` (default)

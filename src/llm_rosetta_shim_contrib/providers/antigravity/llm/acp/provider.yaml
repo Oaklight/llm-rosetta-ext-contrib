@@ -13,7 +13,7 @@ name: antigravity--acp
 model_type: llm
 format: acp
 group_label: Google (Antigravity)
-logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/antigravity.svg
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/antigravity.svg
 
 # What a model on this lane has when its config entry declares no
 # ``capabilities``.  Images ride as inline ACP blocks and thought chunks come

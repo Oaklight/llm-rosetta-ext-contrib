@@ -1,7 +1,6 @@
 name: qwen
 model_type: llm
 format: chat_completions
-logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/qwen.svg
 
 # Shared China endpoint; international uses workspace-dedicated domains:
 # https://{WorkspaceId}.{region}.maas.aliyuncs.com/compatible-mode/v1

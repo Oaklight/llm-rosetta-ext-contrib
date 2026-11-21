@@ -13,7 +13,6 @@ model_type: llm
 format: chat_completions
 display_name: LLM7 (Free)
 free_source: true
-group_label: LLM7.io
 # No icon for this vendor exists in the icon sets the other shims use; the
 # admin UI falls back to a generated mark when ``logo`` is absent.
 hint_msg:

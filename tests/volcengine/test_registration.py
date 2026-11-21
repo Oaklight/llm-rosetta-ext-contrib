@@ -39,10 +39,10 @@ def test_base_types_correct(_registered):
         )
 
 
-def test_the_vendor_declares_no_group(_registered):
+def test_the_vendor_declares_its_label_and_no_group(_registered):
     for name in _SHIMS:
         shim = get_shim(name)
-        assert shim.group is None and shim.group_label is None, name
+        assert shim.group is None and shim.group_label == "Volcengine", name
 
 
 def test_volcengine_has_transforms(_registered):

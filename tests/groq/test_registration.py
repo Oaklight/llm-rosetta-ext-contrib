@@ -24,7 +24,7 @@ def test_registers_the_chat_lane(_registered):
     assert shim.format == "chat_completions"
 
 
-def test_the_vendor_declares_no_group(_registered):
+def test_the_vendor_declares_its_label_and_no_group(_registered):
     shim = get_shim("groq--chat_completions")
-    assert shim.group is None and shim.group_label is None
+    assert shim.group is None and shim.group_label == "Groq"
     assert shim.display_name is None

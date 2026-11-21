@@ -12,8 +12,6 @@ model_type: llm
 format: chat_completions
 display_name: Kilo (Free)
 free_source: true
-group_label: Kilo
-logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/kilocode.svg
 hint_msg:
   en: "Keyless free pool. Only the models the upstream marks free are listed; the paid lane is kilo--chat_completions."
   zh: "无密钥免费池。只列出上游标记为免费的模型；付费线路是 kilo--chat_completions。"

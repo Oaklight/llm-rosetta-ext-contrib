@@ -20,7 +20,6 @@ model_type: llm
 format: chat_completions
 display_name: Zen free lane
 free_source: true
-logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/opencode.svg
 hint_msg:
   en: "Keyless free pool. Only zero-cost models are served here; the model list is filtered to them."
   zh: "无密钥免费池。这里只服务零成本模型；模型列表已按此过滤。"
