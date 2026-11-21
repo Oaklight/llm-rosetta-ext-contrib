@@ -60,7 +60,7 @@ def test_each_shim_is_a_keyless_free_source(_registered, name, base_url):
     # The vendor manifest is a marker: every connection fact is on the leaf.
     assert shim.manifest is not None
     assert shim.manifest.connection == {}
-    assert shim.base == "chat_completions"
+    assert shim.format == "chat_completions"
     assert shim.free_source is True
     assert shim.connection.keyless
     assert shim.connection.base_url == base_url
