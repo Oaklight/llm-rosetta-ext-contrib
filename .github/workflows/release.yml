@@ -17,8 +17,9 @@ name: Release
 #
 # `dist` is the shape a file CDN can serve: gateways fetch
 # https://cdn.jsdelivr.net/gh/<repo>@dist/manifest.json, with
-# raw.githubusercontent.com as the fallback.  The default branch receives
-# nothing; `dist/` there is build output and stays gitignored.
+# raw.githubusercontent.com as the fallback; the release purges the CDN copy
+# of dist/manifest.json so a new release is visible at once.  The default
+# branch receives nothing; `dist/` there is build output and stays gitignored.
 #
 # The job needs `contents: write` to push `dist` and create the release.
 
@@ -90,6 +91,62 @@ jobs:
           fi
           git commit -q -m "dist: ${tag}"
           git push origin dist
+
+      - name: Purge the CDN copy of the latest manifest
+        # jsDelivr caches @dist/manifest.json for up to 12 h (s-maxage=43200),
+        # so without a purge gateways keep reading the previous release.  The
+        # per-release dist/<release>/manifest.json is new and immutable, so it
+        # needs none.  The release has already succeeded by this point: a
+        # purge that does not finish is a warning with the response printed,
+        # not a failed job.
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import time
+          import urllib.request
+
+          path = f"/gh/{os.environ['GITHUB_REPOSITORY']}@dist/manifest.json"
+          url = "https://purge.jsdelivr.net" + path
+
+
+          def get(target):
+              request = urllib.request.Request(
+                  target, headers={"User-Agent": "llm-rosetta-shim-release"}
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  return json.loads(response.read().decode("utf-8"))
+
+
+          def purged(answer):
+              entry = (answer.get("paths") or {}).get(path) or {}
+              return answer.get("status") == "finished" and entry.get("throttled") is False
+
+
+          answer = None
+          for attempt in range(1, 6):
+              try:
+                  answer = get(url)
+                  # A purge that is still running is polled on its status URL.
+                  for _ in range(6):
+                      if answer.get("status") != "pending" or not answer.get("id"):
+                          break
+                      time.sleep(5)
+                      answer = get(f"https://purge.jsdelivr.net/status/{answer['id']}")
+              except Exception as exc:  # noqa: BLE001 - every failure is retried
+                  answer = {"error": f"{type(exc).__name__}: {exc}"}
+              print(f"attempt {attempt}: {json.dumps(answer, sort_keys=True)}")
+              if purged(answer):
+                  print(f"purged {path}")
+                  break
+              time.sleep(10 * attempt)
+          else:
+              print(
+                  f"::warning::jsDelivr did not confirm the purge of {path}; "
+                  f"gateways may read the previous manifest for up to 12 h. "
+                  f"Last answer: {json.dumps(answer, sort_keys=True)}"
+              )
+          PY
 
       - name: Attach to the GitHub Release
         env:
