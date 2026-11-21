@@ -13,6 +13,20 @@ This repository was `llm-rosetta-shim-free` (renamed 2026-11-21; history, issues
 | `opencode_zen_free` | `opencode_zen_free--chat_completions` | `tier:free` | beta | [free tier](docs/vendors/free-tier.md) |
 | `ovhcloud` | `ovhcloud--chat_completions` | `tier:free` | beta | [free tier](docs/vendors/free-tier.md) |
 | `opendesign` | `opendesign--chat_completions`, `opendesign--open_responses`, `opendesign--messages` | `tier:subscription`, `auth:device` | beta | [Open Design Cloud](docs/vendors/opendesign.md) |
+| `opencode` | `opencode--chat_completions`, `opencode--messages`, `opencode--open_responses` | `tier:subscription`, `tier:paid` | beta | Go and Zen lanes; Go allowance probe `opencode_go` |
+| `openai_chatgpt` | `openai_chatgpt--open_responses` | `tier:subscription`, `auth:oauth` | beta | Sign in with ChatGPT; in-band probe `openai_codex` |
+| `antigravity` | `antigravity--acp` | `tier:subscription`, `auth:cli` | beta | drives the local `agy` CLI over ACP |
+| `kilo` | `kilo--chat_completions` | `tier:paid` | beta | aggregator (the keyless pool is `kilo_free`) |
+| `openrouter` | `openrouter--chat_completions`, `openrouter--messages`, `openrouter--open_responses`, `openrouter--rerank` | `tier:paid` | beta | aggregator |
+| `groq` | `groq--chat_completions` | `tier:paid` | beta | |
+| `nvidia` | `nvidia--chat_completions` | `tier:paid` | beta | NIM hosted endpoints |
+| `siliconflow` | `siliconflow--chat_completions`, `siliconflow--embedding`, `siliconflow--rerank` | `tier:paid`, `region:cn` | beta | |
+| `modelscope` | `modelscope--chat_completions` | `tier:paid`, `region:cn` | beta | |
+| `minimax` | `minimax--chat_completions`, `minimax--messages`, `minimax--embedding` | `tier:paid`, `region:cn` | stable | promotion candidate |
+| `zai` | `zai--chat_completions`, `zai--messages`, `zai--embedding`, `zai--rerank` | `tier:paid` | stable | promotion candidate |
+| `volcengine` | `volcengine--chat_completions`, `volcengine--open_responses`, `volcengine--embedding` | `tier:paid`, `region:cn` | stable | promotion candidate |
+
+The vendors from `opencode` down moved out of llm-rosetta core (Oaklight/llm-rosetta#1660 S7) with their shim names unchanged; `tier:paid` there means a keyed account, some with a free allowance. `zhipu`, `xai`, `qwen` and `moonshot` follow once a manifest can carry their bare shim names.
 
 The free-tier vendors are third-party services collected from public sources. Read the disclaimer in [docs/vendors/free-tier.md](docs/vendors/free-tier.md) before you use them: nothing here guarantees data retention terms, and the upstream owns its terms and limits.
 
@@ -91,7 +105,7 @@ Package code imports core only through `llm_rosetta.contracts`: core runs the en
 
 ### Add a vendor
 
-1. Copy the vendor directory to `src/llm_rosetta_shim_contrib/providers/<vendor>/`. Every leaf must be named `<vendor>--<format>`.
+1. Copy the vendor directory to `src/llm_rosetta_shim_contrib/providers/<vendor>/`. Every leaf must be named `<vendor>--<name>`: a new vendor uses the format as `<name>`; a vendor moved from core keeps the name core gave it.
 2. Add a `[vendors.<vendor>]` table to `vendors.toml` (`version`, `maturity`, `since`, `tags`; optional `conformance`, `requires`, `promoted_to`).
 3. Add one line to `[project.entry-points."llm_rosetta.shim_providers"]` in `pyproject.toml`: `<vendor> = "llm_rosetta_shim_contrib.vendors:<vendor>"`.
 4. Move its tests to `tests/<vendor>/`.
@@ -136,8 +150,10 @@ pip install . pytest pyyaml
 pytest
 python scripts/build_shim_archive.py         # archive layout check
 python scripts/build_manifest.py --dry-run   # build and validate, print the manifest
-python scripts/check_core_collisions.py
+python scripts/check_core_collisions.py --allow-file scripts/moving_from_core.txt
 ```
+
+`scripts/moving_from_core.txt` lists the vendors core master still ships while their move (#1660 S7) is in flight; the check names an entry once it stops overlapping, and the file goes when it is empty.
 
 Requires Python >= 3.10 and `llm-rosetta >= 0.14.0.dev35` (the first core with `llm_rosetta.contracts`). The manifest builder needs Python 3.11+ (`tomllib`).
 

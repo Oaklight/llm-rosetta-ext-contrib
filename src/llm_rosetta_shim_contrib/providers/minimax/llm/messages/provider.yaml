@@ -1,0 +1,45 @@
+name: minimax--messages
+model_type: llm
+format: messages
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/minimax.svg
+
+# Domestic (China mainland): api.minimaxi.com; international: api.minimax.io
+connection:
+  base_url: https://api.minimaxi.com/anthropic
+
+tools:
+  # Measured live 2026-10-23: declaring
+  # `{"type": "web_search_20250305", "name": "web_search"}` makes this lane run
+  # the search on the provider side — the response carries `server_tool_use`
+  # and `web_search_tool_result` blocks with real queries and results.
+  # `code_execution_20250522` and `bash_20250124` are rejected with
+  # `invalid params, function parameters is empty` (the lane treats an unknown
+  # server tool as a function that needs a schema), so code execution is not
+  # declared.  Declaring `bash_20250124` would change nothing even if the lane
+  # accepted it: the messages reader reads that type as a plain function named
+  # `bash`, so it never becomes an intrinsic kind to keep or drop.
+  intrinsic_tools:
+    - web_search
+reasoning:
+  thinking_modes:
+    auto: adaptive
+    enabled: adaptive
+    disabled: disabled
+  # `none`, not a field name: this lane has no effort control.  The compatibility
+  # layer documents its supported parameters (model, max_tokens, stream, system,
+  # temperature, top_p, tools, tool_choice, metadata, thinking, service_tier) and
+  # effort is not among them — "M3 thinking control is not a depth slider", only
+  # thinking on/off/omitted.  Probed live 2026-10-13: everything is accepted and
+  # ignored (`output_config={nonsense:1}` -> 200, `thinking.type="banana"` -> 200
+  # returning a thinking block), and paired runs at unset vs max effort gave
+  # overlapping thinking lengths.  A 200 here is not evidence a field was read.
+  #
+  # `none` rather than omitting the key: an omitted `effort_field` falls back to
+  # the loader default (`reasoning_effort`) and the stray flat field goes out on a
+  # Messages payload, which is what #757 / 8937deb34f removed and what
+  # `effort_field: none` actually prevents.
+  effort_field: none
+  # No `unsigned_blocks: preserve` here on purpose.  Probed live 2026-10-13:
+  # MiniMax's Anthropic lane accepts an unsigned thinking block in history
+  # (HTTP 200), so there is nothing to withhold; the default `as_is` keeps the
+  # block on the wire for round-trip fidelity.  See #954.

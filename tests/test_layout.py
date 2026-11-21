@@ -96,13 +96,19 @@ def test_an_unknown_vendor_is_an_attribute_error():
 
 
 @pytest.mark.parametrize("vendor", VENDORS)
-def test_every_leaf_is_named_vendor_dash_dash_format(vendor):
-    """The vendor directory is the shim prefix the manifest and gateway key on."""
+def test_every_leaf_is_named_after_its_vendor(vendor):
+    """The vendor directory is the shim prefix the manifest and gateway key on.
+
+    The part after ``--`` is usually the format, but not always: a vendor
+    moved from core keeps the name core gave it (``minimax--embedding`` has
+    format ``minimax``, ``zai--rerank`` format ``cohere``), because a shim
+    name never changes when the vendor moves.
+    """
     leaves = _leaves(vendor)
     assert leaves, vendor
     for leaf in leaves:
         cfg = _load(leaf)
-        assert cfg["name"] == f"{vendor}--{cfg['format']}", leaf
+        assert cfg["name"].startswith(f"{vendor}--"), leaf
 
 
 def test_vendors_toml_has_one_table_per_vendor():

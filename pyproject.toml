@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Oaklight" }]
-keywords = ["llm", "llm-rosetta", "shim", "contrib", "free", "kilo", "llm7", "opencode", "ovhcloud", "opendesign"]
+keywords = ["llm", "llm-rosetta", "shim", "contrib", "free", "aggregator", "subscription", "kilo", "llm7", "opencode", "ovhcloud", "opendesign", "openrouter", "chatgpt"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -29,11 +29,23 @@ Upstream = "https://github.com/Oaklight/llm-rosetta"
 # inside its own try, so a vendor that fails to load does not stop the others.
 # tests/test_layout.py fails when this table and providers/ disagree.
 [project.entry-points."llm_rosetta.shim_providers"]
+antigravity = "llm_rosetta_shim_contrib.vendors:antigravity"
+groq = "llm_rosetta_shim_contrib.vendors:groq"
+kilo = "llm_rosetta_shim_contrib.vendors:kilo"
 kilo_free = "llm_rosetta_shim_contrib.vendors:kilo_free"
 llm7 = "llm_rosetta_shim_contrib.vendors:llm7"
+minimax = "llm_rosetta_shim_contrib.vendors:minimax"
+modelscope = "llm_rosetta_shim_contrib.vendors:modelscope"
+nvidia = "llm_rosetta_shim_contrib.vendors:nvidia"
+openai_chatgpt = "llm_rosetta_shim_contrib.vendors:openai_chatgpt"
+opencode = "llm_rosetta_shim_contrib.vendors:opencode"
 opencode_zen_free = "llm_rosetta_shim_contrib.vendors:opencode_zen_free"
 opendesign = "llm_rosetta_shim_contrib.vendors:opendesign"
+openrouter = "llm_rosetta_shim_contrib.vendors:openrouter"
 ovhcloud = "llm_rosetta_shim_contrib.vendors:ovhcloud"
+siliconflow = "llm_rosetta_shim_contrib.vendors:siliconflow"
+volcengine = "llm_rosetta_shim_contrib.vendors:volcengine"
+zai = "llm_rosetta_shim_contrib.vendors:zai"
 
 [tool.setuptools.dynamic]
 version = { attr = "llm_rosetta_shim_contrib.__version__" }
@@ -42,7 +54,7 @@ version = { attr = "llm_rosetta_shim_contrib.__version__" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-llm_rosetta_shim_contrib = ["providers/**/*.yaml", "providers/**/*.py"]
+llm_rosetta_shim_contrib = ["providers/**/*.yaml", "providers/**/*.py", "providers/**/*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
