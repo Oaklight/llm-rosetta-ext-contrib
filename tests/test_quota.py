@@ -20,7 +20,7 @@ from llm_rosetta_shim_opendesign.providers.opendesign.quota import (
     PROBES,
     OpenDesignQuota,
 )
-from llm_rosetta.contracts.quota import (
+from llm_rosetta_shim_opendesign.providers._core_compat import (
     QuotaProbeError,
 )
 
@@ -36,8 +36,18 @@ try:
     )
 
     HAVE_CONTRACT = True
-except ImportError:  # pragma: no cover - a core older than the contract
-    HAVE_CONTRACT = False
+except ImportError:
+    try:  # a core before 0.14.0.dev35 keeps the contract in its earlier home
+        from llm_rosetta.shims.quota_probe import (  # type: ignore[no-redef]  # noqa: F401
+            PROBE_ROLE_API_KEY,
+            ProbeRefused,
+            probe_credential_role,
+            probe_fetch,
+        )
+
+        HAVE_CONTRACT = True
+    except ImportError:  # pragma: no cover - a core older than the contract
+        HAVE_CONTRACT = False
 
 pytestmark = pytest.mark.skipif(
     not HAVE_CONTRACT, reason="this core predates the second-credential contract"

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from llm_rosetta.contracts.auth import (
+from llm_rosetta_shim_opendesign.providers._core_compat import (
     AuthContext,
     AuthExchangeError,
     InteractiveSetupRequired,
@@ -468,9 +468,7 @@ def test_the_exchange_is_a_device_flow_that_owns_no_input_key(auth):
 
 def test_the_control_role_returns_the_control_key(auth, ctx):
     """The allowance reader asks for "control"; the model asks for nothing."""
-    auth.EXCHANGE.install(
-        ctx, {"runtime": _RUNTIME, "control": _CONTROL, "user": {}}
-    )
+    auth.EXCHANGE.install(ctx, {"runtime": _RUNTIME, "control": _CONTROL, "user": {}})
 
     exchange = auth.EXCHANGE
 

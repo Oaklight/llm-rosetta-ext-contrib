@@ -21,7 +21,7 @@ classifiers = [
 # file ("a vendor manifest may declare only a 'connection:' block"), so the
 # floor is the first dev that reads identity from a manifest; 0.14.0 and later
 # satisfy it too, since a final release sorts above its dev releases.
-dependencies = ["llm-rosetta>=0.14.0.dev35"]
+dependencies = ["llm-rosetta>=0.14.0.dev31"]
 
 [project.urls]
 Repository = "https://github.com/Oaklight/llm-rosetta-shim-opendesign"
