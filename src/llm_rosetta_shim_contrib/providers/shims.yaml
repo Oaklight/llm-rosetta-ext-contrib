@@ -1,4 +1,13 @@
 version: 1
+# 0.14.0.dev35 is the first core with llm_rosetta.contracts, the only core
+# surface this package imports.  The gateway compares the first three numeric
+# components, so a 0.14.0 development core satisfies this floor.
+#
+# This file lists every shim the package ships, for a gateway source that
+# loads the whole tree.  A release archive carries one vendor and a copy of
+# this file cut to that vendor's entries (scripts/build_shim_archive.py), and
+# the build fails when this list and the vendor's leaves disagree.
+core: ">=0.14.0"
 shims:
   - name: kilo_free--chat_completions
     path: kilo_free/llm
@@ -6,5 +15,11 @@ shims:
     path: llm7/llm
   - name: opencode_zen_free--chat_completions
     path: opencode_zen_free/llm
+  - name: opendesign--chat_completions
+    path: opendesign/llm/chat_completions
+  - name: opendesign--messages
+    path: opendesign/llm/messages
+  - name: opendesign--open_responses
+    path: opendesign/llm/open_responses
   - name: ovhcloud--chat_completions
     path: ovhcloud/llm
