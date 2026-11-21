@@ -13,9 +13,13 @@ from __future__ import annotations
 
 import pytest
 
-from llm_rosetta.shims import get_shim
-from llm_rosetta.shims.provider_shim import _reset_registry
-from llm_rosetta.shims.providers import get_model_list_transform
+from llm_rosetta.api import (
+    get_model_list_transform,
+    get_shim,
+    restore_registry,
+    snapshot_registry,
+    staging_registry,
+)
 
 from llm_rosetta_shim_free import register_shims
 
@@ -27,10 +31,11 @@ _REASONING_SHIMS = (
 
 @pytest.fixture()
 def _registered():
-    _reset_registry()
-    register_shims()
+    saved = snapshot_registry()
+    with staging_registry():
+        register_shims()
     yield
-    _reset_registry()
+    restore_registry(saved)
 
 
 @pytest.mark.parametrize("shim_name", _REASONING_SHIMS)

@@ -11,8 +11,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from llm_rosetta.shims import get_shim
-from llm_rosetta.shims.provider_shim import _reset_registry
+from llm_rosetta.api import (
+    get_shim,
+    restore_registry,
+    snapshot_registry,
+    staging_registry,
+)
 
 from llm_rosetta_shim_free import register_shims
 
@@ -31,10 +35,11 @@ EXPECTED = {
 
 @pytest.fixture()
 def _registered():
-    _reset_registry()  # clean registry, so only the plugin's shims are present
-    register_shims()
+    saved = snapshot_registry()
+    with staging_registry():  # clean registry, so only the plugin's shims are present
+        register_shims()
     yield
-    _reset_registry()
+    restore_registry(saved)
 
 
 def _config(vendor: str) -> dict:

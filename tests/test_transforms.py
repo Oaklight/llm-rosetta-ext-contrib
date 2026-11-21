@@ -5,8 +5,12 @@ from __future__ import annotations
 
 import pytest
 
-from llm_rosetta.shims import get_shim
-from llm_rosetta.shims.provider_shim import _reset_registry
+from llm_rosetta.api import (
+    get_shim,
+    restore_registry,
+    snapshot_registry,
+    staging_registry,
+)
 
 from llm_rosetta_shim_free import register_shims
 from llm_rosetta_shim_free.providers.opencode_zen_free.llm import (
@@ -17,10 +21,11 @@ from llm_rosetta_shim_free.providers.opencode_zen_free.llm import (
 @pytest.fixture(scope="module", autouse=True)
 def _registered_shims():
     """Load this package's shims into a clean registry for the whole file."""
-    _reset_registry()
-    register_shims()
+    saved = snapshot_registry()
+    with staging_registry():
+        register_shims()
     yield
-    _reset_registry()
+    restore_registry(saved)
 
 
 @pytest.fixture(autouse=True)
@@ -359,7 +364,7 @@ class TestReadToolGate:
 
     def test_the_shim_registers_the_model_filter(self):
         """The loader picks the hook up from the leaf transforms module."""
-        from llm_rosetta.shims.providers import get_model_list_transform
+        from llm_rosetta.api import get_model_list_transform
 
         transform = get_model_list_transform("opencode_zen_free--chat_completions")
         assert transform is not None

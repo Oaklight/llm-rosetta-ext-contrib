@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from llm_rosetta.transforms import _NamedTransform, hoist_late_system_messages
+from llm_rosetta.contracts.transform import NamedTransform, hoist_late_system_messages
 
 
 def _rename_reasoning_field(body: dict[str, Any]) -> dict[str, Any]:
@@ -55,5 +55,5 @@ def model_list_transform(
 
 
 post_ir_transforms = ()
-pre_ir_transforms = (_NamedTransform(_rename_reasoning_field, "rename_reasoning()"),)
+pre_ir_transforms = (NamedTransform(_rename_reasoning_field, "rename_reasoning()"),)
 ir_transforms = (hoist_late_system_messages(),)
