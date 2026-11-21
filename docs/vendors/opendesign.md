@@ -1,59 +1,31 @@
-# llm-rosetta-shim-opendesign
+# Open Design Cloud (`opendesign`)
 
-Open Design Cloud as a provider for
-[llm-rosetta](https://github.com/Oaklight/llm-rosetta), delivered as a **plugin
-package** rather than as a built-in shim.
+Open Design Cloud as a provider for [llm-rosetta](https://github.com/Oaklight/llm-rosetta). The vendor was published as `llm-rosetta-shim-opendesign` and now lives in contrib under `src/llm_rosetta_shim_contrib/providers/opendesign/`, with its history.
 
-Open Design Cloud serves its models on a single HTTPS gateway. The three chat
-formats this package exposes all talk to that gateway; only the authentication
-header and the wire body differ.
+Open Design Cloud serves its models on a single HTTPS gateway. The three chat formats this vendor exposes all talk to that gateway; only the authentication header and the wire body differ.
 
 ## Install
 
-Declare the preset in the gateway config:
+Select the vendor from the contrib source (see the repository README):
 
 ```jsonc
 {
-  "shims": { "presets": ["opendesign"] }
+  "shims": { "sources": ["contrib"], "install": ["opendesign"] }
 }
 ```
 
-The preset resolves to this repository and its bundled provider directory
-through llm-rosetta's catalogue. The equivalent explicit entry is:
-
-```jsonc
-{
-  "shims": {
-    "remotes": [
-      {
-        "url": "https://github.com/Oaklight/llm-rosetta-shim-opendesign",
-        "path": "src/llm_rosetta_shim_opendesign/providers"
-      }
-    ]
-  }
-}
-```
-
-Installing the distribution directly also works; llm-rosetta discovers the
-`llm_rosetta.shim_providers` entry point on its own:
-
-```bash
-pip install llm-rosetta-shim-opendesign
-```
+The old `"presets": ["opendesign"]` key maps to the same source and selection. Installing the Python distribution also works: `pip install llm-rosetta-shim-contrib` registers the vendor through its `opendesign` entry point.
 
 ## Requirements
 
 - Python >= 3.10
-- `llm-rosetta >= 0.14.0.dev31` (the vendor manifest carries the mark as a
-  manifest-level `logo:`; dev30 and earlier refuse that file, so the entry point
-  fails to load instead of registering the shims — 0.14.0 and later are above
-  this floor too)
+- `llm-rosetta >= 0.14.0.dev35` (the manifest records `requires: {surface: 1, ir: 1}`)
 
 ## Configure a provider
 
 ```jsonc
 {
-  "shims": { "presets": ["opendesign"] },
+  "shims": { "sources": ["contrib"], "install": ["opendesign"] },
   "providers": {
     "opendesign": {
       "type": "opendesign--chat_completions"
@@ -81,7 +53,7 @@ Open Design splits one account across two planes:
 
 The web UI never shows the control key. The only way to obtain it is the
 device-authorization flow, which this package implements in
-`src/llm_rosetta_shim_opendesign/providers/opendesign/auth.py`:
+`src/llm_rosetta_shim_contrib/providers/opendesign/auth.py`:
 
 1. The gateway starts a device authorization and shows an activation URL and
    a short user code.
@@ -147,8 +119,8 @@ Without a control key the gateway reports the provider's quota as unsupported
 and makes no billing request: there is no fallback to the runtime key, which
 the control plane answers with 401.
 
-The manifest declares the block once, because the allowance is the account's
-rather than a lane's:
+Every leaf declares the same block (the allowance is the account's, not a
+lane's):
 
 ```yaml
 quota:
@@ -156,46 +128,11 @@ quota:
   url: https://amr-api.open-design.ai
 ```
 
-**Release ordering, and what an older core sees.** `credential_role` and
-`fetch` are core contract additions. On a core that carries them the card
-works; on an older one the probe imports (the two names are imported
-defensively) and reports the lane as having no keyed endpoint, so the panel
-says the allowance is unsupported and the lane keeps serving — it never sends
-the runtime key to a plane that would answer 401. The `quota:` block is
-likewise declared on each leaf rather than in the manifest, because a core
-older than the manifest's `quota:` key refuses that file outright. Both move
-up — the block to the manifest, the dependency floor to that dev release —
-when the core ships, and the two are one edit.
+**What a core needs.** `credential_role` and `fetch` are part of `llm_rosetta.contracts.quota` from 0.14.0.dev35, the floor this vendor declares; the probe imports them directly. The `quota:` block is still declared on each leaf rather than in the manifest; it can move up to the manifest, where an account-level fact belongs, in a later version.
 
-## Archive and mirror
+## Archive
 
-Every release publishes one archive of the bundled shims, so a gateway can load
-them from a host other than GitHub. `main` never carries it: `dist/` is build
-output and is in `.gitignore`.
-
-- `v<version>/opendesign.tar.gz` and `v<version>/opendesign.tar.gz.sha256` live
-  on the orphan `dist` branch.
-- The same bytes are attached to the GitHub Release, with the digest in its
-  notes.
-
-The archive's root is `providers/`, the layout the package ships under
-`src/llm_rosetta_shim_opendesign/providers`, so a gateway source declares
-`path: "providers"`:
-
-```jsonc
-{
-  "shims": {
-    "remotes": [
-      {
-        "url": "https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-opendesign@dist/v<version>/opendesign.tar.gz",
-        "path": "providers",
-        "archive": "tar.gz",
-        "sha256": "<digest from v<version>/opendesign.tar.gz.sha256>"
-      }
-    ]
-  }
-}
-```
+Each release that bumps this vendor's version (`[vendors.opendesign]` in `vendors.toml`) publishes `dist/<version>/opendesign.tar.gz` on contrib's `dist` branch and lists it in the manifest with its sha256. The archive root is `providers/`, holding `providers/opendesign/…` and a `providers/shims.yaml` naming the three shims.
 
 ## Live behavior
 
@@ -222,10 +159,4 @@ machine, and the quota normalisation.
 
 ## Development
 
-```bash
-python -m venv .venv
-. .venv/bin/activate
-pip install -e . pytest pyyaml
-pytest tests -q
-python scripts/build_shim_archive.py
-```
+See the repository README. This vendor's tests are under `tests/opendesign/`.
