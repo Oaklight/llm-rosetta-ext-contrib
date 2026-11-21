@@ -20,7 +20,7 @@ from llm_rosetta_shim_opendesign.providers.opendesign.quota import (
     PROBES,
     OpenDesignQuota,
 )
-from llm_rosetta.shims.quota_probe import (
+from llm_rosetta.contracts.quota import (
     QuotaProbeError,
 )
 
@@ -28,7 +28,7 @@ from llm_rosetta.shims.quota_probe import (
 # still import on; without it the probe reports "no keyed endpoint" and the
 # module below is inert, so the module is skipped rather than failing.
 try:
-    from llm_rosetta.shims.quota_probe import (  # noqa: F401
+    from llm_rosetta.contracts.quota import (  # noqa: F401
         PROBE_ROLE_API_KEY,
         ProbeRefused,
         probe_credential_role,

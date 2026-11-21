@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from llm_rosetta.shims.quota_probe import (
+from llm_rosetta.contracts.quota import (
     QuotaProbeError,
     QuotaWindow,
     parse_iso,
@@ -42,7 +42,7 @@ from llm_rosetta.shims.quota_probe import (
 #: unsupported, which is the truth on that core.  The dependency floor moves to
 #: the dev that carries the contract; until then this file has to import.
 try:
-    from llm_rosetta.shims.quota_probe import ProbeRefused
+    from llm_rosetta.contracts.quota import ProbeRefused
 
     CONTRACT_AVAILABLE = True
 except ImportError:  # pragma: no cover - taken only on a core older than the contract

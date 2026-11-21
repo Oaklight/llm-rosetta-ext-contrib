@@ -24,7 +24,7 @@ the core contract module the loader documents), no relative or sibling imports.
 Future contract
 ~~~~~~~~~~~~~~~
 
-The current :class:`llm_rosetta.shims.auth_exchange.AuthExchange` serves one
+The current :class:`llm_rosetta.contracts.auth.AuthExchange` serves one
 credential to the gateway, and for this provider that is the runtime key.  A
 later core revision adds ``credential_for(role)`` so a shim can serve more than
 one credential; ``"control"`` will be served from this file, out of the
@@ -55,7 +55,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from llm_rosetta.shims.auth_exchange import (
+from llm_rosetta.contracts.auth import (
     AuthContext,
     AuthExchangeError,
     BaseAuthExchange,

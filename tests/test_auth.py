@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from llm_rosetta.shims.auth_exchange import (
+from llm_rosetta.contracts.auth import (
     AuthContext,
     AuthExchangeError,
     InteractiveSetupRequired,
