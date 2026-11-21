@@ -19,7 +19,7 @@ classifiers = [
 # ``connection.session_id_format`` / ``request_id_format`` and the free-source
 # metadata land in 0.14; an older core ignores them, so the floor is what makes
 # the minted identifiers actually follow OpenCode's layout.
-dependencies = ["llm-rosetta>=0.14.0.dev35"]
+dependencies = ["llm-rosetta>=0.14.0.dev0"]
 
 [project.urls]
 Repository = "https://github.com/Oaklight/llm-rosetta-shim-free"

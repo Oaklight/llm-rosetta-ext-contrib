@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from llm_rosetta.contracts.shim import load_providers_from_dir
+from .providers._core_compat import load_providers_from_dir
 
 __version__ = "0.3.0"
 
