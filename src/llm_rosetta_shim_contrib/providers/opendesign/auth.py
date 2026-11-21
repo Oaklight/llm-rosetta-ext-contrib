@@ -55,23 +55,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-# A core before 0.14.0.dev35 keeps these names elsewhere.  The loader runs
-# this file as a top-level module, so the bridge is inline rather than in
-# providers/_core_compat.py; remove it with that module (0.15.0 at the latest).
-try:
-    from llm_rosetta.contracts.auth import (
-        AuthContext,
-        AuthExchangeError,
-        BaseAuthExchange,
-        InteractiveSetupRequired,
-    )
-except ImportError:  # a core before 0.14.0.dev35
-    from llm_rosetta.shims.auth_exchange import (  # type: ignore[no-redef]
-        AuthContext,
-        AuthExchangeError,
-        BaseAuthExchange,
-        InteractiveSetupRequired,
-    )
+from llm_rosetta.contracts.auth import (
+    AuthContext,
+    AuthExchangeError,
+    BaseAuthExchange,
+    InteractiveSetupRequired,
+)
 
 # ---------------------------------------------------------------------------
 # Protocol constants

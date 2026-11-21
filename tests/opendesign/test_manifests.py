@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-_ROOT = Path(__file__).resolve().parents[1]
-_PROVIDERS = _ROOT / "src" / "llm_rosetta_shim_opendesign" / "providers"
+_ROOT = Path(__file__).resolve().parents[2]
+_PROVIDERS = _ROOT / "src" / "llm_rosetta_shim_contrib" / "providers"
 _VENDOR = _PROVIDERS / "opendesign" / "provider.yaml"
 _LEAVES = {
     "chat_completions": _PROVIDERS

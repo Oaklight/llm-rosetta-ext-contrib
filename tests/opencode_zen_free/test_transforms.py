@@ -12,7 +12,7 @@ from llm_rosetta.api import (
     staging_registry,
 )
 
-from llm_rosetta_shim_contrib import register_shims
+from llm_rosetta_shim_contrib import register_vendor
 from llm_rosetta_shim_contrib.providers.opencode_zen_free.llm import (
     transforms as _TRANSFORMS,
 )
@@ -20,10 +20,10 @@ from llm_rosetta_shim_contrib.providers.opencode_zen_free.llm import (
 
 @pytest.fixture(scope="module", autouse=True)
 def _registered_shims():
-    """Load this package's shims into a clean registry for the whole file."""
+    """Load this vendor into a clean registry for the whole file."""
     saved = snapshot_registry()
     with staging_registry():
-        register_shims()
+        register_vendor("opencode_zen_free")
     yield
     restore_registry(saved)
 

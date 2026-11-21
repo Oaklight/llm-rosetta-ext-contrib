@@ -1,0 +1,61 @@
+# Release metadata for each vendor this repository publishes: the single place
+# a vendor's version, maturity and tags are set.  scripts/build_manifest.py
+# reads it at a release tag and writes one manifest record per vendor whose
+# archive changed (Oaklight/llm-rosetta#1660; the shim manifest v1 spec).
+#
+# It lives here, not in the vendor's provider.yaml, because it describes a
+# release rather than how a shim loads: core's loader refuses an unknown key
+# in a vendor manifest, and a version field inside the archive would change
+# the archive's bytes for every metadata edit.
+#
+# Rules the builder enforces:
+# - every vendor directory under src/llm_rosetta_shim_contrib/providers has a
+#   table here, and every table names a vendor directory;
+# - a vendor whose archive bytes changed since the last published record
+#   needs a new `version`; an unchanged archive keeps its record untouched;
+# - `requires` is the oldest contracts surface and IR the vendor needs
+#   (`llm_rosetta.contracts.SURFACE_VERSION` / `IR_VERSION`).
+#
+# Maturity (README, "Maturity ladder"): `beta` means tests plus one live
+# verification; `since` is the date of that verification, recorded beside the
+# shim.  No vendor has a tools/conformance run yet, so `conformance` is left
+# out and the record says {"date": null, "result": "none"}.
+
+[requires]
+surface = 1
+ir = 1
+
+# Free tier: keyless pools, live-checked 2026-11-13 ("Measured" in each leaf).
+[vendors.kilo_free]
+version = "0.4.0"
+maturity = "beta"
+since = "2026-11-13"
+tags = ["tier:free"]
+
+[vendors.llm7]
+version = "0.4.0"
+maturity = "beta"
+since = "2026-11-13"
+tags = ["tier:free"]
+
+# The lane's client gate was measured live on 2026-10-16 (llm/transforms.py, #884).
+[vendors.opencode_zen_free]
+version = "0.4.0"
+maturity = "beta"
+since = "2026-10-16"
+tags = ["tier:free"]
+
+[vendors.ovhcloud]
+version = "0.4.0"
+maturity = "beta"
+since = "2026-11-13"
+tags = ["tier:free"]
+
+# Open Design Cloud: model access is the Coding Plan subscription; the
+# credential comes from the vendor's device-authorization sign-in (auth.py,
+# core reports auth.kind == "device").  Live check: docs/vendors/opendesign.md.
+[vendors.opendesign]
+version = "0.3.0"
+maturity = "beta"
+since = "2026-11-14"
+tags = ["tier:subscription", "auth:device"]

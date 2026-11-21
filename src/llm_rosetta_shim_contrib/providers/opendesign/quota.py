@@ -29,48 +29,13 @@ from __future__ import annotations
 import math
 from typing import Any
 
-# A core before 0.14.0.dev35 keeps these names elsewhere.  The loader runs
-# this file as a top-level module, so the bridge is inline rather than in
-# providers/_core_compat.py; remove it with that module (0.15.0 at the latest).
-try:
-    from llm_rosetta.contracts.quota import (
-        QuotaProbeError,
-        QuotaWindow,
-        parse_iso,
-        vendor_message,
-    )
-except ImportError:  # a core before 0.14.0.dev35
-    from llm_rosetta.shims.quota_probe import (  # type: ignore[no-redef]
-        QuotaProbeError,
-        QuotaWindow,
-        parse_iso,
-        vendor_message,
-    )
-
-#: Whether the core carries the second-credential contract (``credential_role``
-#: and multi-step ``fetch``).  A core without it would read this probe with the
-#: runtime key, which the control plane answers with 401, so the probe reports
-#: the lane as having no endpoint instead: the panel then says the allowance is
-#: unsupported, which is the truth on that core.  The dependency floor moves to
-#: the dev that carries the contract; until then this file has to import.
-try:
-    from llm_rosetta.contracts.quota import ProbeRefused
-
-    CONTRACT_AVAILABLE = True
-except ImportError:
-    try:  # a core before 0.14.0.dev35 that already carries the contract
-        from llm_rosetta.shims.quota_probe import ProbeRefused  # type: ignore[no-redef]
-
-        CONTRACT_AVAILABLE = True
-    except (
-        ImportError
-    ):  # pragma: no cover - taken only on a core older than the contract
-        CONTRACT_AVAILABLE = False
-
-        class ProbeRefused(Exception):  # type: ignore[no-redef]
-            """Stand-in: nothing raises it when the contract is absent."""
-
-
+from llm_rosetta.contracts.quota import (
+    ProbeRefused,
+    QuotaProbeError,
+    QuotaWindow,
+    parse_iso,
+    vendor_message,
+)
 
 CONTROL_PLANE = "https://amr-api.open-design.ai"
 
@@ -200,7 +165,7 @@ class OpenDesignQuota:
         """
         if "open-design" not in (base_url or ""):
             return None
-        return CONTROL_PLANE if CONTRACT_AVAILABLE else ""
+        return CONTROL_PLANE
 
     def headers(self, key: str) -> dict[str, str]:
         """Authenticate the control-plane read.

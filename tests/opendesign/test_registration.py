@@ -11,7 +11,7 @@ from llm_rosetta.api import (
     staging_registry,
 )
 
-from llm_rosetta_shim_opendesign import register_shims
+from llm_rosetta_shim_contrib import register_vendor
 
 _SHIMS = {
     "opendesign--chat_completions": "chat_completions",
@@ -24,7 +24,7 @@ _SHIMS = {
 def _registered():
     saved = snapshot_registry()
     with staging_registry():  # clean registry, so only the plugin's shims are present
-        register_shims()
+        register_vendor("opendesign")
     yield
     restore_registry(saved)
 

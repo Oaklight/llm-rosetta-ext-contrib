@@ -11,20 +11,15 @@ from pathlib import Path
 
 import pytest
 
-from llm_rosetta_shim_opendesign.providers._core_compat import (
+from llm_rosetta.contracts.auth import (
     AuthContext,
     AuthExchangeError,
     InteractiveSetupRequired,
 )
 
-_ROOT = Path(__file__).resolve().parents[1]
+_ROOT = Path(__file__).resolve().parents[2]
 _AUTH = (
-    _ROOT
-    / "src"
-    / "llm_rosetta_shim_opendesign"
-    / "providers"
-    / "opendesign"
-    / "auth.py"
+    _ROOT / "src" / "llm_rosetta_shim_contrib" / "providers" / "opendesign" / "auth.py"
 )
 
 _RUNTIME = "sk-amr-" + "r" * 32
