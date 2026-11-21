@@ -8,7 +8,7 @@ import inspect
 
 import pytest
 
-from llm_rosetta_shim_free.providers import _core_compat
+from llm_rosetta_shim_contrib.providers import _core_compat
 
 #: The names this package takes from the core, by ``llm_rosetta.contracts`` module.
 CONTRACT_NAMES = {

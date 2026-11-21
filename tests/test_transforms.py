@@ -12,8 +12,8 @@ from llm_rosetta.api import (
     staging_registry,
 )
 
-from llm_rosetta_shim_free import register_shims
-from llm_rosetta_shim_free.providers.opencode_zen_free.llm import (
+from llm_rosetta_shim_contrib import register_shims
+from llm_rosetta_shim_contrib.providers.opencode_zen_free.llm import (
     transforms as _TRANSFORMS,
 )
 

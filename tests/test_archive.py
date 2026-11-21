@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 _SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "build_shim_archive.py"
-_PACKAGE = "llm_rosetta_shim_free"
+_PACKAGE = "llm_rosetta_shim_contrib"
 
 
 def _load_script():

@@ -18,10 +18,10 @@ from llm_rosetta.api import (
     staging_registry,
 )
 
-from llm_rosetta_shim_free import register_shims
+from llm_rosetta_shim_contrib import register_shims
 
 _PROVIDERS = (
-    Path(__file__).resolve().parents[1] / "src" / "llm_rosetta_shim_free" / "providers"
+    Path(__file__).resolve().parents[1] / "src" / "llm_rosetta_shim_contrib" / "providers"
 )
 
 #: Every shim the package ships, with the base URL it must carry.

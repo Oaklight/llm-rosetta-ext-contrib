@@ -21,7 +21,7 @@ from llm_rosetta.api import (
     staging_registry,
 )
 
-from llm_rosetta_shim_free import register_shims
+from llm_rosetta_shim_contrib import register_shims
 
 _REASONING_SHIMS = (
     "llm7--chat_completions",
