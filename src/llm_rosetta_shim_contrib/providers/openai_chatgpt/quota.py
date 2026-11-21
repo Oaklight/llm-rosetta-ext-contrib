@@ -1,11 +1,9 @@
 """The plan lane's allowance probe — the Codex backend's usage endpoint.
 
-The plan route meters the same account windows the Codex backend reports, so
-this is the same probe the ``openai`` vendor ships in its own ``quota.py``.
-It is a copy, not an import: a shim sidecar imports only
-``llm_rosetta.contracts`` (#1657), so each vendor directory stands alone and
-can move out of core without the other.  ``tests/test_shim_sidecar_boundary.py``
-checks that the two copies of the probe stay identical.
+The plan route meters the same account windows the Codex backend reports.
+The probe moved here from core's ``openai`` vendor in llm-rosetta 0.14
+(#1660); no copy remains in core.  It keeps its ``openai_codex`` id, so a
+config that names ``quota.probe: openai_codex`` still resolves.
 
 This shim declares ``in_band: true``, which means the probe is loaded for its
 refusal classifier and never polled — there is no usage endpoint the
