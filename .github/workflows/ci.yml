@@ -99,4 +99,8 @@ jobs:
           git config --global url."https://github.com/".insteadOf "git@github.com:"
           pip install "$CORE"
       - name: Check contrib's shim names against core's
-        run: python scripts/check_core_collisions.py
+        # Temporary allow list (Oaklight/llm-rosetta#1660 S7): the vendors
+        # moving out of core collide until the core PR that removes them
+        # merges.  The check names each entry that stops overlapping; delete
+        # the file and this flag once it is empty.
+        run: python scripts/check_core_collisions.py --allow-file scripts/moving_from_core.txt

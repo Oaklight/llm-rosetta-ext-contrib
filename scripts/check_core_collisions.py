@@ -22,6 +22,10 @@ Usage::
     pip install "llm-rosetta @ git+https://github.com/Oaklight/llm-rosetta.git@master#subdirectory=packages/llm-rosetta"
     python scripts/check_core_collisions.py
     python scripts/check_core_collisions.py --allow opencode   # a planned move, core still has it
+    python scripts/check_core_collisions.py --allow-file scripts/moving_from_core.txt
+
+An allowed vendor that no longer overlaps core is reported on stderr (the
+check still passes), so the allow list shrinks as core drops the vendors.
 """
 
 from __future__ import annotations
@@ -40,6 +44,16 @@ def _load_archives():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def read_allow_file(path: Path) -> list[str]:
+    """Return the vendor names in *path*: one per line, ``#`` starts a comment."""
+    names: list[str] = []
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if line:
+            names.append(line)
+    return names
 
 
 def core_shim_names() -> tuple[str, set[str], set[str]]:
@@ -70,7 +84,18 @@ def main(argv: list[str] | None = None) -> int:
         metavar="VENDOR",
         help="a contrib vendor allowed to overlap core (a move in progress)",
     )
+    parser.add_argument(
+        "--allow-file",
+        type=Path,
+        action="append",
+        default=[],
+        metavar="PATH",
+        help="a file of vendors allowed to overlap core, one per line",
+    )
     args = parser.parse_args(argv)
+    allowed = set(args.allow)
+    for path in args.allow_file:
+        allowed.update(read_allow_file(path))
     archives = _load_archives()
     root = (args.root or archives.repo_root()).resolve()
     vendors = {
@@ -86,8 +111,16 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
     problems: list[str] = []
+    for vendor in sorted(allowed - set(vendors)):
+        problems.append(f"allowed vendor {vendor!r} is not a contrib vendor")
     for vendor, shims in vendors.items():
-        if vendor in args.allow:
+        if vendor in allowed:
+            if vendor not in core_vendors and not set(shims) & core_names:
+                print(
+                    f"note: allowed vendor {vendor!r} no longer overlaps core; "
+                    "remove it from the allow list",
+                    file=sys.stderr,
+                )
             continue
         if vendor in core_vendors:
             problems.append(f"vendor directory {vendor!r} is also a core vendor")
