@@ -7,6 +7,7 @@ vendor added by copying its directory fails here until it is complete.
 from __future__ import annotations
 
 import ast
+import importlib.util
 import os
 import shutil
 import subprocess
@@ -58,6 +59,22 @@ def _leaves(vendor: str) -> list[Path]:
 VENDORS = _source_vendors()
 
 
+def _manifest_builder():
+    """``scripts/build_manifest.py``, which owns the shim-name rule."""
+    if "build_manifest" in sys.modules:
+        return sys.modules["build_manifest"]
+    path = _ROOT / "scripts" / "build_manifest.py"
+    spec = importlib.util.spec_from_file_location("build_manifest", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["build_manifest"] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+manifest_builder = _manifest_builder()
+
+
 def test_the_installed_package_ships_the_source_vendors():
     """A vendor left out of package-data would vanish from the wheel only."""
     assert list(vendor_names()) == VENDORS
@@ -100,18 +117,22 @@ def test_every_leaf_is_named_after_its_vendor(vendor):
     """The vendor directory is the shim prefix the manifest and gateway key on.
 
     The part after ``--`` is usually the format, but not always: a vendor
-    moved from core keeps the name core gave it (``minimax--embedding`` has
-    format ``minimax``, ``zai--rerank`` format ``cohere``, and ``zhipu`` is
+    moved from core keeps the name core gave it (``zai--embedding`` has
+    format ``openai``, ``zai--rerank`` format ``cohere``, and ``zhipu`` is
     the bare vendor key), because a shim name never changes when the vendor
-    moves.  Same rule as core's manifest check: the vendor key, or
-    ``<vendor>--`` followed by anything.
+    moves.  Same rule as core's manifest check: the vendor key,
+    ``<vendor>--<name>`` or ``<vendor>_<lane>--<name>``, and the longest
+    vendor key that matches owns the name.
     """
     leaves = _leaves(vendor)
     assert leaves, vendor
     for leaf in leaves:
         cfg = _load(leaf)
         name = cfg["name"]
-        assert name == vendor or name.startswith(f"{vendor}--"), leaf
+        assert manifest_builder.shim_belongs_to(name, vendor), leaf
+        # Within the package the longest vendor key owns a name, so kilo and
+        # kilo_free (opencode and opencode_zen_free) never claim each other's.
+        assert manifest_builder.shim_owner(name, VENDORS) == vendor, leaf
 
 
 def test_vendors_toml_has_one_table_per_vendor():

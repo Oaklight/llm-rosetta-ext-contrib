@@ -22,7 +22,6 @@ This repository was `llm-rosetta-shim-free` (renamed 2026-11-21; history, issues
 | `nvidia` | `nvidia--chat_completions` | `tier:paid` | beta | NIM hosted endpoints |
 | `siliconflow` | `siliconflow--chat_completions`, `siliconflow--embedding`, `siliconflow--rerank` | `tier:paid`, `region:cn` | beta | |
 | `modelscope` | `modelscope--chat_completions` | `tier:paid`, `region:cn` | beta | |
-| `minimax` | `minimax--chat_completions`, `minimax--messages`, `minimax--embedding` | `tier:paid`, `region:cn` | stable | promotion candidate |
 | `zai` | `zai--chat_completions`, `zai--messages`, `zai--embedding`, `zai--rerank` | `tier:paid` | stable | promotion candidate |
 | `volcengine` | `volcengine--chat_completions`, `volcengine--open_responses`, `volcengine--embedding` | `tier:paid`, `region:cn` | stable | promotion candidate |
 | `zhipu` | `zhipu`, `zhipu--embedding`, `zhipu--rerank` | `tier:paid`, `region:cn` | stable | promotion candidate; mainland region of `zai` |

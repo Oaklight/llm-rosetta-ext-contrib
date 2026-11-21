@@ -99,7 +99,6 @@ def test_tags_and_maturity_come_from_vendors_toml():
     # (Oaklight/llm-rosetta#1660, "Placement"); everything else is beta.
     stable = {v for v, e in vendors.items() if e["versions"][0]["maturity"] == "stable"}
     assert stable == {
-        "minimax",
         "moonshot",
         "qwen",
         "volcengine",
@@ -264,19 +263,19 @@ def test_write_outputs_lays_out_the_dist_tree(tree: Path, tmp_path: Path):
         (
             ("vendors", "llm7", "versions", 0, "shims"),
             ["ovhcloud--chat_completions"],
-            "must be 'llm7' or start with 'llm7--'",
+            "must be 'llm7', 'llm7--<name>' or 'llm7_<lane>--<name>'",
         ),
         (
             # A shared prefix is not the vendor: ``llm7x`` is neither the key
             # nor ``llm7--...``.
             ("vendors", "llm7", "versions", 0, "shims"),
             ["llm7x--chat_completions"],
-            "must be 'llm7' or start with 'llm7--'",
+            "must be 'llm7', 'llm7--<name>' or 'llm7_<lane>--<name>'",
         ),
         (
             ("vendors", "llm7", "versions", 0, "shims"),
             ["ovhcloud"],
-            "must be 'llm7' or start with 'llm7--'",
+            "must be 'llm7', 'llm7--<name>' or 'llm7_<lane>--<name>'",
         ),
         (
             ("vendors", "llm7", "versions", 0, "conformance"),
@@ -430,3 +429,41 @@ def test_a_bare_vendor_key_is_a_shim_name():
     record["shims"] = ["llm7", "llm7--chat_completions"]
     assert builder.validate_manifest(manifest) == []
     assert "zhipu" in manifest["vendors"]["zhipu"]["versions"][0]["shims"]
+
+
+@needs_tomllib
+def test_a_lane_qualified_name_belongs_to_its_vendor():
+    """``<vendor>_<lane>--<name>`` is the vendor's (core's rule: alcf_sophia)."""
+    manifest = _build()[0]
+    manifest["vendors"]["llm7"]["versions"][0]["shims"] = ["llm7_eu--chat_completions"]
+    assert builder.validate_manifest(manifest) == []
+
+
+@needs_tomllib
+def test_the_longest_vendor_key_of_the_manifest_owns_a_name():
+    """kilo and kilo_free are both vendors: kilo may not publish kilo_free's."""
+    manifest = _build()[0]
+    kilo = manifest["vendors"]["kilo"]["versions"][0]
+    kilo["shims"] = ["kilo--chat_completions", "kilo_free--chat_completions"]
+    problems = builder.validate_manifest(manifest)
+    assert problems == [
+        "vendors.kilo.versions[0].shims: 'kilo_free--chat_completions' "
+        "belongs to vendor 'kilo_free' of this manifest"
+    ]
+
+
+@pytest.mark.parametrize(
+    ("name", "owner"),
+    [
+        ("kilo--chat_completions", "kilo"),
+        ("kilo_free--chat_completions", "kilo_free"),
+        ("opencode--messages", "opencode"),
+        ("opencode_zen_free--chat_completions", "opencode_zen_free"),
+        ("zhipu", "zhipu"),
+        ("zhipu--rerank", "zhipu"),
+        ("kilox--chat_completions", None),
+    ],
+)
+def test_shim_owner(name, owner):
+    keys = ["kilo", "kilo_free", "opencode", "opencode_zen_free", "zhipu"]
+    assert builder.shim_owner(name, keys) == owner

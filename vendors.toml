@@ -149,14 +149,10 @@ tags = ["tier:paid", "region:cn"]
 # Model makers' own APIs with a static key: `stable` and eligible for
 # promotion into core (#1660 "Placement"); `since` is the placement decision.
 # zhipu, xai, qwen and moonshot keep their bare chat shim names (`zhipu`,
-# `xai`, `qwen`, `moonshot`): a manifest shim name is the vendor key or
-# starts with `<vendor>--` (the rule core's manifest check adopts in #1660 S7).
-
-[vendors.minimax]
-version = "0.5.0"
-maturity = "stable"
-since = "2026-11-21"
-tags = ["tier:paid", "region:cn"]
+# `xai`, `qwen`, `moonshot`): a manifest shim name is the vendor key,
+# `<vendor>--<name>` or `<vendor>_<lane>--<name>`, owned by the longest vendor
+# key of this manifest it matches (core's manifest rule, #1660 S7).
+# minimax stays in core as the reference vendor of its embeddings format.
 
 # Zhipu AI's mainland platform (open.bigmodel.cn); zai is the international one.
 [vendors.zhipu]

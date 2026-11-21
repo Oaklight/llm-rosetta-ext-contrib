@@ -19,12 +19,6 @@ shims:
     path: kilo_free/llm
   - name: llm7--chat_completions
     path: llm7/llm
-  - name: minimax--embedding
-    path: minimax/embeddings
-  - name: minimax--chat_completions
-    path: minimax/llm/chat_completions
-  - name: minimax--messages
-    path: minimax/llm/messages
   - name: modelscope--chat_completions
     path: modelscope/llm
   - name: moonshot

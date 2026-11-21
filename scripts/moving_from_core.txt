@@ -6,7 +6,6 @@
 antigravity
 groq
 kilo
-minimax
 modelscope
 moonshot
 nvidia

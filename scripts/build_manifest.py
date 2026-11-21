@@ -68,10 +68,40 @@ _HEX64 = re.compile(r"^[0-9a-f]{64}$")
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _TIMESTAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 _PROMOTED = re.compile(r"^core@\d+\.\d+\.\d+")
-#: A shim name is the vendor key itself or ``<vendor>--<name>``: the vendors
-#: moved from core keep bare names (``zhipu``, ``xai``, ``qwen``, ``moonshot``).
-#: Mirrors core's manifest rule (Oaklight/llm-rosetta#1660 S7).
+#: The shape of a shim name: a bare key (``zhipu``) or ``<prefix>--<name>``.
+#: Which vendor may publish it is :func:`shim_belongs_to` / :func:`shim_owner`.
 _SHIM_NAME = re.compile(r"^[a-z0-9_]+(--[a-z0-9_]+)?$")
+
+
+def _key_matches(name: str, key: str) -> bool:
+    """Whether *name* carries vendor *key*'s prefix: the key itself,
+    ``<key>--<name>`` or ``<key>_<lane>--<name>``."""
+    if name == key:
+        return True
+    head, sep, _ = name.partition("--")
+    return bool(sep) and (head == key or head.startswith(f"{key}_"))
+
+
+def shim_belongs_to(name: str, vendor: str) -> bool:
+    """Whether shim *name* may be published under *vendor*, on its own.
+
+    The vendor key itself (the bare chat shims moved from core: ``zhipu``,
+    ``xai``, ``qwen``, ``moonshot``), ``<vendor>--<name>``, or
+    ``<vendor>_<lane>--<name>``.  Mirrors core's
+    ``llm_rosetta.contracts.shim_manifest`` rule (Oaklight/llm-rosetta#1660 S7).
+    """
+    return _key_matches(name, vendor)
+
+
+def shim_owner(name: str, vendors: Any) -> str | None:
+    """Return the vendor of *vendors* that owns shim *name*, or ``None``.
+
+    Within one manifest the longest matching vendor key owns a name, so
+    ``kilo_free--chat_completions`` belongs to ``kilo_free`` even though it
+    also matches ``kilo_<lane>--``; ``kilo`` may not publish it.
+    """
+    matching = [key for key in vendors if _key_matches(name, key)]
+    return max(matching, key=len) if matching else None
 
 
 class ManifestError(RuntimeError):
@@ -273,9 +303,10 @@ def _check_record(vendor: str, index: int, rec: Any) -> list[str]:
         problems.append(
             f"{where}.shims: must be a non-empty list of distinct shim names"
         )
-    elif not all(s == vendor or s.startswith(f"{vendor}--") for s in shims):
+    elif not all(shim_belongs_to(s, vendor) for s in shims):
         problems.append(
-            f"{where}.shims: every name must be {vendor!r} or start with '{vendor}--'"
+            f"{where}.shims: every name must be {vendor!r}, '{vendor}--<name>' "
+            f"or '{vendor}_<lane>--<name>'"
         )
     tags = rec.get("tags")
     if not isinstance(tags, list) or not all(isinstance(t, str) and t for t in tags):
@@ -345,6 +376,16 @@ def validate_manifest(doc: Any) -> list[str]:
             continue
         for index, rec in enumerate(versions):
             problems.extend(_check_record(vendor, index, rec))
+            names = rec.get("shims") if isinstance(rec, dict) else None
+            for name in names if isinstance(names, list) else ():
+                if not isinstance(name, str) or not shim_belongs_to(name, vendor):
+                    continue  # reported by _check_record
+                owner = shim_owner(name, vendors)
+                if owner != vendor:
+                    problems.append(
+                        f"vendors.{vendor}.versions[{index}].shims: {name!r} "
+                        f"belongs to vendor {owner!r} of this manifest"
+                    )
         numbers = [r.get("version") for r in versions if isinstance(r, dict)]
         if all(isinstance(n, str) and _VERSION.match(n) for n in numbers):
             if len(set(numbers)) != len(numbers):
