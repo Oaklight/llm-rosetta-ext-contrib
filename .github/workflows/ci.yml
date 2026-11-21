@@ -63,10 +63,11 @@ jobs:
           fi
           python scripts/build_manifest.py --dry-run "${args[@]}" > manifest.json
           python scripts/build_manifest.py --check manifest.json
-      - name: Validate against core's schema, when core ships one
-        # The manifest schema is planned as
-        # llm_rosetta/contracts/shim_manifest.schema.json (Oaklight/llm-rosetta#1660).
-        # Until core master carries it, this step reports the skip and passes.
+      - name: Validate against core's schema
+        # Core ships the manifest schema as
+        # llm_rosetta/contracts/shim_manifest.schema.json (since
+        # Oaklight/llm-rosetta#1662), and this package's floor is a core that
+        # has it, so a missing schema fails the step rather than skipping it.
         run: |
           set -euo pipefail
           git config --global url."https://github.com/".insteadOf "git@github.com:"
@@ -75,12 +76,9 @@ jobs:
           import json
           from importlib.resources import files
 
-          schema = files("llm_rosetta.contracts").joinpath("shim_manifest.schema.json")
-          if not schema.is_file():
-              print("core ships no shim_manifest.schema.json yet; skipped")
-              raise SystemExit(0)
           import jsonschema
 
+          schema = files("llm_rosetta.contracts").joinpath("shim_manifest.schema.json")
           jsonschema.validate(json.load(open("manifest.json")), json.loads(schema.read_text()))
           print("manifest.json validates against core's schema")
           PY
