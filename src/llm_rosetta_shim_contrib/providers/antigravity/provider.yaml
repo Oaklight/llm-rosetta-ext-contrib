@@ -25,12 +25,13 @@
 #
 # Client tools take the other path.  A tool the API request declares is served
 # to agy as a loopback MCP endpoint named ``llm_rosetta_tools`` in
-# ``session/new``.  agy calls it through its ``call_mcp_tool`` meta-tool; the
-# gateway hands the call to the API client and answers the pending MCP request
-# when the next request carries the result.  Core tests this path against a
-# fake ACP agent, and the profile/hook/MCP mechanics are measured against agy
-# 1.5.13; a full ``agy acp`` tool round trip is not recorded yet, so ``tools``
-# stays out of the default capabilities until it is.
+# ``session/new``.  agy calls it through its ``call_mcp_tool`` meta-tool
+# (1.5.13) or by the direct ``mcp_llm_rosetta_tools_<tool>`` name (1.5.14);
+# the gateway hands the call to the API client and answers the pending MCP
+# request when the next request carries the result.  Core tests this path
+# against a fake ACP agent, and a live ``agy acp`` round trip on 1.5.14
+# (tool call out, client result back, agent reply) is recorded, so ``tools``
+# is in the default capabilities.
 group_label: Google (Antigravity)
 logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/antigravity.svg
 

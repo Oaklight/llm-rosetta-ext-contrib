@@ -26,8 +26,8 @@ Installing `llm-rosetta-shim-contrib` also registers the vendor through its
 
 - Python >= 3.10
 - `llm-rosetta >= 0.14.0.dev35`
-- `agy` on the gateway host (the profile behaviour below was measured with
-  `agy` 1.5.13)
+- `agy` on the gateway host (the profile measures come from `agy` 1.5.13;
+  the live tool round trip from 1.5.14)
 
 ## Sign in
 
@@ -68,21 +68,26 @@ starts a built-in tool is stopped with HTTP 502.
 
 **Client tools** — tools declared by the API request — are different. They are
 served to `agy` as a loopback HTTP MCP endpoint named `llm_rosetta_tools` in
-`session/new`. `agy` calls one through its `call_mcp_tool` meta-tool; the
-gateway hands the call to the API client and answers the pending MCP request
-when the next API request carries the result.
+`session/new`. `agy` 1.5.14 calls one by its direct MCP name
+(`mcp_llm_rosetta_tools_<tool>`); 1.5.13 used the `call_mcp_tool` meta-tool.
+The gateway hands the call to the API client and answers the pending MCP
+request when the next API request carries the result.
 
-The bridge is tested in core against a fake ACP agent, and the profile, hook
-and MCP mechanics are measured against `agy` 1.5.13. A full `agy acp` tool round
-trip is **not** recorded, so the shim keeps `tools` out of its default
-capabilities. Opt in per model when you want to try it:
+The bridge is tested in core against a fake ACP agent and live-verified
+against `agy` 1.5.14: the request's `echo` tool reached the agent, the agent's
+call suspended the turn, the client's result resumed it, and the agent replied
+with that result. Version 1.5.14 names an MCP tool directly
+(`mcp_llm_rosetta_tools_echo`); 1.5.13 routed it through `call_mcp_tool`. The
+gateway's hook allows both shapes for its own server and nothing else, so
+`tools` is on by default. A model that must not receive client tools can
+declare the other capabilities explicitly:
 
 ```jsonc
 {
   "models": {
     "gemini-3.1-pro": {
       "provider": "antigravity",
-      "capabilities": ["text", "vision", "reasoning", "tools"]
+      "capabilities": ["text", "vision", "reasoning"]
     }
   }
 }

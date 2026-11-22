@@ -95,11 +95,12 @@ tags = ["tier:subscription", "auth:oauth"]
 # Drives the local `agy` CLI over ACP; agy holds the Google sign-in, so the
 # gateway sends no credential (keyless).  The strict-profile measures were
 # made against agy 1.5.13 (core commit of 2026-11-19); never configured on the
-# production gateway.  The client-tool MCP bridge has fake-agent tests in core
-# and measured profile/MCP mechanics, but no full `agy acp` tool round trip;
-# `tools` is therefore not in the shim's default capabilities.
+# production gateway.  A live `agy acp` tool round trip on 1.5.14 is recorded
+# (tool call out, client result back, agent reply); 1.5.14 names the MCP tool
+# directly, and the hook covers both that shape and the 1.5.13 meta-tool.
+# `tools` is in the shim's default capabilities.
 [vendors.antigravity]
-version = "0.5.2"
+version = "0.5.3"
 maturity = "beta"
 since = "2026-11-19"
 tags = ["tier:subscription", "auth:cli"]
