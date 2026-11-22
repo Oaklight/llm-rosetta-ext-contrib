@@ -159,6 +159,13 @@ The shim therefore sets `ENABLE_TOOL_SEARCH=false` in `connection.acp_env`.
 Do not override it unless you also change how the built-in guard treats that
 call.
 
+Client tools need a conversation id. The client's result is matched to the
+suspended turn by that id, so a request that declares tools without one is
+refused with `400` rather than losing the call. Declare a session id in a
+header (`x-claude-code-session-id`, `x-opencode-session`, an
+`x-<vendor>-session-id` whose value looks like an id) or in the body
+(`metadata.user_id.session_id` or `prompt_cache_key`).
+
 **Claude Code's own tools** (file read and write, shell, web) are not a
 gateway tool path. The gateway refuses every built-in tool permission request
 it receives and stops a turn at a built-in tool frame. However, Claude Code may
