@@ -166,6 +166,15 @@ header (`x-claude-code-session-id`, `x-opencode-session`, an
 `x-<vendor>-session-id` whose value looks like an id) or in the body
 (`metadata.user_id.session_id` or `prompt_cache_key`).
 
+The declared tool set is a property of the session, not of one turn. The
+adapter fixes its MCP server list when a session opens, so a request whose
+tools differ from that session's — a tool added or removed, a tool disabled,
+or a refreshed schema — closes the session and replays the conversation into
+a fresh one that lists the new set. A tool-result request that also changes
+the tool set does the same: the gateway abandons the suspended call and
+replays the history rather than continuing with the old bridge. Expect such a
+request to cost a full history replay.
+
 **Claude Code's own tools** (file read and write, shell, web) are not a
 gateway tool path. The gateway refuses every built-in tool permission request
 it receives and stops a turn at a built-in tool frame. However, Claude Code may
