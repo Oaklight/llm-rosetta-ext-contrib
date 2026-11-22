@@ -1,3 +1,0 @@
-# Vendor manifest: the defaults every opencode_zen_free shim shares.
-# A leaf inherits every field here and may override any of them.
-connection: {}

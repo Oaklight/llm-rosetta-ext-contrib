@@ -1,0 +1,42 @@
+# Google Antigravity — through the vendor's own CLI, over ACP.
+#
+# The lane does not call Google's Code Assist API.  It runs the local
+# ``agy`` CLI (``agy acp``) and speaks the Agent Client Protocol to it, so
+# the Google sign-in, the access token and the project stay with agy, exactly
+# as they do when agy is used on its own.
+#
+# Why not call Code Assist directly: Google suspends accounts it sees calling
+# Code Assist outside Antigravity's own client.  Driving the vendor's CLI
+# keeps the request inside the client Google expects.
+#
+# The agent's own tools (file read and write, shell, web search, scheduling,
+# sub-agents, workflows) must never run on the gateway host for an API request.
+# agy has no single switch for that, so the gateway starts it in a profile it
+# owns (``agy acp --gemini-dir <data_dir>/acp/<provider>``) and layers four
+# measures (agy 1.5.13): a custom agent with no tools, a PreToolUse hook that
+# permits only the gateway's loopback MCP server, ``toolPermission: strict``
+# with ``permissions.allow: ["mcp(*)"]``, and its own ACP client, which
+# refuses every permission request for a built-in tool and stops a turn at the
+# first built-in tool frame (HTTP 502).  The gateway re-asserts the profile
+# before every turn.  Not measured: tools with lasting or outward effects
+# (schedule, swarm, run_workflow, sub-agents, send_message) were not run; they
+# are blocked by the same layers.  A provider entry that overrides ``acp_argv``
+# gets none of this and can re-enable the tools, at the operator's own risk.
+#
+# Client tools take the other path.  A tool the API request declares is served
+# to agy as a loopback MCP endpoint named ``llm_rosetta_tools`` in
+# ``session/new``.  agy calls it through its ``call_mcp_tool`` meta-tool
+# (1.5.13) or by the direct ``mcp_llm_rosetta_tools_<tool>`` name (1.5.14);
+# the gateway hands the call to the API client and answers the pending MCP
+# request when the next request carries the result.  Core tests this path
+# against a fake ACP agent, and a live ``agy acp`` round trip on 1.5.14
+# (tool call out, client result back, agent reply) is recorded, so ``tools``
+# is in the default capabilities.
+group_label: Google (Antigravity)
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/antigravity.svg
+
+connection:
+  # This lane sends no credential: agy authenticates itself and the gateway
+  # never sees the token.  Declared here because a credential fact belongs to
+  # the vendor manifest, not to a leaf.
+  keyless: true

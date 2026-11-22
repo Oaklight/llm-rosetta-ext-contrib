@@ -1,0 +1,9 @@
+# SiliconFlow — free and paid models on one credential.  The typed catalogue
+# lives on a second host, so ``models_path`` is an absolute URL on each leaf.
+# The vendor's display name and mark (the panel, and the manifest's
+# ``label`` / ``logo``); every leaf inherits them.
+group_label: SiliconFlow
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/siliconcloud.svg
+connection:
+  base_url: https://api.siliconflow.cn/v1
+  api_key_env: SILICONFLOW_API_KEY

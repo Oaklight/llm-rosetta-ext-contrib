@@ -1,0 +1,10 @@
+name: zhipu--rerank
+model_type: rerank
+format: cohere
+
+# Measured against model `rerank`: the Cohere request shape
+# (model/query/documents, top_n, max_tokens_per_doc) and response shape
+# (results[].index/relevance_score, document as a plain string when
+# return_documents is set).  Both optional parameters are honoured.
+connection:
+  default_path: /rerank

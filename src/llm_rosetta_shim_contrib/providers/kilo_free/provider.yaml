@@ -1,0 +1,5 @@
+# Vendor manifest: the defaults every kilo_free shim shares.
+# A leaf inherits every field here and may override any of them.
+group_label: Kilo (Free)
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/kilocode.svg
+connection: {}
