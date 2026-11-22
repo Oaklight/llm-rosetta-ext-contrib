@@ -1,0 +1,643 @@
+{
+  "manifest_version": 1,
+  "source": "contrib",
+  "repo": "https://github.com/Oaklight/llm-rosetta-shim-contrib",
+  "generated_at": "2026-11-22T23:19:43Z",
+  "vendors": {
+    "antigravity": {
+      "versions": [
+        {
+          "version": "0.5.3",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.3/antigravity.tar.gz",
+          "sha256": "9ac6048b13f60a856f01c0a8a2a5f885d0e8409edd760c83dc970e154174d4ee",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "antigravity--acp"
+          ],
+          "tags": [
+            "tier:subscription",
+            "auth:cli"
+          ],
+          "maturity": "beta",
+          "since": "2026-11-19",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "Google (Antigravity)",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/antigravity.svg"
+        }
+      ]
+    },
+    "claude": {
+      "versions": [
+        {
+          "version": "0.2.0",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.2.0/claude.tar.gz",
+          "sha256": "f778f9f2cbd91f680c2cff72b3bb1821cf24d6991d7fa98f55d21ccee9b8e1bf",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "claude--acp"
+          ],
+          "tags": [
+            "tier:subscription",
+            "auth:cli"
+          ],
+          "maturity": "experimental",
+          "since": "2026-11-21",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "Anthropic (Claude)",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/claude.svg"
+        }
+      ]
+    },
+    "groq": {
+      "versions": [
+        {
+          "version": "0.5.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.1/groq.tar.gz",
+          "sha256": "45d1a5a2f7f0db6f064f3de960a6eaa3181dfae08e0887106693eb5433ef24ca",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "groq--chat_completions"
+          ],
+          "tags": [
+            "tier:paid"
+          ],
+          "maturity": "beta",
+          "since": "2026-11-13",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "Groq",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/groq.svg"
+        }
+      ]
+    },
+    "kilo": {
+      "versions": [
+        {
+          "version": "0.5.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.1/kilo.tar.gz",
+          "sha256": "69a8c588c0b728ca59d1a9bf16404e4f907eb2e4d05ca6a894b96ea6828e3b96",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "kilo--chat_completions"
+          ],
+          "tags": [
+            "tier:paid"
+          ],
+          "maturity": "beta",
+          "since": "2026-11-21",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "Kilo",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/kilocode.svg"
+        }
+      ]
+    },
+    "kilo_free": {
+      "versions": [
+        {
+          "version": "0.4.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.4.1/kilo_free.tar.gz",
+          "sha256": "dd59ef0b8c4d67651e2fd07f40905db85fc85326bf2e3fb8c93d70fd0bf76d05",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "kilo_free--chat_completions"
+          ],
+          "tags": [
+            "tier:free"
+          ],
+          "maturity": "beta",
+          "since": "2026-11-13",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "Kilo (Free)",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/kilocode.svg"
+        }
+      ]
+    },
+    "llm7": {
+      "versions": [
+        {
+          "version": "0.4.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.4.1/llm7.tar.gz",
+          "sha256": "27c4f8ad3c14b7913014f14e45fcfc750f44d6aac3796475bb8a1a3352e958bd",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "llm7--chat_completions"
+          ],
+          "tags": [
+            "tier:free"
+          ],
+          "maturity": "beta",
+          "since": "2026-11-13",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "LLM7.io"
+        }
+      ]
+    },
+    "modelscope": {
+      "versions": [
+        {
+          "version": "0.5.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.1/modelscope.tar.gz",
+          "sha256": "84783de5515c31f0db5e05c2629d5e588c577ba76d7e09381d905ed3f2b5221a",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "modelscope--chat_completions"
+          ],
+          "tags": [
+            "tier:paid",
+            "region:cn"
+          ],
+          "maturity": "beta",
+          "since": "2026-11-13",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "ModelScope",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/modelscope.svg"
+        }
+      ]
+    },
+    "moonshot": {
+      "versions": [
+        {
+          "version": "0.5.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.1/moonshot.tar.gz",
+          "sha256": "a43738280192720b2f7f01230a0527c9834474fe25315dd72d1e84e738e37879",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "moonshot"
+          ],
+          "tags": [
+            "tier:paid",
+            "region:cn"
+          ],
+          "maturity": "stable",
+          "since": "2026-11-21",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "Moonshot",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/moonshot.svg"
+        }
+      ]
+    },
+    "nvidia": {
+      "versions": [
+        {
+          "version": "0.5.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.1/nvidia.tar.gz",
+          "sha256": "59af8e97dd01534939b21f4de416301eca345c706e47cf081993a21fb04e462b",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "nvidia--chat_completions"
+          ],
+          "tags": [
+            "tier:paid"
+          ],
+          "maturity": "beta",
+          "since": "2026-11-13",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "NVIDIA",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/nvidia.svg"
+        }
+      ]
+    },
+    "openai_chatgpt": {
+      "versions": [
+        {
+          "version": "0.5.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.1/openai_chatgpt.tar.gz",
+          "sha256": "99bc6924b8dc85c1c2f1023c03e447c21956464d949398d58c964eb7ab071778",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "openai_chatgpt--open_responses"
+          ],
+          "tags": [
+            "tier:subscription",
+            "auth:oauth"
+          ],
+          "maturity": "beta",
+          "since": "2026-11-21",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "OpenAI (ChatGPT plan)",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/openai.svg"
+        }
+      ]
+    },
+    "opencode": {
+      "versions": [
+        {
+          "version": "0.5.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.1/opencode.tar.gz",
+          "sha256": "c07026c4bf9d26cf49150c6f6de7cbc35384f105965bef14043f7980f3747bdd",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "opencode--chat_completions",
+            "opencode--messages",
+            "opencode--open_responses"
+          ],
+          "tags": [
+            "tier:subscription",
+            "tier:paid"
+          ],
+          "maturity": "beta",
+          "since": "2026-10-13",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "OpenCode",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/opencode.svg"
+        }
+      ]
+    },
+    "opencode_zen_free": {
+      "versions": [
+        {
+          "version": "0.4.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.4.1/opencode_zen_free.tar.gz",
+          "sha256": "6d711d36af8170337d0e81ea0fbd2401f0b897224d0e238256a973b38adcc351",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "opencode_zen_free--chat_completions"
+          ],
+          "tags": [
+            "tier:free"
+          ],
+          "maturity": "beta",
+          "since": "2026-10-16",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "OpenCode Zen",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/opencode.svg"
+        }
+      ]
+    },
+    "opendesign": {
+      "versions": [
+        {
+          "version": "0.3.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.3.1/opendesign.tar.gz",
+          "sha256": "1da61ed7c861d470e6d9c86a809e40e72796d77add80bfe84998e0de6d34ef0b",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "opendesign--chat_completions",
+            "opendesign--messages",
+            "opendesign--open_responses"
+          ],
+          "tags": [
+            "tier:subscription",
+            "auth:device"
+          ],
+          "maturity": "beta",
+          "since": "2026-11-14",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "OpenDesign",
+          "logo": "https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-contrib@main/assets/opendesign.svg"
+        }
+      ]
+    },
+    "openrouter": {
+      "versions": [
+        {
+          "version": "0.5.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.1/openrouter.tar.gz",
+          "sha256": "800d112a4906c78b9b8969045d7309cd329bbb835e005cd59c3a89ba6933e054",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "openrouter--chat_completions",
+            "openrouter--messages",
+            "openrouter--open_responses",
+            "openrouter--rerank"
+          ],
+          "tags": [
+            "tier:paid"
+          ],
+          "maturity": "beta",
+          "since": "2026-11-19",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "OpenRouter",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/openrouter.svg"
+        }
+      ]
+    },
+    "ovhcloud": {
+      "versions": [
+        {
+          "version": "0.4.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.4.1/ovhcloud.tar.gz",
+          "sha256": "c86ebad89d47ca08323ca695404f901edc4aece7bd82a2cf1ce40fa8e33c0c9e",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "ovhcloud--chat_completions"
+          ],
+          "tags": [
+            "tier:free"
+          ],
+          "maturity": "beta",
+          "since": "2026-11-13",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "OVHcloud",
+          "logo": "https://cdn.jsdelivr.net/npm/simple-icons@16.38.0/icons/ovh.svg"
+        }
+      ]
+    },
+    "qwen": {
+      "versions": [
+        {
+          "version": "0.5.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.1/qwen.tar.gz",
+          "sha256": "655a0b292e1dd5f02a4eb65f7787c78dd9c344b3b873d722ac6c41bfd1a69f36",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "qwen"
+          ],
+          "tags": [
+            "tier:paid",
+            "region:cn"
+          ],
+          "maturity": "stable",
+          "since": "2026-11-21",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "Qwen",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/qwen.svg"
+        }
+      ]
+    },
+    "siliconflow": {
+      "versions": [
+        {
+          "version": "0.5.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.1/siliconflow.tar.gz",
+          "sha256": "e34afac0e901e8b89ce66edcf98198665c42cbf961a2954c0b8e38882a98631d",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "siliconflow--embedding",
+            "siliconflow--chat_completions",
+            "siliconflow--rerank"
+          ],
+          "tags": [
+            "tier:paid",
+            "region:cn"
+          ],
+          "maturity": "beta",
+          "since": "2026-11-13",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "SiliconFlow",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/siliconcloud.svg"
+        }
+      ]
+    },
+    "volcengine": {
+      "versions": [
+        {
+          "version": "0.5.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.1/volcengine.tar.gz",
+          "sha256": "4f250e1f9068c5e49e713d89ce1d547fdc20e5c469d04467d6ac477f5ddd0518",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "volcengine--embedding",
+            "volcengine--chat_completions",
+            "volcengine--open_responses"
+          ],
+          "tags": [
+            "tier:paid",
+            "region:cn"
+          ],
+          "maturity": "stable",
+          "since": "2026-11-21",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "Volcengine",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/volcengine.svg"
+        }
+      ]
+    },
+    "xai": {
+      "versions": [
+        {
+          "version": "0.5.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.1/xai.tar.gz",
+          "sha256": "c82cf0e62c1d0ba97c40a4bf8232743f5a685ed8db2c63c904a2fa8701c8bb13",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "xai"
+          ],
+          "tags": [
+            "tier:paid"
+          ],
+          "maturity": "stable",
+          "since": "2026-11-21",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "xAI",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/xai.svg"
+        }
+      ]
+    },
+    "zai": {
+      "versions": [
+        {
+          "version": "0.5.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.1/zai.tar.gz",
+          "sha256": "76e84cd64c40c4b1565b0713ff8ba2489cb81b7554e69e53e41237c84540e6ec",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "zai--embedding",
+            "zai--chat_completions",
+            "zai--messages",
+            "zai--rerank"
+          ],
+          "tags": [
+            "tier:paid"
+          ],
+          "maturity": "stable",
+          "since": "2026-11-21",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "Z.ai",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/zhipu.svg"
+        }
+      ]
+    },
+    "zhipu": {
+      "versions": [
+        {
+          "version": "0.5.1",
+          "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
+          "archive": "0.5.1/zhipu.tar.gz",
+          "sha256": "8bf2440093b7f5e3e947237b578f1c56d80823f0605022203373d1f37574ef8b",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "zhipu--embedding",
+            "zhipu",
+            "zhipu--rerank"
+          ],
+          "tags": [
+            "tier:paid",
+            "region:cn"
+          ],
+          "maturity": "stable",
+          "since": "2026-11-21",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "Zhipu",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/zhipu.svg"
+        }
+      ]
+    }
+  }
+}
