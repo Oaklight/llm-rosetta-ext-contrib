@@ -12,9 +12,10 @@ logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/claud
 # client's result resumed it.  ``tools`` is therefore on by default.  A model
 # that must not receive client tools can declare
 # ``capabilities: [text, vision, reasoning]``.
-# Needs a core at 0.14.0.dev35 or newer (#1675); 0.13.0 and earlier ignore
-# the key, leave tool search on, and never call the bridged tools even
-# though this capability says they are available.
+# Needs llm-rosetta 0.14.0.dev35+ (#1675): an earlier 0.14 development core
+# accepts ``connection.acp_env`` and silently drops it, leaves tool search on,
+# and never calls the bridged tools even though this capability says they are
+# available.
 default_capabilities: [text, vision, reasoning, tools]
 
 connection:
