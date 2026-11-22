@@ -105,9 +105,15 @@ def test_tags_and_maturity_come_from_vendors_toml():
         "zai",
         "zhipu",
     }
+    # Experimental is a real state, not a synonym for beta: name the vendors
+    # on it, so a silent downgrade or a promotion fails here.
+    experimental = {
+        v for v, e in vendors.items() if e["versions"][0]["maturity"] == "experimental"
+    }
+    assert experimental == {"claude"}
     assert {
         e["versions"][0]["maturity"] for v, e in vendors.items() if v not in stable
-    } == {"beta"}
+    } == {"beta", "experimental"}
     assert vendors["openai_chatgpt"]["versions"][0]["tags"] == [
         "tier:subscription",
         "auth:oauth",
@@ -481,6 +487,7 @@ EXPECTED_DISPLAY = {
     "kilo": {"label": "Kilo", "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/kilocode.svg"},
     "kilo_free": {"label": "Kilo (Free)", "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/kilocode.svg"},
     "antigravity": {"label": "Google (Antigravity)", "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/antigravity.svg"},
+    "claude": {"label": "Anthropic (Claude)", "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/claude.svg"},
     "zai": {"label": "Z.ai", "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/zhipu.svg"},
     "groq": {"label": "Groq", "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/groq.svg"},
     "ovhcloud": {"label": "OVHcloud", "logo": "https://cdn.jsdelivr.net/npm/simple-icons@16.38.0/icons/ovh.svg"},

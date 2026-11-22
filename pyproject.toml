@@ -30,6 +30,7 @@ Upstream = "https://github.com/Oaklight/llm-rosetta"
 # tests/test_layout.py fails when this table and providers/ disagree.
 [project.entry-points."llm_rosetta.shim_providers"]
 antigravity = "llm_rosetta_shim_contrib.vendors:antigravity"
+claude = "llm_rosetta_shim_contrib.vendors:claude"
 groq = "llm_rosetta_shim_contrib.vendors:groq"
 kilo = "llm_rosetta_shim_contrib.vendors:kilo"
 kilo_free = "llm_rosetta_shim_contrib.vendors:kilo_free"

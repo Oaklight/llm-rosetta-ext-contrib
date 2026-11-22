@@ -1,0 +1,32 @@
+# Anthropic Claude — through the Claude Agent SDK, over ACP.
+#
+# The lane does not call the Anthropic API with a gateway key.  It starts
+# ``@agentclientprotocol/claude-agent-acp``, which runs Claude Code (the
+# Claude Agent SDK's bundled CLI) and speaks ACP to it.  The Claude sign-in
+# stays in the CLI's own store (``~/.claude``), so the gateway never sees a
+# token.
+#
+# A Claude Pro/Max subscription is used after an out-of-band sign-in on the
+# gateway host: ``claude auth login --claudeai``.  ``--console`` signs in for
+# API billing instead.  Do not set ``ANTHROPIC_API_KEY`` in the gateway's
+# environment: Claude Code prefers API billing over a stored subscription when
+# that variable is present.
+#
+# The agent's own tools are not a gateway tool path.  The gateway refuses every
+# built-in tool permission request it sees and stops a turn at a built-in tool
+# frame.  Claude Code may auto-approve some read-only tools without asking, so
+# this lane cannot promise that it never reads a file on the gateway host.
+# Client tools declared by the API request are different: they are served over
+# a loopback MCP endpoint, Claude Code calls them, and the gateway returns the
+# result on the next request.
+#
+# Maturity: experimental.  The adapter is versioned independently and its
+# permission surface is larger than the gateway can see; no live run through
+# this lane is recorded yet.
+group_label: Anthropic (Claude)
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/claude.svg
+
+connection:
+  # The adapter authenticates through the host's Claude CLI login; the gateway
+  # never holds the credential.
+  keyless: true

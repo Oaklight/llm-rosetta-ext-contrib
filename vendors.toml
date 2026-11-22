@@ -95,11 +95,24 @@ tags = ["tier:subscription", "auth:oauth"]
 # Drives the local `agy` CLI over ACP; agy holds the Google sign-in, so the
 # gateway sends no credential (keyless).  The strict-profile measures were
 # made against agy 1.5.13 (core commit of 2026-11-19); never configured on the
-# production gateway.
+# production gateway.  The client-tool MCP bridge has fake-agent tests in core
+# and measured profile/MCP mechanics, but no full `agy acp` tool round trip;
+# `tools` is therefore not in the shim's default capabilities.
 [vendors.antigravity]
-version = "0.5.1"
+version = "0.5.2"
 maturity = "beta"
 since = "2026-11-19"
+tags = ["tier:subscription", "auth:cli"]
+
+# Claude through the Claude Agent SDK's ACP adapter.  The adapter runs Claude
+# Code and reads the host's `claude auth login` store; the gateway sends no
+# credential (keyless).  Experimental: the adapter is versioned independently,
+# its permission surface is larger than the gateway can see, and no live run
+# through this lane is recorded.  `since` is the date the shim was added.
+[vendors.claude]
+version = "0.1.0"
+maturity = "experimental"
+since = "2026-11-21"
 tags = ["tier:subscription", "auth:cli"]
 
 # The paid gateway (the keyless pool is kilo_free).  No dated live record in
