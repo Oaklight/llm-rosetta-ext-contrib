@@ -41,6 +41,16 @@ class TestWhatTheShimDeclares:
             "-y",
             "@agentclientprotocol/claude-agent-acp@0.109.1",
         )
+        assert connection.acp_env == {"ENABLE_TOOL_SEARCH": "false"}
+
+    def test_request_tools_are_on_by_default(self):
+        """A live round trip is recorded, so a model gets the tool bridge."""
+        assert shim().default_capabilities == (
+            "text",
+            "vision",
+            "reasoning",
+            "tools",
+        )
 
     def test_it_declares_no_credential_of_its_own(self):
         """The adapter reads the host's Claude CLI login; the gateway holds none."""
