@@ -112,8 +112,10 @@ tags = ["tier:subscription", "auth:cli"]
 # round trip through a Pro subscription on adapter 0.109.1 / Claude Code
 # 2.1.299 is recorded (tool call out, client result back, agent reply), so
 # `tools` is on by default.  The enterprise profile hit its 5-hour limit; a
-# clean CLAUDE_CONFIG_DIR is recommended.  `since` is the latest dated live
-# record.
+# clean CLAUDE_CONFIG_DIR is recommended.  0.2.0 uses connection.acp_env, so
+# publish it only to gateways running a core that reads that field
+# (llm-rosetta#1675); an older core ignores it and leaves Claude Code's tool
+# search on.  `since` is the latest dated live record.
 [vendors.claude]
 version = "0.2.0"
 maturity = "experimental"

@@ -35,6 +35,10 @@ point.
 - `llm-rosetta >= 0.14.0.dev35` (the manifest records
   `requires: {surface: 1, ir: 1}`)
 - Node.js **22 or newer** and `npx` on the gateway host
+- A core that reads `connection.acp_env` (Oaklight/llm-rosetta#1675). An older
+  core ignores the key, so Claude Code's tool search stays on and the request's
+  bridged tools are not called directly. The core surface level does not rise
+  for an added field, so check the core build rather than `requires.surface`.
 
 The shim pins `@agentclientprotocol/claude-agent-acp@0.109.1`. The package
 bundles the Claude Agent SDK and its native Claude CLI, so a global `claude`
