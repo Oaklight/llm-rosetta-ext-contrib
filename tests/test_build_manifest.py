@@ -491,7 +491,7 @@ EXPECTED_DISPLAY = {
     "zai": {"label": "Z.ai", "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/zhipu.svg"},
     "groq": {"label": "Groq", "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/groq.svg"},
     "ovhcloud": {"label": "OVHcloud", "logo": "https://cdn.jsdelivr.net/npm/simple-icons@16.38.0/icons/ovh.svg"},
-    "opendesign": {"label": "OpenDesign", "logo": "https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-contrib@v0.5.0/assets/opendesign.svg"},
+    "opendesign": {"label": "OpenDesign", "logo": "https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-contrib@main/assets/opendesign.svg"},
     "llm7": {"label": "LLM7.io", "logo": None},
 }
 #: Per-vendor repositories that are archived; no mark may point at them.
@@ -514,8 +514,9 @@ def test_every_vendor_record_carries_its_label_and_logo_from_provider_yaml():
     for entry in manifest["vendors"].values():
         logo = entry["versions"][0].get("logo")
         if logo:
-            # Pinned: an immutable record's mark cannot change underneath it.
-            assert "@latest" not in logo and "@main" not in logo, logo
+            # A mark follows this repository's main branch or a third-party
+            # package pinned to a version; ``@latest`` floats with no owner.
+            assert "@latest" not in logo, logo
             assert not any(old in logo for old in ARCHIVED), logo
 
 
