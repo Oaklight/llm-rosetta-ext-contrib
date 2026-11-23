@@ -277,6 +277,33 @@ def test_the_port_comes_from_the_redirect_of_the_page_the_cli_opens(tmp_path):
         cancel_cli_login(key)
 
 
+BARE_LOOPBACK_CLI = """
+import os, sys
+
+os.spawnv(
+    os.P_WAIT,
+    os.environ["BROWSER"],
+    [os.environ["BROWSER"], "http://127.0.0.1:45110/callback"],
+)
+print("visit https://claude.com/cai/oauth/authorize?code=true")
+sys.stdin.readline()
+sys.exit(0)
+"""
+
+
+def test_a_bare_loopback_page_still_teaches_the_port(tmp_path):
+    script = tmp_path / "bare_cli.py"
+    script.write_text(BARE_LOOPBACK_CLI, encoding="utf-8")
+    key = "test-browser-bare"
+    started = begin_cli_login(key, [sys.executable, str(script)], browser=True)
+    try:
+        assert started["callback_origin"] == "http://127.0.0.1:45110"
+        with pytest.raises(CliLoginError, match="isn't from this sign-in"):
+            complete_cli_login(key, "http://127.0.0.1:1/callback?code=other")
+    finally:
+        cancel_cli_login(key)
+
+
 def test_a_callback_from_another_port_is_refused(tmp_path):
     argv, _ = _browser_cli(tmp_path)
     key = "test-browser-foreign"
