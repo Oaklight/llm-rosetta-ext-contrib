@@ -8,6 +8,7 @@ rejects the pasted value.
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -160,3 +161,93 @@ def test_a_command_that_prints_no_url_fails_fast(tmp_path, monkeypatch):
 def test_a_missing_command_is_an_error_not_a_crash(tmp_path):
     with pytest.raises(CliLoginError, match="could not start"):
         begin_cli_login("missing", [str(tmp_path / "no-such-binary")])
+
+
+BROWSER_CLI = """
+import os, sys, threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+seen = sys.argv[1]
+
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        with open(seen, "w", encoding="utf-8") as handle:
+            handle.write(self.path)
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"ok")
+
+    def log_message(self, *args):
+        pass
+
+
+server = HTTPServer(("127.0.0.1", 0), Handler)
+port = server.server_port
+callback = "http://127.0.0.1:%d/callback?code=good&state=s" % port
+os.spawnv(os.P_WAIT, os.environ["BROWSER"], [os.environ["BROWSER"], callback])
+print("If the browser didn't open, visit: "
+      "https://claude.com/cai/oauth/authorize?code=true")
+print("Paste code here if prompted > ", end="", flush=True)
+server.handle_request()
+sys.exit(0)
+"""
+
+
+def _browser_cli(tmp_path: Path) -> tuple[list[str], Path]:
+    script = tmp_path / "browser_cli.py"
+    script.write_text(BROWSER_CLI, encoding="utf-8")
+    seen = tmp_path / "callback-path.txt"
+    return [sys.executable, str(script), str(seen)], seen
+
+
+def test_the_browser_recorder_reports_the_page_the_cli_would_open(tmp_path):
+    argv, _ = _browser_cli(tmp_path)
+    key = "test-browser-record"
+    try:
+        started = begin_cli_login(key, argv, browser=True)
+    finally:
+        cancel_cli_login(key)
+
+    assert started["authorization_url"] == (
+        "https://claude.com/cai/oauth/authorize?code=true"
+    )
+    assert started["browser_url"].startswith("http://127.0.0.1:")
+    assert "/callback?code=good&state=s" in started["browser_url"]
+
+
+def test_a_pasted_callback_url_is_replayed_on_this_host(tmp_path):
+    argv, seen = _browser_cli(tmp_path)
+    key = "test-browser-replay"
+    started = begin_cli_login(key, argv, browser=True)
+
+    complete_cli_login(key, started["browser_url"])
+
+    assert seen.read_text(encoding="utf-8") == "/callback?code=good&state=s"
+
+
+def test_a_flow_that_finished_on_its_own_is_not_an_error(tmp_path):
+    script = tmp_path / "done.py"
+    script.write_text(
+        "import sys\n"
+        "print('visit https://accounts.example/oauth2/auth?state=x')\n"
+        "sys.exit(0)\n",
+        encoding="utf-8",
+    )
+    key = "test-finished"
+    started = begin_cli_login(key, [sys.executable, str(script)])
+    assert started["authorization_url"]
+
+    time.sleep(0.3)
+    complete_cli_login(key, "good-code")
+
+
+def test_a_callback_from_another_port_is_refused(tmp_path):
+    argv, _ = _browser_cli(tmp_path)
+    key = "test-browser-foreign"
+    begin_cli_login(key, argv, browser=True)
+    try:
+        with pytest.raises(CliLoginError, match="isn't from this sign-in"):
+            complete_cli_login(key, "http://127.0.0.1:1/callback?code=other")
+    finally:
+        cancel_cli_login(key)

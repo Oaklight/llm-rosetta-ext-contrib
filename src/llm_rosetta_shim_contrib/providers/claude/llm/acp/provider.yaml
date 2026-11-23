@@ -30,7 +30,10 @@ connection:
   # directory; the login store lives there, not in the process's ``~/.claude``.
   # Mount the data directory on a volume to keep the login across restarts and
   # image upgrades, and change ``acp.home`` to switch to another saved profile.
-  # ``CLAUDE_CODE_EXECUTABLE`` may name a specific CLI binary.
+  # The admin panel's sign-in drives the CLI this lane runs: the Claude Code
+  # build the adapter installed in ``npm_config_cache``, or ``claude`` on the
+  # gateway's PATH.  ``CLAUDE_CODE_EXECUTABLE`` forces a specific binary for
+  # that sign-in.
   acp_argv: ["npx", "-y", "@agentclientprotocol/claude-agent-acp@0.109.1"]
   # Tool search defers MCP tools behind its own `ToolSearch` call.  That call
   # is a Claude Code built-in, so the gateway's built-in guard ends the turn
