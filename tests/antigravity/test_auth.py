@@ -204,6 +204,16 @@ def test_a_wrapped_install_keeps_its_prefix(exchange_module):
     ]
 
 
+def test_hardening_off_leaves_the_command_own_store(
+    exchange_module, cli: Path, tmp_path
+):
+    """``acp.harden: false`` starts the agent as written, so sign in there too."""
+    ctx = _ctx(cli, home=str(tmp_path / "gateway-home"))
+    ctx.config["acp"] = {"harden": False}
+
+    assert exchange_module._login_argv(ctx) == [str(cli), "acp", "--login"]
+
+
 def test_the_equals_form_of_gemini_dir_is_read_too(exchange_module, cli: Path):
     ctx = _ctx(cli, argv=[str(cli), "acp", "--gemini-dir=/opt/agy-profile"])
 

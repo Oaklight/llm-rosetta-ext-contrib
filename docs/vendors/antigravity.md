@@ -108,7 +108,9 @@ The older top-level `acp_argv` remains an alias. The gateway applies its own
 profile to any command that starts `agy`, including one the entry wrote, so the
 switch keeps `--gemini-dir`, the no-tools agent, the deny-all hook and the
 session gate; the sign-in store is not lost and host tools do not return.
-`acp.harden: false` opts out for a command that must run as written.
+`acp.harden: false` opts out for a command that must run as written. The
+sign-in then also leaves the CLI's default store in place unless the command
+names `--gemini-dir`, so the agent and the sign-in still write one profile.
 
 Inside the published container, put the install under the mounted data
 directory — for example `/config/data/acp/antigravity/install/agy` — and point
