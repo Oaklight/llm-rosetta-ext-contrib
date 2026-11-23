@@ -162,6 +162,23 @@ def test_status_drives_needs_setup_and_the_summary(exchange_module, cli: Path):
     assert exchange.account_id(ctx) == "test@example.com"
 
 
+def test_an_api_billing_subject_keeps_the_method(exchange_module):
+    """The subject still separates an environment key from a helper command."""
+    ctx = AuthContext(provider="claude", config={})
+    summary = exchange_module._summary(
+        ctx,
+        {
+            "loggedIn": True,
+            "authMethod": "api_key_helper",
+            "email": "test@example.com",
+        },
+    )
+
+    assert summary["subject"] == (
+        "test@example.com (Anthropic API billing, api_key_helper)"
+    )
+
+
 def test_begin_returns_the_cli_url_and_no_token(exchange_module, cli: Path):
     started = exchange_module.EXCHANGE.begin_login(_ctx(cli))
 

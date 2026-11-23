@@ -197,7 +197,7 @@ def _summary(ctx: AuthContext, data: dict[str, Any]) -> dict[str, Any]:
         )
     elif method in ("api_key", "api_key_helper"):
         subject = (
-            f"{email} (Anthropic API billing)"
+            f"{email} (Anthropic API billing, {method})"
             if email
             else f"Anthropic API billing ({method})"
         )
