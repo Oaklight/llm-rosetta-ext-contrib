@@ -109,8 +109,11 @@ class AntigravityUsageProbe:
         return None, windows
 
     def describe_error(self, status_code: int, body: Any) -> str:
-        """Name the status of an HTTP read, which this probe never makes."""
-        return f"the usage command failed (HTTP {status_code})"
+        """Name why an HTTP read refused, which this probe never makes."""
+        return (
+            "Antigravity's allowance is read by its own CLI, "
+            f"not an HTTP endpoint (got HTTP {status_code})"
+        )
 
     def inband(self, status_code: int, body: Any) -> None:
         """This lane exposes no in-band quota signal."""
