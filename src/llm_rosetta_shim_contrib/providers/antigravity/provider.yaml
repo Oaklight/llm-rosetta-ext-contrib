@@ -20,8 +20,9 @@
 # first built-in tool frame (HTTP 502).  The gateway re-asserts the profile
 # before every turn.  Not measured: tools with lasting or outward effects
 # (schedule, swarm, run_workflow, sub-agents, send_message) were not run; they
-# are blocked by the same layers.  A provider entry that overrides ``acp_argv``
-# gets none of this and can re-enable the tools, at the operator's own risk.
+# are blocked by the same layers.  A provider entry that names another ``agy``
+# command keeps this profile; ``acp.harden: false`` opts out and can re-enable
+# the tools, at the operator's own risk.
 #
 # Client tools take the other path.  A tool the API request declares is served
 # to agy as a loopback MCP endpoint named ``llm_rosetta_tools`` in

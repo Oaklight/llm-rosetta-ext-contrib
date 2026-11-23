@@ -188,6 +188,22 @@ def test_a_gemini_dir_in_the_command_is_the_sign_in_profile(
     ]
 
 
+def test_a_wrapped_install_keeps_its_prefix(exchange_module):
+    """A wrapper (``npx``, a version shim) signs in through the same wrapper."""
+    ctx = AuthContext(
+        provider="antigravity",
+        config={"acp": {"argv": ["npx", "-y", "antigravity@1.7.0", "acp"]}},
+    )
+
+    assert exchange_module._login_argv(ctx) == [
+        "npx",
+        "-y",
+        "antigravity@1.7.0",
+        "acp",
+        "--login",
+    ]
+
+
 def test_the_equals_form_of_gemini_dir_is_read_too(exchange_module, cli: Path):
     ctx = _ctx(cli, argv=[str(cli), "acp", "--gemini-dir=/opt/agy-profile"])
 

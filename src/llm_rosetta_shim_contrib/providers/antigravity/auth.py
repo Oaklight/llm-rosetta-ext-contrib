@@ -94,12 +94,23 @@ def _gemini_dir(argv: list[str]) -> str | None:
 def _login_argv(ctx: AuthContext) -> list[str]:
     """``agy acp --login`` in the same profile the ACP transport starts.
 
-    A command that already names ``--gemini-dir`` is signed in there: the
-    transport keeps that directory as the profile, so the sign-in must write
-    the same one even on a core that predates the shared home variable.
+    The configured command is kept up to its ``acp`` subcommand, so an install
+    started through a wrapper (``npx``, a version shim) signs in through that
+    same wrapper; flags the entry adds after ``acp`` are left out.  A command
+    that already names ``--gemini-dir`` is signed in there: the transport
+    keeps that directory as the profile, so the sign-in must write the same
+    one even on a core that predates the shared home variable.
     """
-    argv = [_executable(ctx), "acp", "--login"]
-    home = _gemini_dir(_declared_argv(ctx)) or _home(ctx)
+    declared = _declared_argv(ctx)
+    if declared:
+        try:
+            prefix = declared[: declared.index("acp") + 1]
+        except ValueError:
+            prefix = [declared[0], "acp"]
+    else:
+        prefix = [_executable(ctx), "acp"]
+    argv = [*prefix, "--login"]
+    home = _gemini_dir(declared) or _home(ctx)
     if home:
         argv += ["--gemini-dir", home]
     return argv
