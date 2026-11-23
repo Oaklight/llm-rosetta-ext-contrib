@@ -50,6 +50,19 @@ connection:
   # the panel; the exchange refuses rather than guessing.
   acp_argv: ["agy", "acp", "--dangerously-skip-permissions=false"]
 
+# The ACP turn reports only token counts; the account's allowance is on the
+# CLI's own ``/usage`` command.  The gateway runs it with this lane's profile
+# (same sign-in, same Google account) and the probe decodes the JSON.  The
+# command takes the profile through the app-data environment because print
+# mode does not accept ``--gemini-dir``.
+quota:
+  probe: antigravity_usage
+  local:
+    argv: ["{acp_argv0}", "-p", "/usage", "--output-format", "json"]
+    env:
+      ANTIGRAVITY_APP_DATA_DIR: "{acp_home}"
+    timeout: 60
+
 hint_msg:
   en: >-
     Runs the local agy CLI over ACP. Google may suspend an account it sees
