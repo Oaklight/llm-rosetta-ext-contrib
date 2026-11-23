@@ -26,7 +26,8 @@ Installing `llm-rosetta-shim-contrib` also registers the vendor through its
 
 - Python >= 3.10
 - `llm-rosetta >= 0.14.0.dev38` (the first core whose exchanges may be
-  vendor-managed)
+  vendor-managed and whose ACP lanes get a persistent home; see
+  Oaklight/llm-rosetta#1681 and #1683)
 - `agy` on the gateway host (the profile measures come from `agy` 1.5.13;
   the live tool round trip from 1.5.14)
 
@@ -34,11 +35,44 @@ Installing `llm-rosetta-shim-contrib` also registers the vendor through its
 
 Run `agy` once in a terminal on the gateway host and complete the Google
 sign-in, or use the admin panel's **Sign in** button. Both drive the same
-`agy acp --login`; the panel shows the URL and writes the pasted code back.
+`agy acp --login`, and the gateway passes `--gemini-dir <acp_home>`, so the
+login lands in the lane's persistent profile. The panel shows the URL and
+writes the pasted code back.
 
-The shim declares the lane keyless: the gateway never holds the Google token.
-The panel reads the account address and token expiry from the keyring
-(`service=gemini`, `username=antigravity`) and never returns the token itself.
+`acp_home` is the lane's persistent home: `<data_dir>/acp/<provider-name>` by
+default. On a desktop host `agy` stores the token in the system keyring
+(`service=gemini`, `username=antigravity`); the panel reads the account
+address and token expiry from there and never returns the token itself.
+
+On a headless host without a keyring, `agy` falls back to a token file under
+`--gemini-dir`. The file stays in the persistent home, so mounting
+`server.data_dir` on a volume reuses the login after a restart or an image
+upgrade. In this mode the panel cannot read the token store; it records a
+non-secret marker in `<acp_home>/.llm-rosetta-login.json` after the CLI
+reports success and shows the lane as connected. The gateway never holds the
+Google token.
+
+### Switch or share a profile
+
+`acp.home` selects another home; an absolute path is used as written, `~` is
+expanded, and a relative path is taken under the data directory. The same
+setting drives the agent's `--gemini-dir` and the panel's sign-in, so the two
+cannot disagree:
+
+```jsonc
+{
+  "providers": {
+    "antigravity": {
+      "type": "antigravity--acp",
+      "acp": { "home": "/srv/llm-rosetta/gemini-work" }
+    }
+  }
+}
+```
+
+A desktop keyring is one entry for the whole installation, so a keyring-backed
+host shares one Google account across provider entries. A headless host keeps
+one login per home.
 
 ## Configure a provider
 
@@ -60,7 +94,7 @@ The panel reads the account address and token expiry from the keyring
 
 `agy` approves its own tools by default, which would hand the gateway host to
 every client of the gateway. The transport therefore starts `agy` in a
-gateway-owned profile (`--gemini-dir <data_dir>/acp/<provider>`) and re-asserts
+gateway-owned profile (`--gemini-dir <acp_home>`) and re-asserts
 it before every turn:
 
 - a custom agent with no tools;

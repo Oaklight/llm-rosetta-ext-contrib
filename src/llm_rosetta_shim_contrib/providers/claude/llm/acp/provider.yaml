@@ -26,16 +26,20 @@ connection:
   transport: acp
   # Pin the adapter.  It bundles a native Claude CLI through the Claude Agent
   # SDK, so the host needs Node.js 22+ and npx but no global claude install.
-  # A login made with a separately installed `claude` CLI is shared through
-  # ~/.claude.  Set CLAUDE_CONFIG_DIR through a provider's `acp_env` to use a
-  # separate profile, and CLAUDE_CODE_EXECUTABLE to use a specific CLI binary.
+  # The gateway gives every lane its own persistent home under the data
+  # directory; the login store lives there, not in the process's ``~/.claude``.
+  # Mount the data directory on a volume to keep the login across restarts and
+  # image upgrades, and change ``acp.home`` to switch to another saved profile.
+  # ``CLAUDE_CODE_EXECUTABLE`` may name a specific CLI binary.
   acp_argv: ["npx", "-y", "@agentclientprotocol/claude-agent-acp@0.109.1"]
   # Tool search defers MCP tools behind its own `ToolSearch` call.  That call
   # is a Claude Code built-in, so the gateway's built-in guard ends the turn
   # before the client's tool is ever named.  Turning it off makes the MCP
-  # bridge's tools callable directly.
+  # bridge's tools callable directly.  ``{acp_home}`` is the lane's persistent
+  # home; the gateway expands it for both the agent and the admin sign-in.
   acp_env:
     ENABLE_TOOL_SEARCH: "false"
+    CLAUDE_CONFIG_DIR: "{acp_home}/claude"
 
 hint_msg:
   en: >-
@@ -50,9 +54,11 @@ hint_msg:
     may auto-approve read-only tools without asking, so the lane cannot
     guarantee it never reads the host. Client tools declared by the API request
     are bridged over MCP, so tool calls and results travel over ACP; the shim
-    sets ENABLE_TOOL_SEARCH=false so Claude Code calls them directly. Use a
-    clean CLAUDE_CONFIG_DIR through a provider's acp_env for a separate
-    profile. Anthropic's terms may not allow third-party ACP use; use an
+    sets ENABLE_TOOL_SEARCH=false so Claude Code calls them directly. The
+    gateway keeps this lane's login under its data directory
+    ({acp_home}/claude), so mount that directory on a volume to reuse the
+    login after a restart or image upgrade; set acp.home to switch profiles.
+    Anthropic's terms may not allow third-party ACP use; use an
     account you can afford to lose.
   zh: >-
     通过 ACP 运行 Claude Agent SDK 适配器。网关主机需要 Node.js 22+ 与 npx。
@@ -63,6 +69,7 @@ hint_msg:
     在请求权限时会被网关拒绝；但 Claude Code 可能自动批准只读工具而不询问，
     因此本通道无法保证它绝不读取主机文件。API 请求声明的客户端工具通过 MCP 桥接，
     工具调用与结果经 ACP 往返；本 shim 设置 ENABLE_TOOL_SEARCH=false，
-    让 Claude Code 直接调用这些工具。可在提供方的 acp_env 中指定干净的
-    CLAUDE_CONFIG_DIR，以使用独立配置。Anthropic 的条款可能不允许第三方 ACP 用法，
+    让 Claude Code 直接调用这些工具。网关把本通道的登录保存在数据目录
+    ({acp_home}/claude) 下；把数据目录挂载到卷上，重启或升级镜像后仍可复用登录，
+    也可设置 acp.home 切换到其他配置。Anthropic 的条款可能不允许第三方 ACP 用法，
     请只使用可以承受损失的账号。

@@ -9,6 +9,12 @@
 # The account rules are Google's: it may suspend an account it sees used
 # outside Antigravity's own client.  Running agy is the least indirect way to
 # use the plan; it is still a plan that can be lost.  See the provider guide.
+#
+# The gateway gives the lane a persistent ``--gemini-dir`` under its data
+# directory and drives the admin sign-in with the same flag.  On a headless
+# host, where there is no keyring, agy's file-based token fallback lands
+# there; mount the data directory on a volume to keep the login across
+# restarts and image upgrades.  Set ``acp.home`` to use another saved profile.
 name: antigravity--acp
 model_type: llm
 format: acp
@@ -30,7 +36,7 @@ connection:
   transport: acp
   # agy approves its own tools by default, which would hand the gateway host
   # to every client of the gateway.  The transport therefore starts agy in a
-  # gateway-owned profile (it appends ``--gemini-dir <data_dir>/acp/<provider>``,
+  # gateway-owned profile (it appends ``--gemini-dir <acp_home>``,
   # ``--agent gateway-text-only`` and ``--process-per-session`` to this
   # command) and writes the profile before every turn: a no-tools agent, a
   # PreToolUse hook that permits only the gateway's loopback MCP server,
@@ -52,7 +58,10 @@ hint_msg:
     are disabled, and a turn in which agy starts one fails with HTTP 502.
     Client tools declared by the API request are bridged through a loopback
     MCP server, so tool calls and results travel over ACP (live-verified on
-    agy 1.5.14). A custom acp_argv gets none of this and
+    agy 1.5.14). The gateway keeps the login in a persistent profile under
+    its data directory; mount that directory on a volume to reuse the login
+    after a restart or image upgrade, and set acp.home to switch profiles.
+    A custom acp_argv gets none of this and
     re-enables host tools, at your own risk.
   zh: >-
     通过 ACP 驱动本机 agy CLI。Google 可能封禁被判定在 Antigravity 之外使用的账号，
@@ -60,4 +69,6 @@ hint_msg:
     Sign in 按钮）。agy 运行在网关自有的配置目录中，其自带工具（文件、命令行、网页搜索）全部禁用；
     agy 一旦启动自带工具，该轮请求返回 HTTP 502。API 请求声明的客户端工具通过
     回环 MCP 服务器桥接，工具调用与结果经 ACP 往返（已在 agy 1.5.14 上实测）。
+    网关把登录保存在数据目录下的持久配置中；把数据目录挂载到卷上，重启或升级镜像后
+    仍可复用登录，也可设置 acp.home 切换配置。
     自定义 acp_argv 不会获得上述保护，会重新启用主机工具，风险自负。
