@@ -242,6 +242,39 @@ def test_a_flow_that_finished_on_its_own_is_not_an_error(tmp_path):
     complete_cli_login(key, "good-code")
 
 
+AUTHORIZE_CLI = """
+import os, sys
+
+os.spawnv(
+    os.P_WAIT,
+    os.environ["BROWSER"],
+    [
+        os.environ["BROWSER"],
+        "https://claude.com/cai/oauth/authorize?code=true"
+        "&redirect_uri=http%3A%2F%2Flocalhost%3A45109%2Fcallback&state=s",
+    ],
+)
+print("visit https://claude.com/cai/oauth/authorize?code=true")
+sys.stdin.readline()
+sys.exit(0)
+"""
+
+
+def test_the_port_comes_from_the_redirect_of_the_page_the_cli_opens(tmp_path):
+    script = tmp_path / "authorize_cli.py"
+    script.write_text(AUTHORIZE_CLI, encoding="utf-8")
+    key = "test-browser-authorize"
+    started = begin_cli_login(key, [sys.executable, str(script)], browser=True)
+    try:
+        assert started["browser_url"].startswith(
+            "https://claude.com/cai/oauth/authorize"
+        )
+        with pytest.raises(CliLoginError, match="isn't from this sign-in"):
+            complete_cli_login(key, "http://127.0.0.1:1/callback?code=other")
+    finally:
+        cancel_cli_login(key)
+
+
 def test_a_callback_from_another_port_is_refused(tmp_path):
     argv, _ = _browser_cli(tmp_path)
     key = "test-browser-foreign"
