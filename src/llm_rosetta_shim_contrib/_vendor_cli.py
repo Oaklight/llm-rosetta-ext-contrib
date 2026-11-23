@@ -406,7 +406,22 @@ def _read_browser_url(pending: _Pending) -> str:
     callback = _loopback_callback(url)
     if callback is not None:
         pending.callback_port = callback[0]
+    else:
+        pending.callback_port = _redirect_port(url)
     return url
+
+
+def _redirect_port(value: str) -> str:
+    """The loopback port an authorization page sends the browser back to."""
+    try:
+        parsed = urlparse(value)
+        redirect = parse_qs(parsed.query).get("redirect_uri", [""])[0]
+        target = urlparse(redirect)
+        port = target.port
+    except ValueError:
+        return ""
+    host = (target.hostname or "").lower()
+    return str(port) if host in _LOOPBACK_HOSTS and port else ""
 
 
 def _loopback_callback(value: str) -> tuple[str, str] | None:
