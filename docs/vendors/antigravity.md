@@ -25,14 +25,12 @@ Installing `llm-rosetta-shim-contrib` also registers the vendor through its
 ## Requirements
 
 - Python >= 3.10
-- `llm-rosetta >= 0.14.0.dev38` (the first core whose exchanges may be
-  vendor-managed and whose ACP lanes get a persistent home; see
-  Oaklight/llm-rosetta#1681 and #1683)
+- `llm-rosetta >= 0.14.0.dev39` (the first core whose exchanges may be
+  vendor-managed, whose ACP lanes get a persistent home, and which reads
+  `acp.argv` plus the three-state `acp.harden`; see Oaklight/llm-rosetta#1681,
+  #1683 and #1684)
 - `agy` on the gateway host (the profile measures come from `agy` 1.5.13;
   the live tool round trip from 1.5.14)
-- A core built with Oaklight/llm-rosetta#1684. `acp.argv` and the three-state
-  `acp.harden` (by name / force / off) are newer than `0.14.0.dev38`; on that
-  release a custom `acp_argv` runs unhardened.
 
 ## Sign in
 
@@ -127,8 +125,8 @@ the volume, so the next image starts the same binary and finds the same login.
 The admin sign-in runs the same install and, when the command already names
 `--gemini-dir`, writes that directory. Leave `acp.home` unset then, or set it
 to the same path: two different directories are refused rather than split
-between the agent and its sign-in. `acp.argv` needs a core that reads it; on
-`0.14.0.dev38` use the top-level `acp_argv` instead.
+between the agent and its sign-in. `acp.argv` needs a core that reads it;
+this package's `0.14.0.dev39` floor includes that change.
 
 ## Configure a provider
 

@@ -102,6 +102,8 @@ tags = ["tier:subscription", "auth:oauth"]
 # auth exchange behind the admin sign-in button.  0.5.5 reads a `--gemini-dir`
 # already in the configured command, so the sign-in follows the install the
 # operator selected (another agy version) instead of assuming the default one.
+# It also mirrors the core's three-state `acp.harden` (by name / force / off),
+# so a renamed or wrapped install signs in where the agent runs.
 [vendors.antigravity]
 version = "0.5.5"
 maturity = "beta"
