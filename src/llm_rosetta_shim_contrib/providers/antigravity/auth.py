@@ -91,6 +91,18 @@ def _gemini_dir(argv: list[str]) -> str | None:
     return None
 
 
+def _gateway_owned_profile(ctx: AuthContext) -> bool:
+    """Whether the agent will run in the profile ``acp.home`` names.
+
+    The transport owns that profile unless the entry turns hardening off.
+    With ``acp.harden: false`` and no ``--gemini-dir`` in the command, the
+    agent runs on the CLI's own default store; the sign-in must not write a
+    different one.
+    """
+    block = (ctx.config or {}).get("acp")
+    return not (isinstance(block, dict) and block.get("harden") is False)
+
+
 def _login_argv(ctx: AuthContext) -> list[str]:
     """``agy acp --login`` in the same profile the ACP transport starts.
 
@@ -99,7 +111,8 @@ def _login_argv(ctx: AuthContext) -> list[str]:
     same wrapper; flags the entry adds after ``acp`` are left out.  A command
     that already names ``--gemini-dir`` is signed in there: the transport
     keeps that directory as the profile, so the sign-in must write the same
-    one even on a core that predates the shared home variable.
+    one even on a core that predates the shared home variable.  Otherwise the
+    gateway-owned home is used, unless hardening is off.
     """
     declared = _declared_argv(ctx)
     if declared:
@@ -110,7 +123,9 @@ def _login_argv(ctx: AuthContext) -> list[str]:
     else:
         prefix = [_executable(ctx), "acp"]
     argv = [*prefix, "--login"]
-    home = _gemini_dir(declared) or _home(ctx)
+    home = _gemini_dir(declared)
+    if home is None and _gateway_owned_profile(ctx):
+        home = _home(ctx)
     if home:
         argv += ["--gemini-dir", home]
     return argv
