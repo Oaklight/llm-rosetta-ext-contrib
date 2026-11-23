@@ -117,8 +117,9 @@ rather than copying a full profile.
 `acp_env` is layered over the environment the gateway starts the agent with.
 `CLAUDE_CODE_EXECUTABLE` names a specific CLI binary and `CLAUDE_CONFIG_DIR`
 another profile directory; a value in the provider entry wins over one the
-shim declares. The shim itself sets `ENABLE_TOOL_SEARCH=false` (see
-[Tool calls](#tool-calls)).
+shim declares. `LLM_ROSETTA_ACP_HOME` is the exception: it is gateway-owned,
+and `acp.home` is the way to move the profile. The shim itself sets
+`ENABLE_TOOL_SEARCH=false` (see [Tool calls](#tool-calls)).
 
 A Pro/Max plan is subject to Anthropic's usage windows. An enterprise profile
 used during verification answered `You've hit your 5-hour limit`; that is the
