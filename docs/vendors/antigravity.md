@@ -114,6 +114,11 @@ name; set `acp.harden: true` to force the profile on it (a wrapper must pass
 unhardened `agy` command must name `--gemini-dir`, so the agent and the
 sign-in still share one profile.
 
+A command that hides the whole call in a shell string — `["bash", "-lc", "…
+agy acp"]` — has no literal `acp` token for the sign-in to keep, so the panel
+refuses to drive it rather than guessing a command. Use `["<agy>", "acp"]`, or
+run the CLI's own sign-in in that profile.
+
 Inside the published container, put the install under the mounted data
 directory — for example `/config/data/acp/antigravity/install/agy` — and point
 `argv` at it. The image replaces its own filesystem on upgrade; `/config` is
