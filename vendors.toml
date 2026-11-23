@@ -103,11 +103,14 @@ tags = ["tier:subscription", "auth:oauth"]
 # already in the configured command, so the sign-in follows the install the
 # operator selected (another agy version) instead of assuming the default one.
 # It also mirrors the core's three-state `acp.harden` (by name / force / off),
-# so a renamed or wrapped install signs in where the agent runs.
+# so a renamed or wrapped install signs in where the agent runs.  0.5.6 asks
+# the agent for its sign-in state when the keyring cannot be read, and gives
+# secret-tool the session-bus variables a login session sets, so the card names
+# the Google account under a service manager.
 [vendors.antigravity]
-version = "0.5.5"
+version = "0.5.6"
 maturity = "beta"
-since = "2026-11-19"
+since = "2026-11-23"
 tags = ["tier:subscription", "auth:cli"]
 
 # Claude through the Claude Agent SDK's ACP adapter.  The adapter runs Claude
@@ -128,11 +131,14 @@ tags = ["tier:subscription", "auth:cli"]
 # mounted volume instead of downloading it again.  0.2.3 signs in through the
 # Claude Code build the adapter installed in that cache and keeps the sign-in
 # to one browser page: the CLI no longer opens a second tab, and a pasted
-# callback address is replayed on the gateway host.
+# callback address is replayed on the gateway host.  0.2.4 disables Claude
+# Code's built-in tools from the session `_meta`, removes Anthropic billing
+# variables from the agent and sign-in environments, and names the CLI's
+# account email in the Authentication card.
 [vendors.claude]
-version = "0.2.3"
+version = "0.2.4"
 maturity = "experimental"
-since = "2026-11-21"
+since = "2026-11-23"
 tags = ["tier:subscription", "auth:cli"]
 
 # The paid gateway (the keyless pool is kilo_free).  No dated live record in
