@@ -609,13 +609,19 @@ def _cancel_all() -> None:
 atexit.register(_cancel_all)
 
 
-def subprocess_env(overrides: dict[str, str] | None) -> dict[str, str]:
+def subprocess_env(
+    overrides: dict[str, str] | None,
+    unset: tuple[str, ...] = (),
+) -> dict[str, str]:
     """The CLI's environment: the gateway's own plus the provider's switches.
 
     Mirrors the ACP transport's spawn rule, so the CLI signs in to the same
-    profile the agent will use.
+    profile the agent will use.  *unset* names variables the vendor must not
+    inherit, such as an API key that would outrank the stored subscription.
     """
     env = dict(os.environ)
+    for name in unset:
+        env.pop(name, None)
     if overrides:
         env.update({str(k): str(v) for k, v in overrides.items()})
     return env

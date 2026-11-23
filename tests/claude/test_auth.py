@@ -56,6 +56,7 @@ if "login" in args:
         sys.exit(1)
     with open(state, "w", encoding="utf-8") as handle:
         json.dump({"loggedIn": True, "authMethod": "claude.ai",
+                   "email": "test@example.com",
                    "apiProvider": "firstParty",
                    "configDirectory": os.environ.get("CLAUDE_CONFIG_DIR")
                    or "/home/pding/.claude"}, handle)
@@ -117,6 +118,20 @@ def test_the_exchange_is_vendor_managed(exchange_module: ModuleType):
     assert exchange.kind == "vendor-cli"
 
 
+def test_the_gateways_billing_environment_is_not_passed_to_the_cli(
+    exchange_module, cli: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """A gateway ANTHROPIC_API_KEY would switch Claude Code to API billing."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-gateway")
+    monkeypatch.setenv("ANTHROPIC_BASE_URL", "http://gateway.example")
+
+    env = exchange_module._cli_env(_ctx(cli))
+
+    assert "ANTHROPIC_API_KEY" not in env
+    assert "ANTHROPIC_BASE_URL" not in env
+    assert env["CLAUDE_CODE_EXECUTABLE"] == str(cli)
+
+
 def test_status_drives_needs_setup_and_the_summary(exchange_module, cli: Path):
     exchange = exchange_module.EXCHANGE
     ctx = _ctx(cli)
@@ -129,6 +144,7 @@ def test_status_drives_needs_setup_and_the_summary(exchange_module, cli: Path):
             {
                 "loggedIn": True,
                 "authMethod": "claude.ai",
+                "email": "test@example.com",
                 "apiProvider": "firstParty",
                 "configDirectory": "/tmp/claude-profile",
             }
@@ -140,8 +156,10 @@ def test_status_drives_needs_setup_and_the_summary(exchange_module, cli: Path):
     assert exchange.needs_interactive_setup(ctx) is False
     summary = exchange.describe(ctx)
     assert summary is not None
-    assert summary["subject"] == "Claude subscription (claude.ai)"
+    assert summary["subject"] == "test@example.com (Claude subscription)"
+    assert summary["email"] == "test@example.com"
     assert summary["config_directory"] == "/tmp/claude-profile"
+    assert exchange.account_id(ctx) == "test@example.com"
 
 
 def test_begin_returns_the_cli_url_and_no_token(exchange_module, cli: Path):
@@ -161,7 +179,7 @@ def test_complete_accepts_the_code_with_its_state(exchange_module, cli: Path):
 
     summary = exchange.complete_login(ctx, "good-code#state")
 
-    assert summary["subject"] == "Claude subscription (claude.ai)"
+    assert summary["subject"] == "test@example.com (Claude subscription)"
 
 
 def test_a_callback_from_another_port_is_refused(exchange_module, cli: Path):
@@ -211,7 +229,8 @@ def test_complete_passes_the_code_and_verifies_status(exchange_module, cli: Path
 
     summary = exchange.complete_login(ctx, "good-code")
 
-    assert summary["subject"] == "Claude subscription (claude.ai)"
+    assert summary["subject"] == "test@example.com (Claude subscription)"
+    assert summary["email"] == "test@example.com"
     assert exchange.needs_interactive_setup(ctx) is False
 
 
