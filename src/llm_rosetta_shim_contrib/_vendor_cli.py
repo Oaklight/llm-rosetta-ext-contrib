@@ -430,12 +430,26 @@ def _read_browser_url(pending: _Pending) -> str:
         pending.callback_port, target = callback
         pending.callback_path = target.split("?")[0]
     else:
-        redirect = _redirect_target(url)
-        if redirect is not None:
-            pending.callback_port, pending.callback_path = redirect
+        target = _redirect_target(url) or _loopback_origin(url)
+        if target is not None:
+            pending.callback_port, pending.callback_path = target
     if pending.callback_port:
         pending.callback_origin = f"http://127.0.0.1:{pending.callback_port}"
     return url
+
+
+def _loopback_origin(value: str) -> tuple[str, str] | None:
+    """``(port, path)`` when *value* is itself a URL on the loopback."""
+    try:
+        parsed = urlparse(value)
+        port = parsed.port
+    except ValueError:
+        return None
+    if parsed.scheme not in ("http", "https"):
+        return None
+    if (parsed.hostname or "").lower() not in _LOOPBACK_HOSTS or not port:
+        return None
+    return str(port), parsed.path or "/"
 
 
 def _redirect_target(value: str) -> tuple[str, str] | None:
