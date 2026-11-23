@@ -20,11 +20,14 @@ classifiers = [
 # ``vendor_managed``.  Without it a keyless lane that ships an auth.py is
 # treated as if it mints a credential, so the Claude and Antigravity sign-in
 # exchanges would break startup.  0.14.0.dev39 adds ``acp.argv`` and the
-# three-state ``acp.harden`` the Antigravity sign-in mirrors; the floor covers
-# both, and 0.14.0.dev35, the first core with ``llm_rosetta.contracts``, the
+# three-state ``acp.harden`` the Antigravity sign-in mirrors.  0.14.0.dev40
+# adds ``connection.acp_session_meta`` and ``connection.acp_env_unset``,
+# which the Claude lane needs to turn off Claude Code's own tools and keep a
+# gateway API key from outranking the subscription.  The floor covers all of
+# them, and 0.14.0.dev35, the first core with ``llm_rosetta.contracts``, the
 # only core surface this package imports.  The published manifest gates
 # gateways the same way, through ``requires: {surface, ir}``.
-dependencies = ["llm-rosetta>=0.14.0.dev39"]
+dependencies = ["llm-rosetta>=0.14.0.dev40"]
 
 [project.urls]
 Repository = "https://github.com/Oaklight/llm-rosetta-shim-contrib"
