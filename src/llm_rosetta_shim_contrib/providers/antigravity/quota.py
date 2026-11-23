@@ -152,9 +152,18 @@ def _refusal(payload: dict[str, Any]) -> str:
 
 
 def _brief(payload: Any) -> str:
-    """A short, secret-free view of a payload for an error message."""
-    text = repr(payload)
-    return text[:300]
+    """A short, secret-free view of a payload for an error message.
+
+    Only the status and the field names are shown.  The values may include
+    account or token data, so they never enter the message.
+    """
+    if not isinstance(payload, dict):
+        return f"a {type(payload).__name__}"
+    keys = ", ".join(sorted(str(key) for key in payload))[:200]
+    status = payload.get("status")
+    if status is None:
+        return f"keys {keys}"
+    return f"status {status!r}, keys {keys}"
 
 
 PROBES = (AntigravityUsageProbe(),)

@@ -150,8 +150,15 @@ class TestAntigravityUsageProbe:
 
     def test_an_unknown_window_key_still_reports_the_group(self):
         payload = {
-            "groups": [{"name": "Gemini Models", "buckets": [{"window": "monthly"}]}]
+            "groups": [
+                {
+                    "name": "Gemini Models",
+                    "buckets": [{"window": "monthly", "remaining_fraction": 0.5}],
+                }
+            ]
         }
 
-        with pytest.raises(QuotaProbeError):
-            self.probe.parse_local(payload)
+        _, windows = self.probe.parse_local(payload)
+
+        assert [window.name for window in windows] == ["Gemini Models — monthly"]
+        assert windows[0].span_seconds is None
