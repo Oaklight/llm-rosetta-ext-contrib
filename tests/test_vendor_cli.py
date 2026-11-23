@@ -92,6 +92,22 @@ def test_a_refused_code_is_reported_and_redacted(fake_cli):
     assert "<redacted>" in str(raised.value)
 
 
+def test_token_shaped_cli_output_is_redacted():
+    from llm_rosetta_shim_contrib._vendor_cli import _redact
+
+    line = (
+        "access ya29.a0AfH6SMBexample refresh 1//0gExample "
+        "key sk-ant-example12345 google AIzaSyExample0123456789abcdef "
+        "header Bearer eyJhbGciOiJIUzI1NiJ9.payload"
+    )
+
+    redacted = _redact(line, "")
+
+    for secret in ("ya29.", "1//0g", "sk-ant", "AIzaSy", "eyJhbGci"):
+        assert secret not in redacted
+    assert redacted.count("<redacted>") == 5
+
+
 def test_completing_without_a_pending_sign_in_is_an_error():
     with pytest.raises(CliLoginError, match="no sign-in is pending"):
         complete_cli_login("never-started", "code")

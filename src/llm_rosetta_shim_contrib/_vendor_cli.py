@@ -59,6 +59,17 @@ _URL_RE = re.compile(r"https://[^\s\x1b\x07\"'<>]+")
 #: a CLI prints (a header or a documentation link is common).
 _LOGIN_URL_HINTS = ("oauth", "authorize", "accounts.google.com", "claude.com")
 
+#: Token shapes a verbose CLI may print even though the gateway asked for a
+#: URL.  The pasted code is redacted exactly; these catch the vendor's own
+#: echoes.  A false positive on a diagnostic word is harmless.
+_TOKEN_RES = (
+    re.compile(r"\bya29\.[A-Za-z0-9._\-]+"),
+    re.compile(r"\b1//[A-Za-z0-9._\-]+"),
+    re.compile(r"\bsk-[A-Za-z0-9._\-]{8,}"),
+    re.compile(r"\bAIza[0-9A-Za-z._\-]{20,}"),
+    re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=\-]{8,}"),
+)
+
 _LOCK = threading.Lock()
 _PENDING: dict[str, "_Pending"] = {}
 
@@ -282,7 +293,11 @@ def _first_line(text: str) -> str:
 
 
 def _redact(text: str, value: str) -> str:
-    return text.replace(value, "<redacted>") if value else text
+    if value:
+        text = text.replace(value, "<redacted>")
+    for pattern in _TOKEN_RES:
+        text = pattern.sub("<redacted>", text)
+    return text
 
 
 def _terminate(pending: _Pending) -> None:

@@ -51,7 +51,14 @@ upgrade. The published image declares `/config` as a volume and keeps its data
 in `/config/data`, so a volume on `/config` is enough. In this mode the panel
 cannot read the token store; it records a non-secret marker in
 `<acp_home>/.llm-rosetta-login.json` after the CLI reports success and shows
-the lane as connected. The gateway never holds the Google token.
+the lane as connected. The gateway never holds the Google token. On such a
+host `Connected` means "the CLI last reported a successful sign-in", not that
+the token is still valid.
+
+**Sign out** removes the headless marker and, on a desktop host, the `agy`
+keyring entry. It does not revoke the Google grant upstream. Removing the
+marker returns the lane to its setup state, so the next render offers the
+sign-in again.
 
 ### Switch or share a profile
 
