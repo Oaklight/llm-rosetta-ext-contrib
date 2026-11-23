@@ -32,8 +32,8 @@ point.
 ## Requirements
 
 - Python >= 3.10
-- `llm-rosetta >= 0.14.0.dev35` (the manifest records
-  `requires: {surface: 1, ir: 1}`)
+- `llm-rosetta >= 0.14.0.dev38` (the first core whose exchanges may be
+  vendor-managed; the manifest records `requires: {surface: 1, ir: 1}`)
 - Node.js **22 or newer** and `npx` on the gateway host
 - A core that reads `connection.acp_env` (Oaklight/llm-rosetta#1675). An older
   core ignores the key, so Claude Code's tool search stays on and the request's
@@ -59,6 +59,18 @@ claude auth login --console
 ```
 
 The adapter shares the CLI's credential store, so this login covers the lane.
+
+### Sign in from the admin panel
+
+The admin panel drives the same CLI, so the operator does not need a shell on
+the gateway host. Open the provider's credential page and choose **Sign in**;
+the panel shows the URL the CLI printed and accepts the code or callback URL
+the signed-in page gives back.
+
+The panel uses the CLI named by `acp_env.CLAUDE_CODE_EXECUTABLE`, or `claude`
+on the gateway's `PATH`, and the profile named by
+`acp_env.CLAUDE_CONFIG_DIR`. The gateway stores no token: the account shown
+comes from `claude auth status --json`.
 
 ### Use a clean profile
 

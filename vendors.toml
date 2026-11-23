@@ -98,9 +98,10 @@ tags = ["tier:subscription", "auth:oauth"]
 # production gateway.  A live `agy acp` tool round trip on 1.5.14 is recorded
 # (tool call out, client result back, agent reply); 1.5.14 names the MCP tool
 # directly, and the hook covers both that shape and the 1.5.13 meta-tool.
-# `tools` is in the shim's default capabilities.
+# `tools` is in the shim's default capabilities.  0.5.4 adds the vendor-managed
+# auth exchange behind the admin sign-in button.
 [vendors.antigravity]
-version = "0.5.3"
+version = "0.5.4"
 maturity = "beta"
 since = "2026-11-19"
 tags = ["tier:subscription", "auth:cli"]
@@ -115,9 +116,11 @@ tags = ["tier:subscription", "auth:cli"]
 # clean CLAUDE_CONFIG_DIR is recommended.  0.2.0 uses connection.acp_env, so
 # publish it only to gateways running a core that reads that field
 # (llm-rosetta#1675); an older core ignores it and leaves Claude Code's tool
-# search on.  `since` is the latest dated live record.
+# search on.  `since` is the latest dated live record.  0.2.1 adds the
+# vendor-managed auth exchange behind the admin sign-in button, so it needs the
+# core that honours ``vendor_managed`` (llm-rosetta#1681).
 [vendors.claude]
-version = "0.2.0"
+version = "0.2.1"
 maturity = "experimental"
 since = "2026-11-21"
 tags = ["tier:subscription", "auth:cli"]
