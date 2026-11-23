@@ -26,6 +26,18 @@ def shim():
     return loaded
 
 
+def _requires_connection_key(name: str) -> None:
+    """Skip when this core predates a connection field the shim declares.
+
+    CI installs the core from master, so a shim branch can land before the
+    core that reads a new field.  The loader ignores a key it does not know,
+    which keeps the rest of the shim loadable in that window; only the
+    field's own assertion has to wait for the core.
+    """
+    if not hasattr(shim().connection, name):
+        pytest.skip(f"this core predates connection.{name}")
+
+
 class TestWhatTheShimDeclares:
     def test_it_is_a_prompt_lane_on_the_acp_format(self):
         profile = shim()
@@ -55,10 +67,12 @@ class TestWhatTheShimDeclares:
         take, so the shim declares the adapter's own switch rather than
         relying on a permission refusal after the agent already offered them.
         """
+        _requires_connection_key("acp_session_meta")
         assert shim().connection.acp_session_meta == {"disableBuiltInTools": True}
 
     def test_billing_variables_are_kept_out_of_the_lane(self):
         """A gateway ANTHROPIC_API_KEY must not outrank the stored login."""
+        _requires_connection_key("acp_env_unset")
         connection = shim().connection
 
         assert connection.acp_env_unset == CLAUDE_ENV_UNSET
