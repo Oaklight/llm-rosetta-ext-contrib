@@ -46,41 +46,11 @@ class TestWhatTheShimDeclares:
             "CLAUDE_CONFIG_DIR": "{acp_home}/claude",
         }
 
-    def test_the_lane_gets_a_persistent_login_home(self, register, tmp_path):
-        """The agent and the admin sign-in must name the same store."""
-        register("claude")
+    def test_the_profile_is_the_lane_own_home(self):
+        """The shim asks the gateway for this lane's home, not ``~/.claude``."""
+        connection = shim().connection
 
-        from llm_rosetta_gateway.config.providers import build_provider_info
-
-        info = build_provider_info(
-            "acp",
-            {},
-            shim_name=SHIM,
-            config_name="claude",
-            data_dir=str(tmp_path),
-        )
-
-        home = str(tmp_path / "acp" / "claude")
-        assert info.acp_state_dir == home
-        assert info.acp_env["LLM_ROSETTA_ACP_HOME"] == home
-        assert info.acp_env["CLAUDE_CONFIG_DIR"] == f"{home}/claude"
-
-    def test_a_provider_may_switch_to_another_saved_home(self, register, tmp_path):
-        register("claude")
-
-        from llm_rosetta_gateway.config.providers import build_provider_info
-
-        info = build_provider_info(
-            "acp",
-            {"acp": {"home": "saved/claude-pro"}},
-            shim_name=SHIM,
-            config_name="claude",
-            data_dir=str(tmp_path),
-        )
-
-        home = str(tmp_path / "saved" / "claude-pro")
-        assert info.acp_state_dir == home
-        assert info.acp_env["CLAUDE_CONFIG_DIR"] == f"{home}/claude"
+        assert connection.acp_env["CLAUDE_CONFIG_DIR"] == "{acp_home}/claude"
 
     def test_request_tools_are_on_by_default(self):
         """A live round trip is recorded, so a model gets the tool bridge."""

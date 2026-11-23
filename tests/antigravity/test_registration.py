@@ -49,23 +49,9 @@ class TestWhatTheShimDeclares:
         assert connection.keyless is True
         assert not connection.api_key_env
 
-    def test_the_lane_publishes_a_persistent_home(self, register, tmp_path):
-        """The login driver and the agent must share one durable profile."""
-        register("antigravity")
-
-        from llm_rosetta_gateway.config.providers import build_provider_info
-
-        info = build_provider_info(
-            "acp",
-            {},
-            shim_name=SHIM,
-            config_name="antigravity",
-            data_dir=str(tmp_path),
-        )
-
-        home = str(tmp_path / "acp" / "antigravity")
-        assert info.acp_state_dir == home
-        assert info.acp_env["LLM_ROSETTA_ACP_HOME"] == home
+    def test_the_lane_does_not_pin_a_shared_profile(self):
+        """The gateway names a per-lane home; the shim must not fix one."""
+        assert not shim().connection.acp_env
 
     def test_the_vendor_title_names_the_product(self):
         """Antigravity's vendor title names the product, not the directory."""
