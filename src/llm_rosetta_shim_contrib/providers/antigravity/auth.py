@@ -81,10 +81,14 @@ def _declared_argv(ctx: AuthContext) -> list[str]:
     return [str(part) for part in argv]
 
 
-#: Executable names the transport treats as the Antigravity CLI.  A renamed
-#: download needs ``acp.harden: true``; this exchange follows the same rule.
+#: Executable names the transport treats as the Antigravity CLI.  Kept in
+#: sync with ``llm_rosetta_gateway.transport.acp_profile.is_agy``; the gateway
+#: distribution is not a dependency of this package, so the literal cannot be
+#: imported here.
 AGY_NAMES = ("agy", "agy.real", "agy.exe")
 
+#: The profile flags, with the same spellings as
+#: ``llm_rosetta_gateway.transport.acp_profile._GEMINI_FLAGS``.
 _GEMINI_FLAGS = ("--gemini-dir", "--gemini_dir")
 
 
