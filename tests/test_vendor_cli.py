@@ -212,8 +212,8 @@ def test_the_browser_recorder_reports_the_page_the_cli_would_open(tmp_path):
     assert started["authorization_url"] == (
         "https://claude.com/cai/oauth/authorize?code=true"
     )
-    assert started["browser_url"].startswith("http://127.0.0.1:")
-    assert "/callback?code=good&state=s" in started["browser_url"]
+    assert started["callback_origin"].startswith("http://127.0.0.1:")
+    assert "?" not in started["callback_origin"]
 
 
 def test_a_pasted_callback_url_is_replayed_on_this_host(tmp_path):
@@ -221,7 +221,7 @@ def test_a_pasted_callback_url_is_replayed_on_this_host(tmp_path):
     key = "test-browser-replay"
     started = begin_cli_login(key, argv, browser=True)
 
-    complete_cli_login(key, started["browser_url"])
+    complete_cli_login(key, started["callback_origin"] + "/callback?code=good&state=s")
 
     assert seen.read_text(encoding="utf-8") == "/callback?code=good&state=s"
 
@@ -266,11 +266,13 @@ def test_the_port_comes_from_the_redirect_of_the_page_the_cli_opens(tmp_path):
     key = "test-browser-authorize"
     started = begin_cli_login(key, [sys.executable, str(script)], browser=True)
     try:
-        assert started["browser_url"].startswith(
-            "https://claude.com/cai/oauth/authorize"
-        )
+        assert started["callback_origin"] == "http://127.0.0.1:45109"
         with pytest.raises(CliLoginError, match="isn't from this sign-in"):
             complete_cli_login(key, "http://127.0.0.1:1/callback?code=other")
+        with pytest.raises(CliLoginError, match="isn't from this sign-in"):
+            complete_cli_login(key, "http://127.0.0.1:45109/other?code=other")
+        # The refused addresses leave the flow usable for its own code.
+        complete_cli_login(key, "good-code")
     finally:
         cancel_cli_login(key)
 
