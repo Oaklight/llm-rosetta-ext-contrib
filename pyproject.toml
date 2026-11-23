@@ -16,10 +16,14 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "License :: OSI Approved :: MIT License",
 ]
-# 0.14.0.dev35 is the first core with ``llm_rosetta.contracts``, the only core
-# surface this package imports.  The published manifest gates gateways the
-# same way, through ``requires: {surface, ir}``.
-dependencies = ["llm-rosetta>=0.14.0.dev35"]
+# 0.14.0.dev38 is the first core whose AuthExchange can declare
+# ``vendor_managed``.  Without it a keyless lane that ships an auth.py is
+# treated as if it mints a credential, so the Claude and Antigravity sign-in
+# exchanges would break startup.  The floor also covers 0.14.0.dev35, the first
+# core with ``llm_rosetta.contracts``, the only core surface this package
+# imports; the published manifest gates gateways the same way, through
+# ``requires: {surface, ir}``.
+dependencies = ["llm-rosetta>=0.14.0.dev38"]
 
 [project.urls]
 Repository = "https://github.com/Oaklight/llm-rosetta-shim-contrib"

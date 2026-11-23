@@ -40,7 +40,8 @@ connection:
 hint_msg:
   en: >-
     Runs the Claude Agent SDK adapter over ACP. Requires Node.js 22+ and npx on
-    the gateway host. Sign in once with the Claude Code CLI:
+    the gateway host. Sign in once with the Claude Code CLI (or the admin
+    panel's Sign in button):
     `claude auth login --claudeai` for a Pro/Max subscription, or
     `claude auth login --console` for API billing. Do not set
     ANTHROPIC_API_KEY: Claude Code then bills the API instead of the
@@ -55,7 +56,7 @@ hint_msg:
     account you can afford to lose.
   zh: >-
     通过 ACP 运行 Claude Agent SDK 适配器。网关主机需要 Node.js 22+ 与 npx。
-    先用 Claude Code CLI 登录一次：订阅账号使用
+    先用 Claude Code CLI 登录一次（或用管理面板的 Sign in 按钮）：订阅账号使用
     `claude auth login --claudeai`，API 计费使用
     `claude auth login --console`。不要设置 ANTHROPIC_API_KEY，否则 Claude Code
     会改用 API 计费而不是订阅。适配器运行 Claude Code，其自带工具（文件、命令行）

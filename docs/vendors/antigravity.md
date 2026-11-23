@@ -25,15 +25,20 @@ Installing `llm-rosetta-shim-contrib` also registers the vendor through its
 ## Requirements
 
 - Python >= 3.10
-- `llm-rosetta >= 0.14.0.dev35`
+- `llm-rosetta >= 0.14.0.dev38` (the first core whose exchanges may be
+  vendor-managed)
 - `agy` on the gateway host (the profile measures come from `agy` 1.5.13;
   the live tool round trip from 1.5.14)
 
 ## Sign in
 
 Run `agy` once in a terminal on the gateway host and complete the Google
-sign-in. The shim declares the lane keyless: the gateway never holds the
-Google token.
+sign-in, or use the admin panel's **Sign in** button. Both drive the same
+`agy acp --login`; the panel shows the URL and writes the pasted code back.
+
+The shim declares the lane keyless: the gateway never holds the Google token.
+The panel reads the account address and token expiry from the keyring
+(`service=gemini`, `username=antigravity`) and never returns the token itself.
 
 ## Configure a provider
 
