@@ -8,6 +8,8 @@ and the CLI is a small script that prints a URL and waits for a code.
 from __future__ import annotations
 
 import importlib.util
+import json
+import os
 import stat
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -114,6 +116,8 @@ def test_the_status_record_drives_the_summary(exchange_module, monkeypatch):
     ctx = AuthContext(provider="antigravity", config={})
 
     assert exchange.needs_interactive_setup(ctx) is True
+    # Even a keyring lookup failure cannot prove the CLI signed nobody in.
+    assert exchange.setup_state_is_authoritative(ctx) is False
     assert exchange.describe(ctx) is None
     assert exchange.account_id(ctx) is None
 
@@ -130,6 +134,47 @@ def test_the_status_record_drives_the_summary(exchange_module, monkeypatch):
         2026, 11, 22, 22, 54, 34, 220251, tzinfo=timezone(timedelta(hours=-6))
     ).timestamp()
     assert abs(summary["expires_at"] - expected) < 0.001
+
+
+def test_a_keyring_lookup_fills_in_the_session_bus(
+    exchange_module, monkeypatch, tmp_path
+):
+    """``agy`` finds its keyring without a login session; ``secret-tool`` does not.
+
+    A gateway started by a bare shell or a service manager may have neither
+    variable a login session sets.  The lookup must point libsecret at the bus
+    that is still there instead of reporting the account as unreadable.
+    """
+    bus = tmp_path / "bus"
+    bus.write_text("", encoding="utf-8")
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+    monkeypatch.delenv("DBUS_SESSION_BUS_ADDRESS", raising=False)
+    monkeypatch.setattr(exchange_module, "_keyring_available", lambda: True)
+    seen: dict[str, str] = {}
+
+    def fake_run_capture(argv, *, env=None, timeout=15.0):
+        seen.update(env or {})
+        return 0, json.dumps(RECORD), ""
+
+    monkeypatch.setattr(exchange_module, "run_capture", fake_run_capture)
+
+    assert exchange_module._read_account()["id_token_email"] == "person@example.com"
+    assert seen["XDG_RUNTIME_DIR"] == str(tmp_path)
+    assert seen["DBUS_SESSION_BUS_ADDRESS"] == f"unix:path={bus}"
+
+
+def test_a_keyring_lookup_derives_the_per_user_bus(exchange_module, monkeypatch):
+    """Without ``XDG_RUNTIME_DIR`` the standard per-user socket is the fallback."""
+    bus = Path(f"/run/user/{os.getuid()}/bus")
+    if not bus.exists():
+        pytest.skip("no per-user session bus on this host")
+    monkeypatch.delenv("XDG_RUNTIME_DIR", raising=False)
+    monkeypatch.delenv("DBUS_SESSION_BUS_ADDRESS", raising=False)
+
+    env = exchange_module._session_env()
+
+    assert env["XDG_RUNTIME_DIR"] == str(bus.parent)
+    assert env["DBUS_SESSION_BUS_ADDRESS"] == f"unix:path={bus}"
 
 
 def test_begin_returns_the_google_url(exchange_module, cli: Path):
@@ -346,6 +391,8 @@ def test_a_finished_headless_login_is_scoped_to_its_home(
 
     assert exchange.describe(other) is None
     assert exchange.needs_interactive_setup(other) is True
+    # No marker is not proof of a sign-out: a terminal sign-in leaves none.
+    assert exchange.setup_state_is_authoritative(other) is False
 
 
 def test_revoke_clears_the_headless_marker(

@@ -53,6 +53,10 @@ class TestWhatTheShimDeclares:
         """The gateway names a per-lane home; the shim must not fix one."""
         assert not shim().connection.acp_env
 
+    def test_built_in_tools_are_disabled_by_the_profile_not_the_session(self):
+        """``agy`` is hardened on disk, so no request-side switch is needed."""
+        assert shim().connection.acp_session_meta is None
+
     def test_the_vendor_title_names_the_product(self):
         """Antigravity's vendor title names the product, not the directory."""
         assert shim().group_label == "Google (Antigravity)"
