@@ -34,7 +34,7 @@ point.
 ## Requirements
 
 - Python >= 3.10
-- `llm-rosetta >= 0.14.0.dev38` (the first core whose exchanges may be
+- `llm-rosetta >= 0.14.0.dev39` (the first core whose exchanges may be
   vendor-managed; the manifest records `requires: {surface: 1, ir: 1}`)
 - Node.js **22 or newer** and `npx` on the gateway host
 - A core that reads `connection.acp_env` (Oaklight/llm-rosetta#1675). An older
@@ -44,7 +44,7 @@ point.
 - A core with the persistent ACP home (Oaklight/llm-rosetta#1683): it expands
   `{acp_home}` and publishes `LLM_ROSETTA_ACP_HOME`. An older core passes the
   placeholder literally, so the CLI would try to use a directory with braces in
-  its name. The manifest's `>= 0.14.0.dev38` floor includes both changes.
+  its name. The manifest's `>= 0.14.0.dev39` floor includes both changes.
 
 The shim pins `@agentclientprotocol/claude-agent-acp@0.109.1`. The package
 bundles the Claude Agent SDK and its native Claude CLI, so a global `claude`
@@ -142,8 +142,8 @@ and the login store does not move:
 
 The older top-level `acp_argv` still works as an alias. Because the npm cache
 and `CLAUDE_CONFIG_DIR` both live under `acp.home`, a version switch needs no
-new sign-in; keep the home and change only the command. `acp.argv` needs a core
-that reads it; on `0.14.0.dev38` use the top-level `acp_argv` instead.
+new sign-in; keep the home and change only the command. `acp.argv` needs a
+core that reads it; this package's `0.14.0.dev39` floor includes that change.
 
 `acp_env` is layered over the environment the gateway starts the agent with.
 `CLAUDE_CODE_EXECUTABLE` names a specific CLI binary and `CLAUDE_CONFIG_DIR`
