@@ -90,6 +90,8 @@ provider reuses it.
 Because the home lives under `server.data_dir`, mounting that directory on a
 volume keeps the login across a gateway restart and across an image upgrade.
 The next container reads the same credential store and needs no new sign-in.
+The published image declares `/config` as a volume and keeps its data in
+`/config/data`, so a volume on `/config` is enough.
 
 `acp.home` selects a different home. An absolute path is used as written, `~`
 is expanded, and a relative path is taken under the data directory. Two
