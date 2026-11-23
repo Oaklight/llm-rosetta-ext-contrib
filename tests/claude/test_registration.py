@@ -10,6 +10,7 @@ from __future__ import annotations
 import pytest
 
 from llm_rosetta.api import get_shim
+from llm_rosetta_shim_contrib.providers.claude.auth import CLAUDE_ENV_UNSET
 
 SHIM = "claude--acp"
 
@@ -45,6 +46,27 @@ class TestWhatTheShimDeclares:
             "ENABLE_TOOL_SEARCH": "false",
             "CLAUDE_CONFIG_DIR": "{acp_home}/claude",
             "npm_config_cache": "{acp_home}/npm",
+        }
+
+    def test_built_in_tools_are_switched_off_on_the_session(self):
+        """The adapter keeps Claude Code's tools unless the request says no.
+
+        The gateway's tool bridge is the only path a request's tools should
+        take, so the shim declares the adapter's own switch rather than
+        relying on a permission refusal after the agent already offered them.
+        """
+        assert shim().connection.acp_session_meta == {"disableBuiltInTools": True}
+
+    def test_billing_variables_are_kept_out_of_the_lane(self):
+        """A gateway ANTHROPIC_API_KEY must not outrank the stored login."""
+        connection = shim().connection
+
+        assert connection.acp_env_unset == CLAUDE_ENV_UNSET
+        assert set(CLAUDE_ENV_UNSET) == {
+            "ANTHROPIC_API_KEY",
+            "ANTHROPIC_AUTH_TOKEN",
+            "ANTHROPIC_BASE_URL",
+            "ANTHROPIC_MODEL",
         }
 
     def test_the_profile_is_the_lane_own_home(self):

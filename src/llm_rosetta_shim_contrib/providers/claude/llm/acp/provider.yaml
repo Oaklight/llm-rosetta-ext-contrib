@@ -48,6 +48,27 @@ connection:
     # which a container image replaces on every upgrade; on a volume the next
     # image reuses the install instead of downloading it again.
     npm_config_cache: "{acp_home}/npm"
+  # The gateway's own environment may carry Anthropic billing settings (a
+  # deployment usually does).  Claude Code gives them precedence over the
+  # stored subscription, so a lane would silently bill the API or call another
+  # host.  These names are removed from both the agent's environment and the
+  # admin sign-in's environment; the list is mirrored in ``auth.py`` as
+  # ``CLAUDE_ENV_UNSET``.
+  acp_env_unset:
+    - ANTHROPIC_API_KEY
+    - ANTHROPIC_AUTH_TOKEN
+    - ANTHROPIC_BASE_URL
+    - ANTHROPIC_MODEL
+  # This adapter keeps Claude Code's own file, shell and web tools on unless
+  # the request says otherwise, and Claude Code may auto-approve a read-only
+  # tool without asking the client.  ``disableBuiltInTools`` is the adapter's
+  # own switch for ``tools: []``: the agent then offers only the tools the
+  # gateway routes over its loopback MCP server.  It is repeated on
+  # ``session/load`` and ``session/resume`` because the adapter folds the
+  # value into its session fingerprint.  Antigravity needs no such switch: its
+  # ``--gemini-dir`` profile and PreToolUse hook already block built-ins.
+  acp_session_meta:
+    disableBuiltInTools: true
 
 hint_msg:
   en: >-
@@ -55,13 +76,13 @@ hint_msg:
     the gateway host. Sign in once with the Claude Code CLI (or the admin
     panel's Sign in button):
     `claude auth login --claudeai` for a Pro/Max subscription, or
-    `claude auth login --console` for API billing. Do not set
-    ANTHROPIC_API_KEY: Claude Code then bills the API instead of the
-    subscription. The adapter runs Claude Code, whose built-in tools (files,
-    shell) are refused by the gateway when it asks for permission; Claude Code
-    may auto-approve read-only tools without asking, so the lane cannot
-    guarantee it never reads the host. Client tools declared by the API request
-    are bridged over MCP, so tool calls and results travel over ACP; the shim
+    `claude auth login --console` for API billing. The shim removes
+    ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN, ANTHROPIC_BASE_URL and
+    ANTHROPIC_MODEL from the lane's environment, so a gateway process that
+    exports them still uses the stored subscription rather than API billing.
+    The adapter's built-in tools (files, shell) are disabled on
+    this lane, so the model can only use tools the API request declares; those
+    are bridged over MCP and their calls and results travel over ACP. The shim
     sets ENABLE_TOOL_SEARCH=false so Claude Code calls them directly. The
     gateway keeps this lane's login under its data directory
     ({acp_home}/claude), so mount that directory on a volume to reuse the
@@ -72,11 +93,12 @@ hint_msg:
     通过 ACP 运行 Claude Agent SDK 适配器。网关主机需要 Node.js 22+ 与 npx。
     先用 Claude Code CLI 登录一次（或用管理面板的 Sign in 按钮）：订阅账号使用
     `claude auth login --claudeai`，API 计费使用
-    `claude auth login --console`。不要设置 ANTHROPIC_API_KEY，否则 Claude Code
-    会改用 API 计费而不是订阅。适配器运行 Claude Code，其自带工具（文件、命令行）
-    在请求权限时会被网关拒绝；但 Claude Code 可能自动批准只读工具而不询问，
-    因此本通道无法保证它绝不读取主机文件。API 请求声明的客户端工具通过 MCP 桥接，
-    工具调用与结果经 ACP 往返；本 shim 设置 ENABLE_TOOL_SEARCH=false，
+    `claude auth login --console`。本 shim 会从通道环境中移除
+    ANTHROPIC_API_KEY、ANTHROPIC_AUTH_TOKEN、ANTHROPIC_BASE_URL 和
+    ANTHROPIC_MODEL，因此即使网关进程导出了这些变量，仍会使用已保存的订阅而不是
+    API 计费。适配器自带的工具（文件、命令行）已在本通道禁用，
+    模型只能使用 API 请求声明的客户端工具；这些工具通过 MCP 桥接，
+    调用与结果经 ACP 往返；本 shim 设置 ENABLE_TOOL_SEARCH=false，
     让 Claude Code 直接调用这些工具。网关把本通道的登录保存在数据目录
     ({acp_home}/claude) 下；把数据目录挂载到卷上，重启或升级镜像后仍可复用登录，
     也可设置 acp.home 切换到其他配置。Anthropic 的条款可能不允许第三方 ACP 用法，

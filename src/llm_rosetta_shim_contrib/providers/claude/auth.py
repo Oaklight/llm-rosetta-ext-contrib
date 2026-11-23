@@ -53,6 +53,19 @@ STATUS_TTL = 2.0
 _STATUS_LOCK = threading.Lock()
 _STATUS_CACHE: dict[str, tuple[float, dict[str, Any] | None]] = {}
 
+#: Variables the gateway's own environment may carry that outrank the stored
+#: Claude Code login.  ``ANTHROPIC_API_KEY`` switches the CLI to API billing,
+#: and ``ANTHROPIC_BASE_URL``/``ANTHROPIC_MODEL`` point it at another host or
+#: model; either would make the panel's sign-in report a different account
+#: from the one the agent uses.  The shim's ``acp_env_unset`` declares the same
+#: names; ``tests/claude/test_registration.py`` asserts they match.
+CLAUDE_ENV_UNSET: tuple[str, ...] = (
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_AUTH_TOKEN",
+    "ANTHROPIC_BASE_URL",
+    "ANTHROPIC_MODEL",
+)
+
 
 def _acp_env(ctx: AuthContext) -> dict[str, str]:
     """The ``acp_env`` map the provider entry declares, if any."""
@@ -60,6 +73,11 @@ def _acp_env(ctx: AuthContext) -> dict[str, str]:
     if not isinstance(raw, dict):
         return {}
     return {str(k): str(v) for k, v in raw.items()}
+
+
+def _cli_env(ctx: AuthContext) -> dict[str, str]:
+    """The sign-in CLI's environment, matching what the ACP agent receives."""
+    return subprocess_env(_acp_env(ctx), CLAUDE_ENV_UNSET)
 
 
 #: The npx cache the shim gives the adapter holds one directory per install,
@@ -146,7 +164,7 @@ def _status(ctx: AuthContext, *, refresh: bool = False) -> dict[str, Any] | None
     if executable:
         captured = run_capture(
             [executable, "auth", "status", "--json"],
-            env=subprocess_env(_acp_env(ctx)),
+            env=_cli_env(ctx),
         )
         if captured is not None:
             code, stdout, _ = captured
@@ -167,19 +185,37 @@ def _signed_in(data: dict[str, Any] | None) -> bool:
 
 
 def _summary(ctx: AuthContext, data: dict[str, Any]) -> dict[str, Any]:
-    """What the panel may show: method and profile, never a token."""
+    """What the panel may show: account, method and profile, never a token."""
     method = str(data.get("authMethod") or "")
+    email = data.get("email")
+    email = email if isinstance(email, str) and email else ""
     if method == "claude.ai":
-        subject = "Claude subscription (claude.ai)"
+        subject = (
+            f"{email} (Claude subscription)"
+            if email
+            else "Claude subscription (claude.ai)"
+        )
     elif method in ("api_key", "api_key_helper"):
-        subject = f"Anthropic API billing ({method})"
+        subject = (
+            f"{email} (Anthropic API billing)"
+            if email
+            else f"Anthropic API billing ({method})"
+        )
     else:
-        subject = f"Claude Code ({method or 'signed in'})"
+        subject = (
+            f"{email} (Claude Code)"
+            if email
+            else f"Claude Code ({method or 'signed in'})"
+        )
     summary: dict[str, Any] = {
         "connected": True,
         "subject": subject,
         "auth_method": method,
     }
+    if email:
+        # The account an operator recognizes.  It is not a credential; the
+        # CLI reports it for exactly this purpose.
+        summary["email"] = email
     provider = data.get("apiProvider")
     if isinstance(provider, str) and provider:
         summary["api_provider"] = provider
@@ -207,8 +243,15 @@ class ClaudeCliExchange(BaseAuthExchange):
         )
 
     def account_id(self, ctx: AuthContext) -> str | None:
-        """Return ``None``: the CLI exposes no stable account identifier."""
-        return None
+        """The signed-in address, so two entries name different accounts.
+
+        The CLI's status is the only source: the gateway holds no token and
+        the adapter's store is opaque.  A missing address stays ``None``
+        rather than guessing from the profile path.
+        """
+        data = _status(ctx) or {}
+        email = data.get("email")
+        return email if isinstance(email, str) and email else None
 
     def describe(self, ctx: AuthContext) -> dict[str, Any] | None:
         """Report who is signed in, from the CLI's own status."""
@@ -231,7 +274,7 @@ class ClaudeCliExchange(BaseAuthExchange):
             return begin_cli_login(
                 ctx.provider,
                 [executable, "auth", "login", "--claudeai"],
-                env=subprocess_env(_acp_env(ctx)),
+                env=_cli_env(ctx),
                 paste_label=(
                     "Paste the code the Claude page shows, or the full callback URL"
                 ),
@@ -260,7 +303,7 @@ class ClaudeCliExchange(BaseAuthExchange):
         executable = _executable(ctx)
         captured = run_capture(
             [executable, "auth", "logout"],
-            env=subprocess_env(_acp_env(ctx)),
+            env=_cli_env(ctx),
         )
         if captured is None:
             raise AuthExchangeError("the Claude CLI could not be run to sign out")
