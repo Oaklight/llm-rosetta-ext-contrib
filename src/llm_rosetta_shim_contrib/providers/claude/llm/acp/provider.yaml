@@ -40,6 +40,11 @@ connection:
   acp_env:
     ENABLE_TOOL_SEARCH: "false"
     CLAUDE_CONFIG_DIR: "{acp_home}/claude"
+    # Keep the adapter package (and the Claude CLI it bundles) in the lane's
+    # persistent home.  ``npx`` otherwise caches under the process's HOME,
+    # which a container image replaces on every upgrade; on a volume the next
+    # image reuses the install instead of downloading it again.
+    npm_config_cache: "{acp_home}/npm"
 
 hint_msg:
   en: >-

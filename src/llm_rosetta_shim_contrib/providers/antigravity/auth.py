@@ -64,10 +64,42 @@ def _home(ctx: AuthContext) -> str:
     return _acp_env(ctx).get("LLM_ROSETTA_ACP_HOME", "")
 
 
+def _declared_argv(ctx: AuthContext) -> list[str]:
+    """The agent command the ACP transport will start, when the entry sets one.
+
+    ``acp.argv`` is the current spelling; ``acp_argv`` is its older alias.
+    Both name an install — another version is another path — while the profile
+    stays in ``acp.home``.
+    """
+    config = ctx.config or {}
+    block = config.get("acp")
+    argv = block.get("argv") if isinstance(block, dict) else None
+    if not isinstance(argv, (list, tuple)) or not argv:
+        argv = config.get("acp_argv")
+    if not isinstance(argv, (list, tuple)) or not argv:
+        return []
+    return [str(part) for part in argv]
+
+
+def _gemini_dir(argv: list[str]) -> str | None:
+    """The ``--gemini-dir`` an agent command already names, if any."""
+    for index, arg in enumerate(argv):
+        if arg == "--gemini-dir" and index + 1 < len(argv):
+            return argv[index + 1]
+        if arg.startswith("--gemini-dir="):
+            return arg.split("=", 1)[1]
+    return None
+
+
 def _login_argv(ctx: AuthContext) -> list[str]:
-    """``agy acp --login`` in the same profile the ACP transport starts."""
+    """``agy acp --login`` in the same profile the ACP transport starts.
+
+    A command that already names ``--gemini-dir`` is signed in there: the
+    transport keeps that directory as the profile, so the sign-in must write
+    the same one even on a core that predates the shared home variable.
+    """
     argv = [_executable(ctx), "acp", "--login"]
-    home = _home(ctx)
+    home = _gemini_dir(_declared_argv(ctx)) or _home(ctx)
     if home:
         argv += ["--gemini-dir", home]
     return argv
@@ -134,18 +166,16 @@ def _clear_marker(ctx: AuthContext) -> bool:
 
 def _executable(ctx: AuthContext) -> str:
     """The ``agy`` binary the provider starts, or a clear error."""
-    argv = (ctx.config or {}).get("acp_argv")
-    if isinstance(argv, (list, tuple)) and argv:
-        first = str(argv[0])
-        if first:
-            return first
+    argv = _declared_argv(ctx)
+    if argv and argv[0]:
+        return argv[0]
     found = shutil.which("agy")
     if found:
         return found
     raise AuthExchangeError(
         "the `agy` CLI is not on the gateway's PATH, so the admin sign-in "
         "cannot drive it; install Antigravity CLI or set this provider's "
-        "acp_argv to its path"
+        "acp.argv (or acp_argv) to its path"
     )
 
 
