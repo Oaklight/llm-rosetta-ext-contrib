@@ -40,11 +40,18 @@ if "status" in args:
     sys.exit(0)
 
 if "login" in args:
+    browser = os.environ.get("BROWSER")
+    if browser:
+        import subprocess
+        subprocess.run(
+            [browser, "http://127.0.0.1:45109/callback?code=good&state=s"],
+            check=False,
+        )
     print("If the browser didn't open, visit: "
           "https://claude.com/cai/oauth/authorize?code=true&state=x")
     print("Paste code here if prompted > ", end="", flush=True)
     line = sys.stdin.readline().strip()
-    if line != "good-code":
+    if line not in ("good-code", "good-code#state"):
         print("the code was refused: " + line)
         sys.exit(1)
     with open(state, "w", encoding="utf-8") as handle:
@@ -141,9 +148,62 @@ def test_begin_returns_the_cli_url_and_no_token(exchange_module, cli: Path):
     started = exchange_module.EXCHANGE.begin_login(_ctx(cli))
 
     assert started["authorization_url"].startswith("https://claude.com/cai/oauth/")
+    assert started["browser_url"] == (
+        "http://127.0.0.1:45109/callback?code=good&state=s"
+    )
     assert started["paste_label"]
     assert "access_token" not in started
     assert "refresh_token" not in started
+
+
+def test_complete_accepts_the_code_with_its_state(exchange_module, cli: Path):
+    exchange = exchange_module.EXCHANGE
+    ctx = _ctx(cli)
+    exchange.begin_login(ctx)
+
+    summary = exchange.complete_login(ctx, "good-code#state")
+
+    assert summary["subject"] == "Claude subscription (claude.ai)"
+
+
+def test_a_callback_from_another_port_is_refused(exchange_module, cli: Path):
+    exchange = exchange_module.EXCHANGE
+    ctx = _ctx(cli)
+    exchange.begin_login(ctx)
+
+    with pytest.raises(AuthExchangeError, match="isn't from this sign-in"):
+        exchange.complete_login(ctx, "http://127.0.0.1:1/callback?code=x")
+
+
+def test_the_adapters_bundled_cli_is_preferred(
+    exchange_module, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setenv("FAKE_STATE", str(tmp_path / "state.json"))
+    bundled = (
+        tmp_path
+        / "npm"
+        / "_npx"
+        / "abc"
+        / "node_modules"
+        / "@anthropic-ai"
+        / "claude-agent-sdk-linux-x64"
+        / "claude"
+    )
+    bundled.parent.mkdir(parents=True)
+    bundled.write_text(FAKE_CLI, encoding="utf-8")
+    bundled.chmod(0o755)
+    ctx = AuthContext(
+        provider="claude",
+        config={
+            "acp_env": {
+                "CLAUDE_CONFIG_DIR": str(tmp_path / "profile"),
+                "npm_config_cache": str(tmp_path / "npm"),
+            }
+        },
+    )
+
+    assert exchange_module._executable(ctx) == str(bundled)
+    assert exchange_module.EXCHANGE.needs_interactive_setup(ctx) is True
 
 
 def test_complete_passes_the_code_and_verifies_status(exchange_module, cli: Path):

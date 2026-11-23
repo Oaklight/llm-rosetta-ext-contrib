@@ -12,16 +12,22 @@ token.  What it implements is the admin sign-in surface — start the CLI,
 return the URL it prints, write the pasted code back, then report the CLI's
 own ``auth status``.  The gateway sees no token and stores no record.
 
-The executable is the one the ACP agent will use when the provider sets
-``CLAUDE_CODE_EXECUTABLE`` in ``acp_env``; otherwise it is ``claude`` from the
-gateway's ``PATH``.  The adapter bundles its own CLI, but the admin sign-in
-needs a CLI binary to drive, so a host that installs only the adapter cannot
-offer this button.
+The executable is the one the ACP agent will use.  The adapter pins a Claude
+Code build and installs it under the lane's ``npm_config_cache``, so that
+bundled binary is preferred: a gateway image needs Node.js and npx, not a
+global ``claude`` install, and the sign-in writes to the store the same build
+reads.  ``CLAUDE_CODE_EXECUTABLE`` in ``acp_env`` overrides it for operators
+who run a different build; otherwise ``claude`` on the gateway's ``PATH`` is
+the last resort.  Before the adapter has been installed there is no bundled
+binary and the lane must already have ``claude`` or an override, or the panel
+reports which one to install.
 """
 
 from __future__ import annotations
 
+import glob
 import json
+import os
 import shutil
 import threading
 import time
@@ -56,18 +62,55 @@ def _acp_env(ctx: AuthContext) -> dict[str, str]:
     return {str(k): str(v) for k, v in raw.items()}
 
 
+#: The npx cache the shim gives the adapter holds one directory per install,
+#: and the SDK publishes its CLI in a platform package there.
+_BUNDLED_CLI_GLOBS = (
+    "_npx/*/node_modules/@anthropic-ai/claude-agent-sdk-*/claude",
+    "_npx/*/node_modules/@anthropic-ai/claude-agent-sdk-*/claude.exe",
+)
+
+
+def _bundled_executable(ctx: AuthContext) -> str:
+    """The Claude Code build the adapter installed in the lane's npm cache.
+
+    The adapter is started with ``npm_config_cache={acp_home}/npm``, so this is
+    the binary that will serve the lane's requests.  Its credential store is
+    the same ``CLAUDE_CONFIG_DIR``.  Empty when the adapter has not run yet.
+    """
+    cache = _acp_env(ctx).get("npm_config_cache")
+    if not cache:
+        return ""
+    newest: tuple[float, str] | None = None
+    for pattern in _BUNDLED_CLI_GLOBS:
+        for path in glob.glob(os.path.join(cache, pattern)):
+            if not os.access(path, os.X_OK):
+                continue
+            try:
+                modified = os.stat(path).st_mtime
+            except OSError:
+                continue
+            if newest is None or modified > newest[0]:
+                newest = (modified, path)
+    return newest[1] if newest else ""
+
+
 def _executable(ctx: AuthContext) -> str:
     """The Claude Code binary to drive, or a clear operator-facing error."""
     custom = _acp_env(ctx).get("CLAUDE_CODE_EXECUTABLE")
     if custom:
         return custom
+    bundled = _bundled_executable(ctx)
+    if bundled:
+        return bundled
     found = shutil.which("claude")
     if found:
         return found
     raise AuthExchangeError(
-        "the Claude Code CLI (`claude`) is not on the gateway's PATH, so the "
-        "admin sign-in cannot drive it; install Claude Code, or set "
-        "CLAUDE_CODE_EXECUTABLE in this provider's acp_env"
+        "no Claude Code CLI is available for the admin sign-in: the adapter "
+        "has not been installed in this lane's npm cache yet, and `claude` is "
+        "not on the gateway's PATH.  Send one request through the lane first, "
+        "or install Claude Code, or set CLAUDE_CODE_EXECUTABLE in this "
+        "provider's acp_env"
     )
 
 
@@ -175,7 +218,14 @@ class ClaudeCliExchange(BaseAuthExchange):
         return _summary(ctx, data or {})
 
     def begin_login(self, ctx: AuthContext) -> dict[str, Any]:
-        """Run ``claude auth login --claudeai`` and return its URL."""
+        """Run ``claude auth login --claudeai`` and return its URL.
+
+        The CLI is given a browser recorder, so it does not open a tab beside
+        the one the admin panel shows: the panel's page is the only one the
+        operator sees, and its paste box is the only way the flow finishes.
+        The recorder also learns the CLI's loopback port, so a pasted callback
+        URL can be replayed here instead of typed into the CLI.
+        """
         executable = _executable(ctx)
         try:
             return begin_cli_login(
@@ -186,6 +236,7 @@ class ClaudeCliExchange(BaseAuthExchange):
                     "Paste the code the Claude page shows, or the full callback URL"
                 ),
                 paste_placeholder="the code shown after signing in",
+                browser=True,
             )
         except CliLoginError as exc:
             raise AuthExchangeError(str(exc)) from exc
