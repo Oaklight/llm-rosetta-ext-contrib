@@ -2,10 +2,36 @@
   "manifest_version": 1,
   "source": "contrib",
   "repo": "https://github.com/Oaklight/llm-rosetta-shim-contrib",
-  "generated_at": "2026-11-22T23:19:43Z",
+  "generated_at": "2026-11-23T07:22:49Z",
   "vendors": {
     "antigravity": {
       "versions": [
+        {
+          "version": "0.5.5",
+          "commit": "4e376374c3839e33381cbf601aefcaf394b50e43",
+          "archive": "0.5.5/antigravity.tar.gz",
+          "sha256": "b61db75f2121da08cb5a269e5be4b203543f9f9793ac9846e42f1ee5bcd53abb",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "antigravity--acp"
+          ],
+          "tags": [
+            "tier:subscription",
+            "auth:cli"
+          ],
+          "maturity": "beta",
+          "since": "2026-11-19",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "Google (Antigravity)",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/antigravity.svg"
+        },
         {
           "version": "0.5.3",
           "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
@@ -36,6 +62,32 @@
     },
     "claude": {
       "versions": [
+        {
+          "version": "0.2.2",
+          "commit": "4e376374c3839e33381cbf601aefcaf394b50e43",
+          "archive": "0.2.2/claude.tar.gz",
+          "sha256": "e9273d8316503f527095ba886fd1296abed228583ae6434cdfbc7e65acc10ba5",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "claude--acp"
+          ],
+          "tags": [
+            "tier:subscription",
+            "auth:cli"
+          ],
+          "maturity": "experimental",
+          "since": "2026-11-21",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "Anthropic (Claude)",
+          "logo": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/claude.svg"
+        },
         {
           "version": "0.2.0",
           "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
@@ -361,6 +413,34 @@
     },
     "opendesign": {
       "versions": [
+        {
+          "version": "0.3.2",
+          "commit": "4e376374c3839e33381cbf601aefcaf394b50e43",
+          "archive": "0.3.2/opendesign.tar.gz",
+          "sha256": "1da61ed7c861d470e6d9c86a809e40e72796d77add80bfe84998e0de6d34ef0b",
+          "requires": {
+            "surface": 1,
+            "ir": 1
+          },
+          "shims": [
+            "opendesign--chat_completions",
+            "opendesign--messages",
+            "opendesign--open_responses"
+          ],
+          "tags": [
+            "tier:subscription",
+            "auth:device"
+          ],
+          "maturity": "beta",
+          "since": "2026-11-14",
+          "conformance": {
+            "date": null,
+            "result": "none"
+          },
+          "promoted_to": null,
+          "label": "OpenDesign",
+          "logo": "https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-contrib@main/assets/opendesign.svg"
+        },
         {
           "version": "0.3.1",
           "commit": "ddd92361f29cfa1d864fe4d024d9fbf542d5004f",
