@@ -127,7 +127,7 @@ tags = ["tier:subscription", "auth:cli"]
 # a switch to another pinned adapter version — reuses the install on the
 # mounted volume instead of downloading it again.
 [vendors.claude]
-version = "0.2.2"
+version = "0.2.3"
 maturity = "experimental"
 since = "2026-11-21"
 tags = ["tier:subscription", "auth:cli"]
