@@ -44,6 +44,7 @@ class TestWhatTheShimDeclares:
         assert connection.acp_env == {
             "ENABLE_TOOL_SEARCH": "false",
             "CLAUDE_CONFIG_DIR": "{acp_home}/claude",
+            "npm_config_cache": "{acp_home}/npm",
         }
 
     def test_the_profile_is_the_lane_own_home(self):
@@ -51,6 +52,12 @@ class TestWhatTheShimDeclares:
         connection = shim().connection
 
         assert connection.acp_env["CLAUDE_CONFIG_DIR"] == "{acp_home}/claude"
+
+    def test_the_adapter_install_is_cached_in_the_lane_home(self):
+        """The npm cache rides the volume, so a new image reuses the install."""
+        connection = shim().connection
+
+        assert connection.acp_env["npm_config_cache"] == "{acp_home}/npm"
 
     def test_request_tools_are_on_by_default(self):
         """A live round trip is recorded, so a model gets the tool bridge."""

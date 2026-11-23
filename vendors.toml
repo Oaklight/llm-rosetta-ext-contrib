@@ -99,9 +99,11 @@ tags = ["tier:subscription", "auth:oauth"]
 # (tool call out, client result back, agent reply); 1.5.14 names the MCP tool
 # directly, and the hook covers both that shape and the 1.5.13 meta-tool.
 # `tools` is in the shim's default capabilities.  0.5.4 adds the vendor-managed
-# auth exchange behind the admin sign-in button.
+# auth exchange behind the admin sign-in button.  0.5.5 reads a `--gemini-dir`
+# already in the configured command, so the sign-in follows the install the
+# operator selected (another agy version) instead of assuming the default one.
 [vendors.antigravity]
-version = "0.5.4"
+version = "0.5.5"
 maturity = "beta"
 since = "2026-11-19"
 tags = ["tier:subscription", "auth:cli"]
@@ -118,9 +120,12 @@ tags = ["tier:subscription", "auth:cli"]
 # (llm-rosetta#1675); an older core ignores it and leaves Claude Code's tool
 # search on.  `since` is the latest dated live record.  0.2.1 adds the
 # vendor-managed auth exchange behind the admin sign-in button, so it needs the
-# core that honours ``vendor_managed`` (llm-rosetta#1681).
+# core that honours ``vendor_managed`` (llm-rosetta#1681).  0.2.2 keeps the
+# adapter's npm cache in the lane's persistent home, so an image upgrade — or
+# a switch to another pinned adapter version — reuses the install on the
+# mounted volume instead of downloading it again.
 [vendors.claude]
-version = "0.2.1"
+version = "0.2.2"
 maturity = "experimental"
 since = "2026-11-21"
 tags = ["tier:subscription", "auth:cli"]

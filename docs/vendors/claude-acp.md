@@ -114,6 +114,37 @@ run with a full `~/.claude` profile reached `Prompt is too long · ~201543
 tokens` against the 200,000-token limit. Sign in again in the empty home
 rather than copying a full profile.
 
+The shim also sets `npm_config_cache={acp_home}/npm`. `npx` would otherwise
+cache the adapter under the process's `HOME`, which a container replaces with
+each image; on the volume the next image reuses the installed package instead
+of downloading it again.
+
+### Switch the adapter version
+
+The agent command names an **install**; `acp.home` names the **profile**. The
+shim pins `@agentclientprotocol/claude-agent-acp@0.109.1` in
+`connection.acp_argv`. Point the provider entry's `acp.argv` at another version
+and the login store does not move:
+
+```jsonc
+{
+  "providers": {
+    "claude": {
+      "type": "claude--acp",
+      "acp": {
+        "argv": ["npx", "-y", "@agentclientprotocol/claude-agent-acp@0.110.0"],
+        "home": "saved/claude-pro"
+      }
+    }
+  }
+}
+```
+
+The older top-level `acp_argv` still works as an alias. Because the npm cache
+and `CLAUDE_CONFIG_DIR` both live under `acp.home`, a version switch needs no
+new sign-in; keep the home and change only the command. `acp.argv` needs a core
+that reads it; on `0.14.0.dev38` use the top-level `acp_argv` instead.
+
 `acp_env` is layered over the environment the gateway starts the agent with.
 `CLAUDE_CODE_EXECUTABLE` names a specific CLI binary and `CLAUDE_CONFIG_DIR`
 another profile directory; a value in the provider entry wins over one the
@@ -217,7 +248,9 @@ gateway on a host where that is acceptable.
   the rest is dropped.
 - ACP turns have no sampling parameters, so `temperature`, `top_p` and similar
   settings are reported as dropped conversion warnings.
-- The adapter version is pinned in the shim. Update the shim version to move it.
+- The adapter version is pinned in the shim. Override `acp.argv` on a provider
+  entry to run another version without moving `acp.home` (see
+  [Switch the adapter version](#switch-the-adapter-version)).
 - Subscription windows are Anthropic's and are not visible to the gateway. An
   exhausted plan reads as the adapter's own error, not a gateway error.
 - A full Claude profile can load the host's skill catalog and exceed the context

@@ -77,8 +77,12 @@ def cli(tmp_path: Path) -> Path:
     return script
 
 
-def _ctx(script: Path, home: str | None = None) -> AuthContext:
-    config: dict[str, Any] = {"acp_argv": [str(script)]}
+def _ctx(
+    script: Path,
+    home: str | None = None,
+    argv: list[str] | None = None,
+) -> AuthContext:
+    config: dict[str, Any] = {"acp_argv": argv or [str(script)]}
     if home is not None:
         config["acp_env"] = {"LLM_ROSETTA_ACP_HOME": home}
     return AuthContext(provider="antigravity", config=config)
@@ -153,6 +157,44 @@ def test_login_runs_in_the_lanes_persistent_profile(exchange_module, cli: Path):
 def test_login_without_a_home_leaves_the_flag_out(exchange_module, cli: Path):
     """A host that names no home keeps the CLI's own default."""
     assert exchange_module._login_argv(_ctx(cli)) == [str(cli), "acp", "--login"]
+
+
+def test_the_sign_in_drives_the_configured_install(exchange_module, cli: Path):
+    """``acp.argv`` names the version; the sign-in must run that one."""
+    ctx = _ctx(cli)
+    ctx.config["acp"] = {"argv": [str(cli), "acp"]}
+    ctx.config["acp_argv"] = ["/wrong/agy"]
+
+    assert exchange_module._login_argv(ctx) == [str(cli), "acp", "--login"]
+
+
+def test_a_gemini_dir_in_the_command_is_the_sign_in_profile(
+    exchange_module, cli: Path, tmp_path
+):
+    """Another install may keep the profile outside the gateway's default."""
+    profile = str(tmp_path / "entry-profile")
+    ctx = _ctx(
+        cli,
+        home="/data/acp/antigravity",
+        argv=[str(cli), "acp", "--gemini-dir", profile],
+    )
+
+    assert exchange_module._login_argv(ctx) == [
+        str(cli),
+        "acp",
+        "--login",
+        "--gemini-dir",
+        profile,
+    ]
+
+
+def test_the_equals_form_of_gemini_dir_is_read_too(exchange_module, cli: Path):
+    ctx = _ctx(cli, argv=[str(cli), "acp", "--gemini-dir=/opt/agy-profile"])
+
+    assert exchange_module._login_argv(ctx)[-2:] == [
+        "--gemini-dir",
+        "/opt/agy-profile",
+    ]
 
 
 def test_complete_waits_for_the_keyring_and_returns_the_account(

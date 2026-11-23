@@ -30,6 +30,9 @@ Installing `llm-rosetta-shim-contrib` also registers the vendor through its
   Oaklight/llm-rosetta#1681 and #1683)
 - `agy` on the gateway host (the profile measures come from `agy` 1.5.13;
   the live tool round trip from 1.5.14)
+- A core built after Oaklight/llm-rosetta#1683. `acp.argv` and the rule that an
+  operator-written `agy` command keeps the gateway-owned profile are newer than
+  `0.14.0.dev38`; on that release a custom `acp_argv` runs unhardened.
 
 ## Sign in
 
@@ -81,6 +84,37 @@ cannot disagree:
 A desktop keyring is one entry for the whole installation, so a keyring-backed
 host shares one Google account across provider entries. A headless host keeps
 one login per home.
+
+### Switch the installed version
+
+The agent command names an **install**; `acp.home` names the **profile**. To
+run another `agy` build, point `acp.argv` at it and leave the home in place:
+
+```jsonc
+{
+  "providers": {
+    "antigravity": {
+      "type": "antigravity--acp",
+      "acp": {
+        "home": "saved/antigravity-work",
+        "argv": ["/opt/agy-1.7/bin/agy", "acp"]
+      }
+    }
+  }
+}
+```
+
+The older top-level `acp_argv` remains an alias. The gateway applies its own
+profile to any command that starts `agy`, including one the entry wrote, so the
+switch keeps `--gemini-dir`, the no-tools agent, the deny-all hook and the
+session gate; the sign-in store is not lost and host tools do not return.
+`acp.harden: false` opts out for a command that must run as written.
+
+The admin sign-in runs the same install and, when the command already names
+`--gemini-dir`, writes that directory. Leave `acp.home` unset then, or set it
+to the same path: two different directories are refused rather than split
+between the agent and its sign-in. `acp.argv` needs a core that reads it; on
+`0.14.0.dev38` use the top-level `acp_argv` instead.
 
 ## Configure a provider
 
