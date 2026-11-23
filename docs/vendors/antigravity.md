@@ -110,6 +110,11 @@ switch keeps `--gemini-dir`, the no-tools agent, the deny-all hook and the
 session gate; the sign-in store is not lost and host tools do not return.
 `acp.harden: false` opts out for a command that must run as written.
 
+Inside the published container, put the install under the mounted data
+directory — for example `/config/data/acp/antigravity/install/agy` — and point
+`argv` at it. The image replaces its own filesystem on upgrade; `/config` is
+the volume, so the next image starts the same binary and finds the same login.
+
 The admin sign-in runs the same install and, when the command already names
 `--gemini-dir`, writes that directory. Leave `acp.home` unset then, or set it
 to the same path: two different directories are refused rather than split
@@ -176,7 +181,8 @@ declare the other capabilities explicitly:
 
 ## Limitations
 
-- A custom `acp_argv` gets none of the profile and re-enables host tools, at
+- `acp.harden: false` turns the gateway-owned profile off for a custom `agy`
+  command; the command then runs as written and can re-enable host tools, at
   the operator's own risk.
 - ACP turns carry no sampling parameters; those settings are reported as
   dropped conversion warnings.
