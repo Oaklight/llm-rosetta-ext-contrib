@@ -24,8 +24,9 @@
 # permission surface is larger than the gateway can see.  A live tool round
 # trip on adapter 0.109.1 / Claude Code 2.1.299 through a Pro subscription is
 # recorded: the request's `echo` tool returned as a tool call and the client's
-# result resumed the same ACP turn.  Use a clean CLAUDE_CONFIG_DIR for a lane:
-# a full profile can load the host's whole skill catalog and exceed the context
+# result resumed the same ACP turn.  The lane uses its own persistent home
+# (``CLAUDE_CONFIG_DIR={acp_home}/claude``), not the host's ``~/.claude``: a
+# full profile can load the host's whole skill catalog and exceed the context
 # window, and an enterprise profile hit its 5-hour usage limit.
 group_label: Anthropic (Claude)
 logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/claude.svg

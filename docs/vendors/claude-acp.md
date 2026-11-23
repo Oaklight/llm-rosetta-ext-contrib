@@ -6,8 +6,10 @@ through the **Claude Agent SDK ACP adapter**
 
 The lane starts the adapter as a local ACP agent. The adapter runs Claude Code
 (the native CLI shipped with the Claude Agent SDK) and exposes it over ACP.
-No gateway credential is involved: the Claude CLI's own login store
-(`~/.claude`) is the account.
+No gateway credential is involved: the Claude CLI's own login store is the
+account. The shim points that store at the lane's persistent directory under
+the gateway data directory (`CLAUDE_CONFIG_DIR={acp_home}/claude`), so a
+mounted data volume carries the login into the next container image.
 
 > Maturity: **experimental**. The adapter is versioned independently, and its
 > permission surface is larger than the gateway can see. A live tool round trip
@@ -39,12 +41,17 @@ point.
   core ignores the key, so Claude Code's tool search stays on and the request's
   bridged tools are not called directly. The core surface level does not rise
   for an added field, so check the core build rather than `requires.surface`.
+- A core with the persistent ACP home (Oaklight/llm-rosetta#1683): it expands
+  `{acp_home}` and publishes `LLM_ROSETTA_ACP_HOME`. An older core passes the
+  placeholder literally, so the CLI would try to use a directory with braces in
+  its name. The manifest's `>= 0.14.0.dev38` floor includes both changes.
 
 The shim pins `@agentclientprotocol/claude-agent-acp@0.109.1`. The package
 bundles the Claude Agent SDK and its native Claude CLI, so a global `claude`
 install is not required. A separately installed CLI can be selected with
-`CLAUDE_CODE_EXECUTABLE`, and a separate Claude profile with
-`CLAUDE_CONFIG_DIR`. Set the latter through a provider's `acp_env` (below).
+`CLAUDE_CODE_EXECUTABLE`. The shim sets `CLAUDE_CONFIG_DIR` to the lane's
+persistent home; a provider's `acp_env` may override it with another saved
+profile.
 
 ## Sign in
 
@@ -72,38 +79,42 @@ on the gateway's `PATH`, and the profile named by
 `acp_env.CLAUDE_CONFIG_DIR`. The gateway stores no token: the account shown
 comes from `claude auth status --json`.
 
-### Use a clean profile
+### The lane's own profile
 
-A full profile (`~/.claude`) can carry the host's entire skill catalog. A live
-run with a large profile reached `Prompt is too long · ~201543 tokens` against
-the 200,000-token limit. For a gateway lane, use a clean profile and point the
-provider at it:
+The shim does not use the host's `~/.claude`. It points
+`CLAUDE_CONFIG_DIR` at `{acp_home}/claude`, where `acp_home` is the lane's
+persistent home: `<data_dir>/acp/<provider-name>` by default. The sign-in
+writes the Claude credential there once, and every later ACP session of that
+provider reuses it.
 
-```bash
-mkdir -p /srv/llm-rosetta/claude-pro
-chmod 700 /srv/llm-rosetta/claude-pro
-# Copy only the credential file from the profile you signed in with.
-install -m 600 ~/.claude/.credentials.json \
-  /srv/llm-rosetta/claude-pro/.credentials.json
+Because the home lives under `server.data_dir`, mounting that directory on a
+volume keeps the login across a gateway restart and across an image upgrade.
+The next container reads the same credential store and needs no new sign-in.
 
-# With CLAUDE_CONFIG_DIR pointing at that directory, this should report
-# authMethod "claude.ai" and the subscription type.
-CLAUDE_CONFIG_DIR=/srv/llm-rosetta/claude-pro claude auth status --json
-```
+`acp.home` selects a different home. An absolute path is used as written, `~`
+is expanded, and a relative path is taken under the data directory. Two
+provider entries with different homes hold two independent logins and two
+independent profiles:
 
 ```jsonc
 {
   "providers": {
     "claude": {
       "type": "claude--acp",
-      "acp_env": { "CLAUDE_CONFIG_DIR": "/srv/llm-rosetta/claude-pro" }
+      "acp": { "home": "/srv/llm-rosetta/claude-pro" }
     }
   }
 }
 ```
 
-`acp_env` is layered over the gateway's own environment, so `PATH` and the
-login store remain available; a value in the provider entry wins over one the
+A new home starts empty, so the lane avoids the host's skill catalog. A live
+run with a full `~/.claude` profile reached `Prompt is too long · ~201543
+tokens` against the 200,000-token limit. Sign in again in the empty home
+rather than copying a full profile.
+
+`acp_env` is layered over the environment the gateway starts the agent with.
+`CLAUDE_CODE_EXECUTABLE` names a specific CLI binary and `CLAUDE_CONFIG_DIR`
+another profile directory; a value in the provider entry wins over one the
 shim declares. The shim itself sets `ENABLE_TOOL_SEARCH=false` (see
 [Tool calls](#tool-calls)).
 
@@ -207,6 +218,6 @@ gateway on a host where that is acceptable.
 - Subscription windows are Anthropic's and are not visible to the gateway. An
   exhausted plan reads as the adapter's own error, not a gateway error.
 - A full Claude profile can load the host's skill catalog and exceed the context
-  window. Point `CLAUDE_CONFIG_DIR` at a clean profile for each lane.
+  window. The lane's own home starts empty; keep it that way.
 - Claude Code's own tools are refused, but some read-only tools may be
   auto-approved before a permission request reaches the gateway.

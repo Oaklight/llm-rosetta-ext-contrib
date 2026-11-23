@@ -8,9 +8,11 @@ and the CLI is a small script that prints a URL and waits for a code.
 from __future__ import annotations
 
 import importlib.util
+import stat
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 import pytest
 
@@ -75,8 +77,11 @@ def cli(tmp_path: Path) -> Path:
     return script
 
 
-def _ctx(script: Path) -> AuthContext:
-    return AuthContext(provider="antigravity", config={"acp_argv": [str(script)]})
+def _ctx(script: Path, home: str | None = None) -> AuthContext:
+    config: dict[str, Any] = {"acp_argv": [str(script)]}
+    if home is not None:
+        config["acp_env"] = {"LLM_ROSETTA_ACP_HOME": home}
+    return AuthContext(provider="antigravity", config=config)
 
 
 def _record(module: ModuleType, monkeypatch: pytest.MonkeyPatch, record) -> None:
@@ -132,6 +137,24 @@ def test_begin_returns_the_google_url(exchange_module, cli: Path):
     assert started["paste_label"]
 
 
+def test_login_runs_in_the_lanes_persistent_profile(exchange_module, cli: Path):
+    """The login must write the store the ACP agent will later read."""
+    ctx = _ctx(cli, home="/data/acp/antigravity")
+
+    assert exchange_module._login_argv(ctx) == [
+        str(cli),
+        "acp",
+        "--login",
+        "--gemini-dir",
+        "/data/acp/antigravity",
+    ]
+
+
+def test_login_without_a_home_leaves_the_flag_out(exchange_module, cli: Path):
+    """A host that names no home keeps the CLI's own default."""
+    assert exchange_module._login_argv(_ctx(cli)) == [str(cli), "acp", "--login"]
+
+
 def test_complete_waits_for_the_keyring_and_returns_the_account(
     exchange_module, cli: Path, monkeypatch
 ):
@@ -146,10 +169,10 @@ def test_complete_waits_for_the_keyring_and_returns_the_account(
 
 
 def test_complete_succeeds_without_a_readable_keyring(
-    exchange_module, cli: Path, monkeypatch
+    exchange_module, cli: Path, monkeypatch, tmp_path
 ):
     exchange = exchange_module.EXCHANGE
-    ctx = _ctx(cli)
+    ctx = _ctx(cli, home=str(tmp_path / "home"))
     exchange.begin_login(ctx)
     _no_keyring(exchange_module, monkeypatch)
 
@@ -157,6 +180,28 @@ def test_complete_succeeds_without_a_readable_keyring(
 
     assert summary["connected"] is True
     assert "Google account" in summary["subject"]
+    marker = tmp_path / "home" / exchange_module.LOGIN_MARKER
+    assert marker.is_file()
+    assert "must-not-escape" not in marker.read_text(encoding="utf-8")
+    assert stat.S_IMODE(marker.stat().st_mode) == 0o600
+    # A later render must not send the operator through setup again.
+    assert exchange.describe(ctx) is not None
+    assert exchange.needs_interactive_setup(ctx) is False
+
+
+def test_a_finished_headless_login_is_scoped_to_its_home(
+    exchange_module, cli: Path, monkeypatch, tmp_path
+):
+    exchange = exchange_module.EXCHANGE
+    first = _ctx(cli, home=str(tmp_path / "one"))
+    exchange.begin_login(first)
+    _no_keyring(exchange_module, monkeypatch)
+    exchange.complete_login(first, "good-code")
+
+    other = _ctx(cli, home=str(tmp_path / "two"))
+
+    assert exchange.describe(other) is None
+    assert exchange.needs_interactive_setup(other) is True
 
 
 def test_a_refused_code_is_reported_without_echoing_it(

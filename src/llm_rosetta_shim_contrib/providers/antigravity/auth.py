@@ -1,25 +1,32 @@
 """Sign in to Antigravity through the ``agy`` CLI.
 
 The Antigravity ACP lane is keyless: ``agy`` authenticates itself and the
-gateway never sees the token.  On Linux the token lives in the desktop
+gateway never sees the token.  On a desktop Linux host the token lives in the
 keyring as one entry for the whole installation (``service=gemini``,
-``user=antigravity``), not in the ``--gemini-dir`` profile the transport
-hardens, so every provider of this shim shares one Google account.
+``user=antigravity``), so every provider of this shim shares one Google
+account there.  A headless host or container has no keyring; ``agy`` then
+falls back to a token file under its ``--gemini-dir``.  The gateway gives each
+lane a persistent ``--gemini-dir`` under its data directory, so both the admin
+sign-in and the ACP agent use the same store, and a mounted data volume keeps
+it across restarts and image upgrades.
 
 This exchange is therefore **vendor-managed**: it keeps the lane keyless and
-never mints or seeds a credential.  It drives ``agy acp --login``, returns the
-Google URL that command prints, writes the pasted code back, and reports the
-account the CLI wrote to the keyring.  The token itself is never read into the
-gateway's credential ring and never appears in a response.
+never mints or seeds a credential.  It drives ``agy acp --login`` with the
+same ``--gemini-dir`` the transport will use, returns the Google URL that
+command prints, writes the pasted code back, and reports the account the CLI
+wrote to the keyring.  The token itself is never read into the gateway's
+credential ring and never appears in a response.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import time
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from llm_rosetta.contracts.auth import (
@@ -49,6 +56,65 @@ def _acp_env(ctx: AuthContext) -> dict[str, str]:
     if not isinstance(raw, dict):
         return {}
     return {str(k): str(v) for k, v in raw.items()}
+
+
+def _home(ctx: AuthContext) -> str:
+    """The lane's persistent directory, as the gateway named it to the agent."""
+    return _acp_env(ctx).get("LLM_ROSETTA_ACP_HOME", "")
+
+
+def _login_argv(ctx: AuthContext) -> list[str]:
+    """``agy acp --login`` in the same profile the ACP transport starts."""
+    argv = [_executable(ctx), "acp", "--login"]
+    home = _home(ctx)
+    if home:
+        argv += ["--gemini-dir", home]
+    return argv
+
+
+#: A non-secret note that the vendor CLI completed a sign-in.  A headless host
+#: has no keyring, so the CLI cannot be asked; this marker lives in the same
+#: persistent home and tells the panel not to offer setup after a restart.
+#: It holds no token, only the time the CLI reported success.
+LOGIN_MARKER = ".llm-rosetta-login.json"
+
+
+def _home_dir(ctx: AuthContext) -> Path | None:
+    """The lane's persistent directory, or the record directory on old cores."""
+    root = _home(ctx) or ctx.state_dir
+    return Path(root) if root else None
+
+
+def _read_marker(ctx: AuthContext) -> dict[str, Any] | None:
+    """The sign-in marker, if this lane has one and it is readable."""
+    root = _home_dir(ctx)
+    if root is None:
+        return None
+    try:
+        data = json.loads((root / LOGIN_MARKER).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _write_marker(ctx: AuthContext) -> None:
+    """Record that the CLI reported success, without recording any token."""
+    root = _home_dir(ctx)
+    if root is None:
+        return
+    root.mkdir(parents=True, exist_ok=True)
+    try:
+        os.chmod(root, 0o700)
+    except OSError:  # pragma: no cover - a filesystem that refuses chmod
+        pass
+    path = root / LOGIN_MARKER
+    temp = root / f".{LOGIN_MARKER}.tmp"
+    temp.write_text(
+        json.dumps({"connected": True, "at": time.time()}, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    os.chmod(temp, 0o600)
+    os.replace(temp, path)
 
 
 def _executable(ctx: AuthContext) -> str:
@@ -151,11 +217,16 @@ class AntigravityCliExchange(BaseAuthExchange):
     vendor_managed = True
 
     def needs_interactive_setup(self, ctx: AuthContext) -> bool:
-        """Whether the keyring holds no account this host can see."""
+        """Whether this host has no account it can see.
+
+        A keyring host answers from the keyring.  A headless host answers from
+        the marker the last successful sign-in wrote in the lane's persistent
+        home: the CLI's own token is not readable there, but the gateway can
+        still tell a restarted deployment with a finished sign-in from one
+        that never signed in.
+        """
         if not _keyring_available():
-            # No libsecret here: the CLI may still be signed in, and claiming
-            # otherwise would offer a button that cannot verify its result.
-            return False
+            return _read_marker(ctx) is None
         return _read_account() is None
 
     async def credential(self, ctx: AuthContext) -> str:
@@ -173,15 +244,19 @@ class AntigravityCliExchange(BaseAuthExchange):
     def describe(self, ctx: AuthContext) -> dict[str, Any] | None:
         """Report the Google account and token expiry, never the token."""
         data = _read_account()
-        return _summary(data) if data else None
+        if data:
+            return _summary(data)
+        if _keyring_available():
+            return None
+        marker = _read_marker(ctx)
+        return _summary(marker) if marker else None
 
     def begin_login(self, ctx: AuthContext) -> dict[str, Any]:
-        """Run ``agy acp --login`` and return its Google URL."""
-        executable = _executable(ctx)
+        """Run ``agy acp --login`` in the lane's persistent profile."""
         try:
             return begin_cli_login(
                 ctx.provider,
-                [executable, "acp", "--login"],
+                _login_argv(ctx),
                 env=subprocess_env(_acp_env(ctx)),
                 paste_label=(
                     "Paste the authorization code, or the full URL of the page "
@@ -199,8 +274,10 @@ class AntigravityCliExchange(BaseAuthExchange):
         except CliLoginError as exc:
             raise AuthExchangeError(str(exc)) from exc
         if not _keyring_available():
-            # The CLI exited 0 and this host cannot read the keyring; the CLI
-            # is the authority on its own sign-in.
+            # The CLI exited 0 and this host cannot read the keyring.  The CLI
+            # is the authority on its own sign-in; the marker lets a later
+            # render, including after a restart, know it finished.
+            _write_marker(ctx)
             return {"connected": True, "subject": "Antigravity (Google account)"}
         end = time.monotonic() + KEYRING_WAIT
         while time.monotonic() < end:

@@ -1,10 +1,14 @@
 """Drive a vendor CLI's interactive sign-in from the admin panel.
 
 Both ACP lanes keep their credential in the vendor CLI's own store: Claude
-Code writes ``~/.claude`` (or ``$CLAUDE_CONFIG_DIR``) and the Antigravity CLI
-writes a Google account token to the desktop keyring.  The gateway never sees
-that token, so the ``auth.py`` exchange for such a lane cannot mint one.  What
-it can do is run the vendor's own sign-in command, show the operator the URL
+Code writes ``$CLAUDE_CONFIG_DIR`` (``~/.claude`` when unset), and the
+Antigravity CLI writes a Google account token to the desktop keyring, or to a
+file under its ``--gemini-dir`` when no keyring is available.  The gateway
+gives each lane a persistent directory under its data directory and passes it
+to the CLI here, so an admin sign-in lands in the same profile the agent will
+use and survives a restart or image upgrade.  The gateway never sees that
+token, so the ``auth.py`` exchange for such a lane cannot mint one.  What it
+can do is run the vendor's own sign-in command, show the operator the URL
 that command prints, and feed the pasted code back to the waiting process.
 
 That is what this module provides.  It is deliberately small and

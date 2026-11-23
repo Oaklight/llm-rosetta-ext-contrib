@@ -12,7 +12,7 @@
 # The agent's own tools (file read and write, shell, web search, scheduling,
 # sub-agents, workflows) must never run on the gateway host for an API request.
 # agy has no single switch for that, so the gateway starts it in a profile it
-# owns (``agy acp --gemini-dir <data_dir>/acp/<provider>``) and layers four
+# owns (``agy acp --gemini-dir <acp_home>``) and layers four
 # measures (agy 1.5.13): a custom agent with no tools, a PreToolUse hook that
 # permits only the gateway's loopback MCP server, ``toolPermission: strict``
 # with ``permissions.allow: ["mcp(*)"]``, and its own ACP client, which
