@@ -148,9 +148,7 @@ def test_begin_returns_the_cli_url_and_no_token(exchange_module, cli: Path):
     started = exchange_module.EXCHANGE.begin_login(_ctx(cli))
 
     assert started["authorization_url"].startswith("https://claude.com/cai/oauth/")
-    assert started["browser_url"] == (
-        "http://127.0.0.1:45109/callback?code=good&state=s"
-    )
+    assert started["callback_origin"] == "http://127.0.0.1:45109"
     assert started["paste_label"]
     assert "access_token" not in started
     assert "refresh_token" not in started

@@ -116,6 +116,9 @@ class _Pending:
         self.browser_file = browser_file
         self.browser_url = ""
         self.callback_port = ""
+        self.callback_path = ""
+        self.callback_origin = ""
+        self.busy = False
         self.workdir = workdir
         self.lines: deque[str] = deque(maxlen=200)
         self.timer: threading.Timer | None = None
@@ -173,7 +176,9 @@ def begin_cli_login(
         paste_label: What the admin panel calls the pasted input.
         paste_placeholder: The placeholder for that input.
         browser: Point ``BROWSER`` at a recorder so the CLI opens no tab of its
-            own.  The page it asked for comes back as ``browser_url``.
+            own.  When the recorded page names a loopback redirect, the result
+            carries ``callback_origin`` and a pasted callback URL is replayed
+            on that listener.
 
     Raises:
         CliLoginError: The command could not be started, exited before printing
@@ -239,8 +244,8 @@ def begin_cli_login(
         "paste_label": paste_label,
         "paste_placeholder": paste_placeholder,
     }
-    if pending.browser_url:
-        result["browser_url"] = pending.browser_url
+    if pending.callback_origin:
+        result["callback_origin"] = pending.callback_origin
     return result
 
 
@@ -253,62 +258,66 @@ def complete_cli_login(
     """Write the operator's code to the waiting CLI and wait for it to exit.
 
     Raises:
-        CliLoginError: No sign-in is pending, the process refused the value, or
-            it did not finish in time.
+        CliLoginError: No sign-in is pending, the value is not from this
+            sign-in, the process refused it, or it did not finish in time.
     """
     value = _first_line(pasted)
     if not value:
         raise CliLoginError("a code or callback URL is required")
     with _LOCK:
         pending = _PENDING.get(key)
-    if pending is None:
-        raise CliLoginError("no sign-in is pending; start again")
-    if time.time() >= pending.deadline:
+        if pending is None:
+            raise CliLoginError("no sign-in is pending; start again")
+        if pending.busy:
+            raise CliLoginError("this sign-in is already finishing; wait for it")
+        pending.busy = True
+    try:
+        _finish_pending(key, pending, value, timeout)
+    finally:
         with _LOCK:
-            _PENDING.pop(key, None)
-        if pending.timer is not None:
-            pending.timer.cancel()
+            pending.busy = False
+
+
+def _finish_pending(key: str, pending: _Pending, value: str, timeout: float) -> None:
+    if time.time() >= pending.deadline:
+        _take(key, pending)
         _terminate(pending)
         raise CliLoginError("the sign-in expired; start again")
     process = pending.process
     callback = _loopback_callback(value)
-    if callback is not None:
+    replay: tuple[str, str] | None = None
+    if callback is not None and pending.callback_port:
         port, target = callback
-        if pending.callback_port and port != pending.callback_port:
+        if (
+            port != pending.callback_port
+            or target.split("?")[0] != pending.callback_path
+        ):
             # The flow stays open: the operator can still paste its code.
             raise CliLoginError(
                 "that address isn't from this sign-in: paste the code the "
                 "vendor page shows, or the address this sign-in opened"
             )
-    elif _is_http_url(value):
-        raise CliLoginError(
-            "paste the code the vendor page shows, or the complete callback "
-            "address this sign-in opened"
-        )
-    # The value is usable; take the pending so a second submit cannot race.
-    with _LOCK:
-        if _PENDING.get(key) is not pending:
-            raise CliLoginError("no sign-in is pending; start again")
-        _PENDING.pop(key, None)
-    if pending.timer is not None:
-        pending.timer.cancel()
+        replay = (port, target)
     if process.poll() == 0:
         # The flow finished without this call: a browser reached the CLI's own
         # callback listener, or the operator submitted twice.  The CLI is the
         # authority; the exchange verifies the account after this returns.
+        _take(key, pending)
         _drain_reader(pending)
         _remove_dir(pending.workdir)
         pending.workdir = None
-        return None
-    if callback is not None:
+        return
+    if replay is not None:
         try:
-            _replay_callback(port, target)
+            _replay_callback(*replay)
         except OSError as exc:
-            _terminate(pending)
+            # The CLI still waits on stdin; keep the flow so the operator can
+            # paste the code instead of the address.
             raise CliLoginError(
                 "the sign-in listener did not take the callback "
                 f"({exc}); paste the code the page shows instead"
             ) from exc
+        _take(key, pending)
     else:
         try:
             assert process.stdin is not None
@@ -320,15 +329,18 @@ def complete_cli_login(
             except subprocess.TimeoutExpired:
                 finished = None
             if finished == 0:
+                _take(key, pending)
                 _drain_reader(pending)
                 _remove_dir(pending.workdir)
                 pending.workdir = None
-                return None
+                return
+            _take(key, pending)
             output = pending.tail()
             _terminate(pending)
             raise CliLoginError(
                 f"the sign-in command had already exited: {exc}; it said: {output}"
             ) from exc
+        _take(key, pending)
     try:
         code = process.wait(timeout=timeout)
     except subprocess.TimeoutExpired as exc:
@@ -345,6 +357,16 @@ def complete_cli_login(
             f"the sign-in command exited with {code}; it said: {_redact(output, value)}"
         )
     return None
+
+
+def _take(key: str, pending: _Pending) -> None:
+    """Remove *pending* from the map and stop its expiry timer."""
+    with _LOCK:
+        if _PENDING.get(key) is pending:
+            _PENDING.pop(key, None)
+    if pending.timer is not None:
+        pending.timer.cancel()
+        pending.timer = None
 
 
 def cancel_cli_login(key: str) -> None:
@@ -405,23 +427,30 @@ def _read_browser_url(pending: _Pending) -> str:
     pending.browser_url = url
     callback = _loopback_callback(url)
     if callback is not None:
-        pending.callback_port = callback[0]
+        pending.callback_port, target = callback
+        pending.callback_path = target.split("?")[0]
     else:
-        pending.callback_port = _redirect_port(url)
+        redirect = _redirect_target(url)
+        if redirect is not None:
+            pending.callback_port, pending.callback_path = redirect
+    if pending.callback_port:
+        pending.callback_origin = f"http://127.0.0.1:{pending.callback_port}"
     return url
 
 
-def _redirect_port(value: str) -> str:
-    """The loopback port an authorization page sends the browser back to."""
+def _redirect_target(value: str) -> tuple[str, str] | None:
+    """``(port, path)`` of the loopback a sign-in page comes back to."""
     try:
         parsed = urlparse(value)
         redirect = parse_qs(parsed.query).get("redirect_uri", [""])[0]
         target = urlparse(redirect)
         port = target.port
     except ValueError:
-        return ""
+        return None
     host = (target.hostname or "").lower()
-    return str(port) if host in _LOOPBACK_HOSTS and port else ""
+    if host not in _LOOPBACK_HOSTS or not port:
+        return None
+    return str(port), target.path or "/"
 
 
 def _loopback_callback(value: str) -> tuple[str, str] | None:
@@ -441,13 +470,6 @@ def _loopback_callback(value: str) -> tuple[str, str] | None:
     if parsed.query:
         target += "?" + parsed.query
     return str(port), target
-
-
-def _is_http_url(value: str) -> bool:
-    try:
-        return urlparse(value).scheme in ("http", "https")
-    except ValueError:
-        return False
 
 
 def _replay_callback(port: str, target: str) -> None:
