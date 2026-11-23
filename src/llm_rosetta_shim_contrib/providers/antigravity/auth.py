@@ -81,26 +81,76 @@ def _declared_argv(ctx: AuthContext) -> list[str]:
     return [str(part) for part in argv]
 
 
+#: Executable names the transport treats as the Antigravity CLI.  A renamed
+#: download needs ``acp.harden: true``; this exchange follows the same rule.
+AGY_NAMES = ("agy", "agy.real", "agy.exe")
+
+_GEMINI_FLAGS = ("--gemini-dir", "--gemini_dir")
+
+
+def _is_agy(argv: list[str]) -> bool:
+    return bool(argv) and Path(argv[0]).name in AGY_NAMES
+
+
 def _gemini_dir(argv: list[str]) -> str | None:
-    """The ``--gemini-dir`` an agent command already names, if any."""
-    for index, arg in enumerate(argv):
-        if arg == "--gemini-dir" and index + 1 < len(argv):
-            return argv[index + 1]
-        if arg.startswith("--gemini-dir="):
-            return arg.split("=", 1)[1]
-    return None
+    """The last non-empty ``--gemini-dir`` an agent command names, if any."""
+    found: str | None = None
+    index = 0
+    while index < len(argv):
+        arg = argv[index]
+        for name in _GEMINI_FLAGS:
+            if arg == name:
+                if index + 1 < len(argv) and argv[index + 1]:
+                    found = argv[index + 1]
+                index += 2
+                break
+            if arg.startswith(name + "="):
+                value = arg.split("=", 1)[1]
+                if value:
+                    found = value
+                index += 1
+                break
+        else:
+            index += 1
+    return found
+
+
+def _without_gemini_dir(argv: list[str]) -> list[str]:
+    """Drop the profile flags, so only the command's own tokens remain."""
+    out: list[str] = []
+    index = 0
+    while index < len(argv):
+        arg = argv[index]
+        for name in _GEMINI_FLAGS:
+            if arg == name:
+                index += 2
+                break
+            if arg.startswith(name + "="):
+                index += 1
+                break
+        else:
+            out.append(arg)
+            index += 1
+    return out
 
 
 def _gateway_owned_profile(ctx: AuthContext) -> bool:
     """Whether the agent will run in the profile ``acp.home`` names.
 
-    The transport owns that profile unless the entry turns hardening off.
-    With ``acp.harden: false`` and no ``--gemini-dir`` in the command, the
-    agent runs on the CLI's own default store; the sign-in must not write a
-    different one.
+    The transport's three-state rule is mirrored here: an absent
+    ``acp.harden`` follows the executable's name (``agy``), ``true`` forces
+    the profile on a wrapper or a renamed binary, and ``false`` runs the
+    command as written.  With no command in the entry the shim's default is
+    ``agy``, so the home is owned.
     """
     block = (ctx.config or {}).get("acp")
-    return not (isinstance(block, dict) and block.get("harden") is False)
+    declared = block.get("harden") if isinstance(block, dict) else None
+    if declared is not None:
+        return declared is True
+    argv = _declared_argv(ctx)
+    if not argv:
+        return True
+    return _is_agy(argv)
 
 
 def _login_argv(ctx: AuthContext) -> list[str]:
@@ -108,18 +158,28 @@ def _login_argv(ctx: AuthContext) -> list[str]:
 
     The configured command is kept up to its ``acp`` subcommand, so an install
     started through a wrapper (``npx``, a version shim) signs in through that
-    same wrapper; flags the entry adds after ``acp`` are left out.  A command
-    that already names ``--gemini-dir`` is signed in there: the transport
-    keeps that directory as the profile, so the sign-in must write the same
-    one even on a core that predates the shared home variable.  Otherwise the
-    gateway-owned home is used, unless hardening is off.
+    same wrapper; flags the entry adds after ``acp`` and a profile flag are
+    left out.  A command that already names ``--gemini-dir`` is signed in
+    there: the transport keeps that directory as the profile, so the sign-in
+    must write the same one even on a core that predates the shared home
+    variable.  Otherwise the gateway-owned home is used when the command is
+    owned, and the CLI's own default when it is not.
     """
     declared = _declared_argv(ctx)
-    if declared:
-        try:
-            prefix = declared[: declared.index("acp") + 1]
-        except ValueError:
-            prefix = [declared[0], "acp"]
+    stripped = _without_gemini_dir(declared)
+    if "acp" in stripped:
+        # The last ``acp`` token is the subcommand; an earlier one can be a
+        # flag value (``--label acp``).
+        end = len(stripped) - 1 - stripped[::-1].index("acp")
+        prefix = stripped[: end + 1]
+    elif declared and _is_agy(declared):
+        prefix = [declared[0], "acp"]
+    elif stripped:
+        raise AuthExchangeError(
+            "cannot derive a sign-in command from this acp.argv: it names no "
+            "`acp` subcommand and its executable is not `agy`. Set acp.argv "
+            "to ['<agy>', 'acp'], or run the vendor CLI's own sign-in."
+        )
     else:
         prefix = [_executable(ctx), "acp"]
     argv = [*prefix, "--login"]

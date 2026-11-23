@@ -30,9 +30,9 @@ Installing `llm-rosetta-shim-contrib` also registers the vendor through its
   Oaklight/llm-rosetta#1681 and #1683)
 - `agy` on the gateway host (the profile measures come from `agy` 1.5.13;
   the live tool round trip from 1.5.14)
-- A core built after Oaklight/llm-rosetta#1683. `acp.argv` and the rule that an
-  operator-written `agy` command keeps the gateway-owned profile are newer than
-  `0.14.0.dev38`; on that release a custom `acp_argv` runs unhardened.
+- A core built with Oaklight/llm-rosetta#1684. `acp.argv` and the three-state
+  `acp.harden` (by name / force / off) are newer than `0.14.0.dev38`; on that
+  release a custom `acp_argv` runs unhardened.
 
 ## Sign in
 
@@ -104,13 +104,15 @@ run another `agy` build, point `acp.argv` at it and leave the home in place:
 }
 ```
 
-The older top-level `acp_argv` remains an alias. The gateway applies its own
-profile to any command that starts `agy`, including one the entry wrote, so the
-switch keeps `--gemini-dir`, the no-tools agent, the deny-all hook and the
-session gate; the sign-in store is not lost and host tools do not return.
-`acp.harden: false` opts out for a command that must run as written. The
-sign-in then also leaves the CLI's default store in place unless the command
-names `--gemini-dir`, so the agent and the sign-in still write one profile.
+The older top-level `acp_argv` remains an alias. Hardening follows the
+executable name by default: a command whose executable is `agy` keeps
+`--gemini-dir`, the no-tools agent, the deny-all hook and the session gate, so
+a switch to another `agy` build neither re-enables host tools nor costs the
+sign-in. A renamed download (`agy-1.7`) or a wrapper is not recognised by
+name; set `acp.harden: true` to force the profile on it (a wrapper must pass
+`agy`'s flags through), or `acp.harden: false` to run it as written. An
+unhardened `agy` command must name `--gemini-dir`, so the agent and the
+sign-in still share one profile.
 
 Inside the published container, put the install under the mounted data
 directory — for example `/config/data/acp/antigravity/install/agy` — and point
