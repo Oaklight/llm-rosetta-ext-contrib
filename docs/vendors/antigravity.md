@@ -47,10 +47,11 @@ address and token expiry from there and never returns the token itself.
 On a headless host without a keyring, `agy` falls back to a token file under
 `--gemini-dir`. The file stays in the persistent home, so mounting
 `server.data_dir` on a volume reuses the login after a restart or an image
-upgrade. In this mode the panel cannot read the token store; it records a
-non-secret marker in `<acp_home>/.llm-rosetta-login.json` after the CLI
-reports success and shows the lane as connected. The gateway never holds the
-Google token.
+upgrade. The published image declares `/config` as a volume and keeps its data
+in `/config/data`, so a volume on `/config` is enough. In this mode the panel
+cannot read the token store; it records a non-secret marker in
+`<acp_home>/.llm-rosetta-login.json` after the CLI reports success and shows
+the lane as connected. The gateway never holds the Google token.
 
 ### Switch or share a profile
 
