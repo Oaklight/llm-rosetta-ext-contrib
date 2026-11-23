@@ -125,7 +125,10 @@ tags = ["tier:subscription", "auth:cli"]
 # core that honours ``vendor_managed`` (llm-rosetta#1681).  0.2.2 keeps the
 # adapter's npm cache in the lane's persistent home, so an image upgrade — or
 # a switch to another pinned adapter version — reuses the install on the
-# mounted volume instead of downloading it again.
+# mounted volume instead of downloading it again.  0.2.3 signs in through the
+# Claude Code build the adapter installed in that cache and keeps the sign-in
+# to one browser page: the CLI no longer opens a second tab, and a pasted
+# callback address is replayed on the gateway host.
 [vendors.claude]
 version = "0.2.3"
 maturity = "experimental"
