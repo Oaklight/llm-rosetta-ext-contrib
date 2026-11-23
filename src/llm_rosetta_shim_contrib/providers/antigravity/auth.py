@@ -38,6 +38,7 @@ from llm_rosetta.contracts.auth import (
 from llm_rosetta_shim_contrib._vendor_cli import (
     CliLoginError,
     begin_cli_login,
+    cancel_cli_login,
     complete_cli_login,
     run_capture,
     subprocess_env,
@@ -115,6 +116,20 @@ def _write_marker(ctx: AuthContext) -> None:
     )
     os.chmod(temp, 0o600)
     os.replace(temp, path)
+
+
+def _clear_marker(ctx: AuthContext) -> bool:
+    """Remove the sign-in marker, returning whether one was there."""
+    root = _home_dir(ctx)
+    if root is None:
+        return False
+    try:
+        (root / LOGIN_MARKER).unlink()
+    except FileNotFoundError:
+        return False
+    except OSError:
+        return False
+    return True
 
 
 def _executable(ctx: AuthContext) -> str:
@@ -289,6 +304,30 @@ class AntigravityCliExchange(BaseAuthExchange):
             "the Antigravity CLI exited but no account appeared in the keyring; "
             "run `agy acp --login` on the gateway host to see its own error"
         )
+
+    def revoke(self, ctx: AuthContext) -> bool:
+        """Sign out locally, without claiming the Google grant was revoked.
+
+        The CLI owns the upstream session.  This removes what the panel reads:
+        the headless marker and, when a keyring is present, the entry ``agy``
+        wrote.  ``False`` means the local record is gone but the Google grant
+        may still be live upstream.
+        """
+        cancel_cli_login(ctx.provider)
+        _clear_marker(ctx)
+        if _keyring_available():
+            run_capture(
+                [
+                    "secret-tool",
+                    "clear",
+                    "service",
+                    KEYRING_SERVICE,
+                    "username",
+                    KEYRING_USER,
+                ],
+                timeout=10.0,
+            )
+        return False
 
 
 EXCHANGE = AntigravityCliExchange()

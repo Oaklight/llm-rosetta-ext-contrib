@@ -96,12 +96,12 @@ def _no_keyring(module: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(module, "_read_account", lambda: None)
 
 
-def test_the_exchange_is_vendor_mediated_and_not_revocable(exchange_module):
+def test_the_exchange_is_vendor_mediated_and_revocable(exchange_module):
     exchange = exchange_module.EXCHANGE
 
     assert exchange.vendor_managed is True
     assert exchange.kind == "vendor-cli"
-    assert exchange.can_revoke() is False
+    assert exchange.can_revoke() is True
 
 
 def test_the_status_record_drives_the_summary(exchange_module, monkeypatch):
@@ -202,6 +202,47 @@ def test_a_finished_headless_login_is_scoped_to_its_home(
 
     assert exchange.describe(other) is None
     assert exchange.needs_interactive_setup(other) is True
+
+
+def test_revoke_clears_the_headless_marker(
+    exchange_module, cli: Path, monkeypatch, tmp_path
+):
+    exchange = exchange_module.EXCHANGE
+    home = tmp_path / "home"
+    home.mkdir()
+    marker = home / exchange_module.LOGIN_MARKER
+    marker.write_text('{"connected": true, "at": 1}\n', encoding="utf-8")
+    ctx = _ctx(cli, home=str(home))
+    _no_keyring(exchange_module, monkeypatch)
+    assert exchange.needs_interactive_setup(ctx) is False
+
+    assert exchange.revoke(ctx) is False
+
+    assert not marker.exists()
+    assert exchange.needs_interactive_setup(ctx) is True
+
+
+def test_revoke_clears_the_keyring_entry(exchange_module, cli: Path, monkeypatch):
+    calls: list[list[str]] = []
+    monkeypatch.setattr(exchange_module, "_keyring_available", lambda: True)
+    monkeypatch.setattr(
+        exchange_module,
+        "run_capture",
+        lambda argv, **kwargs: calls.append(argv) or (0, "", ""),
+    )
+
+    assert exchange_module.EXCHANGE.revoke(_ctx(cli)) is False
+
+    assert calls == [
+        [
+            "secret-tool",
+            "clear",
+            "service",
+            exchange_module.KEYRING_SERVICE,
+            "username",
+            exchange_module.KEYRING_USER,
+        ]
+    ]
 
 
 def test_a_refused_code_is_reported_without_echoing_it(
