@@ -273,6 +273,30 @@ def _keyring_available() -> bool:
     return shutil.which("secret-tool") is not None
 
 
+def _session_env() -> dict[str, str]:
+    """The environment a desktop keyring lookup needs.
+
+    ``secret-tool`` speaks to the session bus, so it needs
+    ``DBUS_SESSION_BUS_ADDRESS`` and ``XDG_RUNTIME_DIR``.  A login session sets
+    both, but a gateway started by a service manager or a bare shell may have
+    neither even though the bus exists.  ``agy`` finds the same store on its
+    own; only the shim's lookup needs the repair, so fill in the per-user path
+    when the socket is there and leave a host without one untouched.
+    """
+    env = dict(os.environ)
+    runtime = env.get("XDG_RUNTIME_DIR", "")
+    if not runtime:
+        candidate = f"/run/user/{os.getuid()}"
+        if os.path.isdir(candidate):
+            runtime = candidate
+            env["XDG_RUNTIME_DIR"] = candidate
+    if runtime and not env.get("DBUS_SESSION_BUS_ADDRESS"):
+        bus = os.path.join(runtime, "bus")
+        if os.path.exists(bus):
+            env["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={bus}"
+    return env
+
+
 def _read_account() -> dict[str, Any] | None:
     """The signed-in account record, without its token.
 
@@ -290,6 +314,7 @@ def _read_account() -> dict[str, Any] | None:
             "username",
             KEYRING_USER,
         ],
+        env=_session_env(),
         timeout=10.0,
     )
     if captured is None:
@@ -363,6 +388,17 @@ class AntigravityCliExchange(BaseAuthExchange):
         if not _keyring_available():
             return _read_marker(ctx) is None
         return _read_account() is None
+
+    def setup_state_is_authoritative(self, ctx: AuthContext) -> bool:
+        """Return ``False``: a missing account is not proof of a sign-out.
+
+        The CLI keeps its token in a store the gateway may not be able to
+        read: a keyring lookup can fail because the collection is locked, and
+        a headless terminal sign-in leaves no marker.  Both look exactly like
+        "nobody signed in".  The readiness probe must ask the agent, which is
+        the only authority on its own session.
+        """
+        return False
 
     async def credential(self, ctx: AuthContext) -> str:
         """Refuse: the gateway never holds this lane's credential."""
@@ -445,6 +481,7 @@ class AntigravityCliExchange(BaseAuthExchange):
                     "username",
                     KEYRING_USER,
                 ],
+                env=_session_env(),
                 timeout=10.0,
             )
         return False
