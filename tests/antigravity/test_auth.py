@@ -204,6 +204,82 @@ def test_a_wrapped_install_keeps_its_prefix(exchange_module):
     ]
 
 
+def test_a_wrapper_is_not_owned_until_hardening_is_forced(exchange_module, tmp_path):
+    """Core hardens by executable name; a wrapper must opt in explicitly."""
+    ctx = _ctx(
+        tmp_path / "agy",
+        home=str(tmp_path / "gateway-home"),
+        argv=["npx", "-y", "antigravity@1.7.0", "acp"],
+    )
+    ctx.config["acp"] = {"argv": ["npx", "-y", "antigravity@1.7.0", "acp"]}
+
+    assert exchange_module._login_argv(ctx) == [
+        "npx",
+        "-y",
+        "antigravity@1.7.0",
+        "acp",
+        "--login",
+    ]
+
+    ctx.config["acp"]["harden"] = True
+    assert exchange_module._login_argv(ctx)[-2:] == [
+        "--gemini-dir",
+        str(tmp_path / "gateway-home"),
+    ]
+
+
+def test_a_command_with_no_acp_token_and_no_agy_name_is_refused(
+    exchange_module, tmp_path
+):
+    ctx = _ctx(
+        tmp_path / "agy",
+        argv=["bash", "-lc", "exec /opt/agy acp"],
+    )
+
+    with pytest.raises(AuthExchangeError, match="cannot derive a sign-in"):
+        exchange_module._login_argv(ctx)
+
+
+def test_a_flag_value_named_acp_does_not_split_the_command(exchange_module):
+    ctx = AuthContext(
+        provider="antigravity",
+        config={"acp": {"argv": ["agy2", "--label", "acp", "acp"]}},
+    )
+
+    assert exchange_module._login_argv(ctx) == [
+        "agy2",
+        "--label",
+        "acp",
+        "acp",
+        "--login",
+    ]
+
+
+def test_the_underscore_alias_names_the_profile(exchange_module, cli: Path):
+    ctx = _ctx(cli, argv=[str(cli), "acp", "--gemini_dir", "/opt/agy-profile"])
+
+    assert exchange_module._login_argv(ctx)[-2:] == [
+        "--gemini-dir",
+        "/opt/agy-profile",
+    ]
+
+
+def test_the_last_gemini_dir_is_the_one_that_runs(exchange_module, cli: Path):
+    """Core's parser takes the last; a valid config has only one anyway."""
+    ctx = _ctx(
+        cli,
+        argv=[
+            str(cli),
+            "acp",
+            "--gemini-dir",
+            "/a",
+            "--gemini-dir=/b",
+        ],
+    )
+
+    assert exchange_module._login_argv(ctx)[-2:] == ["--gemini-dir", "/b"]
+
+
 def test_hardening_off_leaves_the_command_own_store(
     exchange_module, cli: Path, tmp_path
 ):
