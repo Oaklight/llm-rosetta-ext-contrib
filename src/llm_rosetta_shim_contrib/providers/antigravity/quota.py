@@ -75,7 +75,11 @@ class AntigravityUsageProbe:
         from llm_rosetta.contracts.quota import QuotaProbeError, QuotaWindow
         from llm_rosetta.contracts.quota import parse_iso
 
-        payload = body if isinstance(body, dict) else {}
+        if not isinstance(body, dict):
+            raise QuotaProbeError(
+                f"the usage command printed a {type(body).__name__}, not a JSON object"
+            )
+        payload = body
         status = payload.get("status")
         if isinstance(status, str) and status and status.upper() != "SUCCESS":
             raise QuotaProbeError(_refusal(payload))
