@@ -422,6 +422,81 @@ def test_the_helper_is_found_by_import_not_by_text(tree: Path):
     assert list(archives.shared_helpers("llm7", tree)) == ["_vendor_cli.py"]
 
 
+_EXEC_AUTH = textwrap.dedent(
+    """
+    import importlib.abc
+    import importlib.util
+    import sys
+
+    class _BlockDistribution(importlib.abc.MetaPathFinder):
+        def find_spec(self, name, path=None, target=None):
+            if name.split(".")[0] == "llm_rosetta_shim_contrib":
+                raise ModuleNotFoundError(f"No module named {name!r}", name=name)
+            return None
+
+    sys.meta_path.insert(0, _BlockDistribution())
+    spec = importlib.util.spec_from_file_location("auth_under_test", sys.argv[1])
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    print("loaded")
+    """
+)
+
+
+def _extracted(tmp_path: Path, vendor: str = "antigravity") -> Path:
+    data = archives.build_archive(vendor, _ROOT)
+    with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
+        safe = {"filter": "data"} if hasattr(tarfile, "data_filter") else {}
+        tar.extractall(tmp_path, **safe)
+    return tmp_path / "providers"
+
+
+def test_a_lane_sidecar_finds_the_archive_helper(tmp_path: Path):
+    """A lane-level exchange sits deeper than the vendor's auth.py."""
+    providers = _extracted(tmp_path)
+    deep = providers / "antigravity" / "llm" / "acp" / "auth.py"
+    deep.parent.mkdir(parents=True, exist_ok=True)
+    (providers / "antigravity" / "auth.py").replace(deep)
+
+    proc = subprocess.run(
+        [sys.executable, "-c", _EXEC_AUTH, str(deep)],
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+
+
+def test_the_helper_search_stops_at_the_archive_root(tmp_path: Path):
+    """A copy above the extraction root must not stand in for the archive's."""
+    stray = tmp_path / "outer" / "_vendor_cli.py"
+    stray.parent.mkdir(parents=True)
+    stray.write_bytes((archives.package_dir(_ROOT) / "_vendor_cli.py").read_bytes())
+    auth = (
+        tmp_path
+        / "outer"
+        / "archive"
+        / "providers"
+        / "antigravity"
+        / "llm"
+        / "acp"
+        / "auth.py"
+    )
+    auth.parent.mkdir(parents=True)
+    auth.write_bytes(
+        (archives.providers_dir(_ROOT) / "antigravity" / "auth.py").read_bytes()
+    )
+
+    proc = subprocess.run(
+        [sys.executable, "-c", _EXEC_AUTH, str(auth)],
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode != 0
+    assert "providers/_vendor_cli.py is missing from this archive" in proc.stderr
+
+
 def test_contrib_shares_no_shim_name_with_the_installed_core(capsys):
     """CI's call: no allowances."""
     assert collisions.main([]) == 0
