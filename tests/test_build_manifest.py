@@ -352,6 +352,7 @@ def test_the_cli_refuses_a_tag_that_is_not_the_package_version(tmp_path: Path):
 _LOAD_ARCHIVE = textwrap.dedent(
     """
     import importlib.abc
+    import importlib.util
     import sys
     from pathlib import Path
 
@@ -364,6 +365,12 @@ _LOAD_ARCHIVE = textwrap.dedent(
             return None
 
     sys.meta_path.insert(0, _BlockDistribution())
+    try:
+        importlib.util.find_spec("llm_rosetta_shim_contrib")
+    except ModuleNotFoundError:
+        pass
+    else:
+        raise AssertionError("the load must not resolve the installed distribution")
     from llm_rosetta.api import list_shims, staging_registry
     from llm_rosetta.contracts.shim import load_providers_from_dir
     with staging_registry():
