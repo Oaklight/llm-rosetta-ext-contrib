@@ -59,6 +59,18 @@ connection:
     - ANTHROPIC_AUTH_TOKEN
     - ANTHROPIC_BASE_URL
     - ANTHROPIC_MODEL
+    - ANTHROPIC_SMALL_FAST_MODEL
+    - ANTHROPIC_DEFAULT_OPUS_MODEL
+    - ANTHROPIC_DEFAULT_SONNET_MODEL
+    - ANTHROPIC_DEFAULT_HAIKU_MODEL
+    - ANTHROPIC_CUSTOM_HEADERS
+    - CLAUDE_CODE_USE_BEDROCK
+    - CLAUDE_CODE_USE_VERTEX
+    - CLAUDE_CODE_USE_FOUNDRY
+    - CLAUDE_CODE_USE_ANTHROPIC_AWS
+    - CLAUDE_CODE_USE_ANTHROPIC_GOOGLE_CLOUD
+    - CLAUDE_CODE_USE_MANTLE
+    - CLAUDE_CODE_USE_GATEWAY
   # This adapter keeps Claude Code's own file, shell and web tools on unless
   # the request says otherwise, and Claude Code may auto-approve a read-only
   # tool without asking the client.  ``disableBuiltInTools`` is the adapter's

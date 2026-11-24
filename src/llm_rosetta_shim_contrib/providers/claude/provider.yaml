@@ -1,10 +1,11 @@
-# Anthropic Claude — through the Claude Agent SDK, over ACP.
+# Anthropic Claude — through the vendor's own CLI.
 #
-# The lane does not call the Anthropic API with a gateway key.  It starts
-# ``@agentclientprotocol/claude-agent-acp``, which runs Claude Code (the
-# Claude Agent SDK's bundled CLI) and speaks ACP to it.  The Claude sign-in
-# stays in the CLI's own store (``~/.claude``), so the gateway never sees a
-# token.
+# Two lanes share this vendor manifest.  ``claude--acp`` starts the Claude
+# Agent SDK adapter and speaks ACP to it; ``claude--messages`` runs the
+# official Claude Code CLI as a model client and reads its upstream request
+# through a loopback relay.  Both leave the credential in the CLI's own login
+# store (``~/.claude``, or ``$CLAUDE_CONFIG_DIR`` when the ACP lane sets one),
+# so the gateway never sees a token.
 #
 # A Claude Pro/Max subscription is used after an out-of-band sign-in on the
 # gateway host: ``claude auth login --claudeai``.  ``--console`` signs in for

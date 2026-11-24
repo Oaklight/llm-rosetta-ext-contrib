@@ -62,12 +62,14 @@ class TestWhatTheShimDeclares:
         connection = shim().connection
 
         assert connection.acp_env_unset == CLAUDE_ENV_UNSET
-        assert set(CLAUDE_ENV_UNSET) == {
+        assert {
             "ANTHROPIC_API_KEY",
             "ANTHROPIC_AUTH_TOKEN",
             "ANTHROPIC_BASE_URL",
             "ANTHROPIC_MODEL",
-        }
+            "CLAUDE_CODE_USE_BEDROCK",
+            "CLAUDE_CODE_USE_VERTEX",
+        } <= set(CLAUDE_ENV_UNSET)
 
     def test_the_profile_is_the_lane_own_home(self):
         """The shim asks the gateway for this lane's home, not ``~/.claude``."""

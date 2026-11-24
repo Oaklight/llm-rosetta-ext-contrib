@@ -13,6 +13,8 @@ shims:
     path: antigravity/llm/acp
   - name: claude--acp
     path: claude/llm/acp
+  - name: claude--messages
+    path: claude/llm/messages
   - name: groq--chat_completions
     path: groq/llm
   - name: kilo--chat_completions

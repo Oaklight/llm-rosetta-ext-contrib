@@ -16,7 +16,7 @@ This repository was `llm-rosetta-shim-free` (renamed 2026-11-21; history, issues
 | `opencode` | `opencode--chat_completions`, `opencode--messages`, `opencode--open_responses` | `tier:subscription`, `tier:paid` | beta | Go and Zen lanes; Go allowance probe `opencode_go` |
 | `openai_chatgpt` | `openai_chatgpt--open_responses` | `tier:subscription`, `auth:oauth` | beta | Sign in with ChatGPT; in-band probe `openai_codex` |
 | `antigravity` | `antigravity--acp` | `tier:subscription`, `auth:cli` | beta | drives the local `agy` CLI over ACP; client tools bridged over MCP |
-| `claude` | `claude--acp` | `tier:subscription`, `auth:cli` | experimental | Claude Agent SDK adapter over ACP; client tools bridged over MCP, live-verified through a Pro subscription |
+| `claude` | `claude--acp`, `claude--messages` | `tier:subscription`, `auth:cli` | experimental | [ACP adapter](docs/vendors/claude-acp.md) and the [official CLI as a model client](docs/vendors/claude-cli.md); both keyless |
 | `kilo` | `kilo--chat_completions` | `tier:paid` | beta | aggregator (the keyless pool is `kilo_free`) |
 | `openrouter` | `openrouter--chat_completions`, `openrouter--messages`, `openrouter--open_responses`, `openrouter--rerank` | `tier:paid` | beta | aggregator |
 | `groq` | `groq--chat_completions` | `tier:paid` | beta | |

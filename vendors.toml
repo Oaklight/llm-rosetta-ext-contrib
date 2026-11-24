@@ -113,19 +113,21 @@ maturity = "beta"
 since = "2026-11-23"
 tags = ["tier:subscription", "auth:cli"]
 
-# Claude through the Claude Agent SDK's ACP adapter.  The adapter runs Claude
-# Code and reads the host's `claude auth login` store; the gateway sends no
-# credential (keyless).  Experimental: the adapter is versioned independently
-# and its permission surface is larger than the gateway can see.  A live tool
-# round trip through a Pro subscription on adapter 0.109.1 / Claude Code
+# Claude through two lanes, both keyless: the Claude Agent SDK's ACP adapter
+# (`claude--acp`) and the official Claude Code CLI as a model client
+# (`claude--messages`).  Both read the host's `claude auth login` store; the
+# gateway sends no credential.  Experimental: the adapter is versioned
+# independently and its permission surface is larger than the gateway can see,
+# and the CLI lane is coupled to the CLI's replay and request format.  A live
+# tool round trip through a Pro subscription on adapter 0.109.1 / Claude Code
 # 2.1.299 is recorded (tool call out, client result back, agent reply), so
-# `tools` is on by default.  The enterprise profile hit its 5-hour limit; a
-# clean CLAUDE_CONFIG_DIR is recommended.  0.2.0 uses connection.acp_env, so
-# publish it only to gateways running a core that reads that field
-# (llm-rosetta#1675); an older core ignores it and leaves Claude Code's tool
-# search on.  `since` is the latest dated live record.  0.2.1 adds the
-# vendor-managed auth exchange behind the admin sign-in button, so it needs the
-# core that honours ``vendor_managed`` (llm-rosetta#1681).  0.2.2 keeps the
+# `tools` is on by default on the ACP leaf.  The enterprise profile hit its
+# 5-hour limit; a clean CLAUDE_CONFIG_DIR is recommended.  0.2.0 uses
+# connection.acp_env, so publish it only to gateways running a core that reads
+# that field (llm-rosetta#1675); an older core ignores it and leaves Claude
+# Code's tool search on.  `since` is the latest dated live record.  0.2.1 adds
+# the vendor-managed auth exchange behind the admin sign-in button, so it needs
+# the core that honours ``vendor_managed`` (llm-rosetta#1681).  0.2.2 keeps the
 # adapter's npm cache in the lane's persistent home, so an image upgrade — or
 # a switch to another pinned adapter version — reuses the install on the
 # mounted volume instead of downloading it again.  0.2.3 signs in through the
@@ -135,10 +137,17 @@ tags = ["tier:subscription", "auth:cli"]
 # Code's built-in tools from the session `_meta`, removes Anthropic billing
 # variables from the agent and sign-in environments, and names the CLI's
 # account email in the Authentication card.
+#
+# 0.3.0 adds `claude--messages`, which needs a core with the `claude_cli`
+# transport (llm-rosetta#1696).  Measured on CLI 2.1.299: the relay's prefix
+# restore lifts the cache-read share from a flat 17.4% to 49.9% over four
+# turns; vision and thinking work; a tool definition is not yet sent upstream,
+# so the leaf declares `[text, vision, reasoning]` only.  The shared unset list
+# now also removes the model overrides and cloud backend selectors.
 [vendors.claude]
-version = "0.2.4"
+version = "0.3.0"
 maturity = "experimental"
-since = "2026-11-23"
+since = "2026-11-24"
 tags = ["tier:subscription", "auth:cli"]
 
 # The paid gateway (the keyless pool is kilo_free).  No dated live record in

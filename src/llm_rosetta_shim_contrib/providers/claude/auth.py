@@ -1,10 +1,11 @@
 """Sign in to Claude through the Claude Code CLI.
 
-The Claude ACP lane does not hold a gateway credential.  The adapter starts
-Claude Code, and Claude Code authenticates from its own store: ``~/.claude``
-by default, or ``$CLAUDE_CONFIG_DIR`` when the provider's ``acp_env`` sets
-one.  A Pro/Max subscription is written there by ``claude auth login
---claudeai``; ``--console`` signs in for API billing instead.
+Both Claude lanes are keyless.  The ACP adapter starts Claude Code, and the
+``claude--messages`` lane runs the CLI directly; either way Claude Code
+authenticates from its own store: ``~/.claude`` by default, or
+``$CLAUDE_CONFIG_DIR`` when the provider's ``acp_env`` sets one.  A Pro/Max
+subscription is written there by ``claude auth login --claudeai``;
+``--console`` signs in for API billing instead.
 
 So this exchange is **vendor-managed**: it declares ``vendor_managed = True``,
 which keeps the lane keyless and tells the gateway never to mint or seed a
@@ -87,15 +88,29 @@ _STATUS_CACHE: dict[str, tuple[float, dict[str, Any] | None]] = {}
 
 #: Variables the gateway's own environment may carry that outrank the stored
 #: Claude Code login.  ``ANTHROPIC_API_KEY`` switches the CLI to API billing,
-#: and ``ANTHROPIC_BASE_URL``/``ANTHROPIC_MODEL`` point it at another host or
-#: model; either would make the panel's sign-in report a different account
-#: from the one the agent uses.  The shim's ``acp_env_unset`` declares the same
-#: names; ``tests/claude/test_registration.py`` asserts they match.
+#: ``ANTHROPIC_BASE_URL`` points it at another host, and the model names change
+#: what it asks for; a cloud selector (``CLAUDE_CODE_USE_BEDROCK`` and its
+#: siblings) moves the request to another provider entirely.  Any of them
+#: would make the panel's sign-in report a different account from the one the
+#: agent uses.  The shim's ``acp_env_unset`` and ``cli_env_unset`` declare the
+#: same names; ``tests/claude/test_registration.py`` asserts they match.
 CLAUDE_ENV_UNSET: tuple[str, ...] = (
     "ANTHROPIC_API_KEY",
     "ANTHROPIC_AUTH_TOKEN",
     "ANTHROPIC_BASE_URL",
     "ANTHROPIC_MODEL",
+    "ANTHROPIC_SMALL_FAST_MODEL",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    "ANTHROPIC_CUSTOM_HEADERS",
+    "CLAUDE_CODE_USE_BEDROCK",
+    "CLAUDE_CODE_USE_VERTEX",
+    "CLAUDE_CODE_USE_FOUNDRY",
+    "CLAUDE_CODE_USE_ANTHROPIC_AWS",
+    "CLAUDE_CODE_USE_ANTHROPIC_GOOGLE_CLOUD",
+    "CLAUDE_CODE_USE_MANTLE",
+    "CLAUDE_CODE_USE_GATEWAY",
 )
 
 
