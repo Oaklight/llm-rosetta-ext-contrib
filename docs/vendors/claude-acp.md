@@ -11,11 +11,12 @@ account. The shim points that store at the lane's persistent directory under
 the gateway data directory (`CLAUDE_CONFIG_DIR={acp_home}/claude`), so a
 mounted data volume carries the login into the next container image.
 
-> Maturity: **experimental**. The adapter is versioned independently, and its
-> permission surface is larger than the gateway can see. A live tool round trip
-> through a Claude Pro subscription is recorded (adapter 0.109.1, Claude Code
-> 2.1.299): the request's `echo` tool returned as a tool call and the client's
-> result resumed the same ACP turn.
+> Maturity: **experimental**. The adapter is versioned independently. The
+> pinned adapter is given `disableBuiltInTools: true`, so the lane offers only
+> the gateway's bridged tools; another adapter version must be checked for that
+> key. A live tool round trip through a Claude Pro subscription is recorded
+> (adapter 0.109.1, Claude Code 2.1.299): the request's `echo` tool returned as
+> a tool call and the client's result resumed the same ACP turn.
 
 ## Install
 
@@ -34,8 +35,9 @@ point.
 ## Requirements
 
 - Python >= 3.10
-- `llm-rosetta >= 0.14.0.dev39` (the first core whose exchanges may be
-  vendor-managed; the manifest records `requires: {surface: 1, ir: 1}`)
+- `llm-rosetta >= 0.14.0.dev40` (the first core with the vendor-managed
+  exchange, `connection.acp_session_meta` and `connection.acp_env_unset`; the
+  manifest records `requires: {surface: 1, ir: 1}`)
 - Node.js **22 or newer** and `npx` on the gateway host
 - A core that reads `connection.acp_env` (Oaklight/llm-rosetta#1675). An older
   core ignores the key, so Claude Code's tool search stays on and the request's
@@ -44,7 +46,8 @@ point.
 - A core with the persistent ACP home (Oaklight/llm-rosetta#1683): it expands
   `{acp_home}` and publishes `LLM_ROSETTA_ACP_HOME`. An older core passes the
   placeholder literally, so the CLI would try to use a directory with braces in
-  its name. The manifest's `>= 0.14.0.dev39` floor includes both changes.
+  its name. The manifest's `>= 0.14.0.dev40` floor includes both changes and
+  the session `_meta` that removes Claude Code's built-in tools.
 
 The shim pins `@agentclientprotocol/claude-agent-acp@0.109.1`. The package
 bundles the Claude Agent SDK and its native Claude CLI, so a global `claude`
@@ -143,7 +146,7 @@ and the login store does not move:
 The older top-level `acp_argv` still works as an alias. Because the npm cache
 and `CLAUDE_CONFIG_DIR` both live under `acp.home`, a version switch needs no
 new sign-in; keep the home and change only the command. `acp.argv` needs a
-core that reads it; this package's `0.14.0.dev39` floor includes that change.
+core that reads it; this package's `0.14.0.dev40` floor includes that change.
 
 `acp_env` is layered over the environment the gateway starts the agent with.
 `CLAUDE_CODE_EXECUTABLE` names a specific CLI binary and `CLAUDE_CONFIG_DIR`
@@ -235,11 +238,14 @@ replays the history rather than continuing with the old bridge. Expect such a
 request to cost a full history replay.
 
 **Claude Code's own tools** (file read and write, shell, web) are not a
-gateway tool path. The gateway refuses every built-in tool permission request
-it receives and stops a turn at a built-in tool frame. However, Claude Code may
-auto-approve some read-only tools without sending a permission request, so this
-lane cannot guarantee that it never reads a file on the gateway host. Run the
-gateway on a host where that is acceptable.
+gateway tool path. The shim passes `disableBuiltInTools: true` on
+`session/new` (and repeats it on `session/load` and `session/resume`, which the
+adapter folds into its session fingerprint), so the agent's built-in list is
+empty and the only tools it can call are the request's, served over the
+loopback MCP bridge. The gateway also refuses every built-in permission request
+and stops a turn that starts one, as a second line. Only an adapter version
+that ignores `disableBuiltInTools` would expose the built-ins; check that key
+before changing the pin.
 
 ## Limitations
 
@@ -255,5 +261,6 @@ gateway on a host where that is acceptable.
   exhausted plan reads as the adapter's own error, not a gateway error.
 - A full Claude profile can load the host's skill catalog and exceed the context
   window. The lane's own home starts empty; keep it that way.
-- Claude Code's own tools are refused, but some read-only tools may be
-  auto-approved before a permission request reaches the gateway.
+- Built-in tools are removed by the pinned adapter's `disableBuiltInTools`
+  session key; an adapter that ignores it could expose them, so change the pin
+  deliberately and re-run the live check.
