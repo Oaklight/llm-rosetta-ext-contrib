@@ -57,6 +57,9 @@ NOOP = {
 #: An oversized screenshot turns a useful verdict into a gateway error.
 _MAX_IMAGE_BYTES = 4 << 20
 
+#: A value the prompt never contains, so only the tool result can supply it.
+_RESULT_NONCE = "kestrel-4815"
+
 
 class CheckError(RuntimeError):
     """One live step did not hold."""
@@ -204,7 +207,10 @@ def _check_tool_round_trip(
     model: str,
     timeout: float,
 ) -> None:
-    prompt = "Call the echo tool with text ping. Do not answer in text."
+    prompt = (
+        "Call the echo tool with text ping. Then repeat the tool result "
+        "exactly and nothing else."
+    )
     first = _messages(
         base,
         key,
@@ -245,7 +251,7 @@ def _check_tool_round_trip(
                         {
                             "type": "tool_result",
                             "tool_use_id": call["id"],
-                            "content": "ping",
+                            "content": f"echo: {_RESULT_NONCE}",
                         }
                     ],
                 },
@@ -259,7 +265,7 @@ def _check_tool_round_trip(
         raise CheckError(f"the resumed turn stopped at {second.get('stop_reason')!r}")
     if not answer:
         raise CheckError("the resumed turn has no text answer")
-    if "ping" not in answer.lower():
+    if _RESULT_NONCE not in answer.lower():
         raise CheckError(
             f"the resumed turn did not use the tool result: {answer[:300]!r}"
         )
