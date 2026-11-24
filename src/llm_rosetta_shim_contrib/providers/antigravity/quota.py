@@ -77,7 +77,7 @@ class AntigravityUsageProbe:
 
         if not isinstance(body, dict):
             raise QuotaProbeError(
-                f"the usage command printed a {type(body).__name__}, not a JSON object"
+                f"the usage command printed {type(body).__name__}, not a JSON object"
             )
         payload = body
         status = payload.get("status")
