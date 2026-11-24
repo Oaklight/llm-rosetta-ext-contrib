@@ -44,6 +44,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import ast
 import gzip
 import hashlib
 import io
@@ -227,6 +228,23 @@ def vendor_shims_file(vendor: str, root: Path | None = None) -> bytes:
     return ("\n".join(lines) + "\n").encode("utf-8")
 
 
+def _imported_modules(path: Path) -> set[str]:
+    """Return the dotted modules *path* imports.
+
+    Read as syntax, not as text: a comment that mentions a helper must not
+    ship it, and ``from <package> import <module>`` must.
+    """
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    modules: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            modules.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            modules.add(node.module)
+            modules.update(f"{node.module}.{alias.name}" for alias in node.names)
+    return modules
+
+
 def shared_helpers(vendor: str, root: Path | None = None) -> dict[str, bytes]:
     """Return the package helpers *vendor* imports, keyed by archive name.
 
@@ -239,9 +257,11 @@ def shared_helpers(vendor: str, root: Path | None = None) -> dict[str, bytes]:
     directory = vendor_dir(vendor, root)
     used: set[str] = set()
     for relative in shipped_files(directory):
-        text = (directory / relative).read_bytes()
+        if not relative.endswith(".py"):
+            continue
+        imported = _imported_modules(directory / relative)
         for filename, module in SHARED_HELPERS.items():
-            if module.encode("utf-8") in text:
+            if module in imported:
                 used.add(filename)
     return {
         filename: (package_dir(root) / filename).read_bytes()

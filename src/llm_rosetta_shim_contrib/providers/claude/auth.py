@@ -55,9 +55,14 @@ except ModuleNotFoundError as exc:  # a manifest archive ships the helper itself
     from pathlib import Path
 
     _helper = Path(__file__).resolve().parents[1] / "_vendor_cli.py"
+    if not _helper.is_file():
+        raise ModuleNotFoundError(
+            "providers/_vendor_cli.py is missing from this archive",
+            name="llm_rosetta_shim_contrib._vendor_cli",
+        ) from exc
     _spec = importlib.util.spec_from_file_location("_vendor_cli", _helper)
     if _spec is None or _spec.loader is None:
-        raise
+        raise RuntimeError(f"cannot load {_helper}") from exc
     _module = importlib.util.module_from_spec(_spec)
     _spec.loader.exec_module(_module)
     CliLoginError = _module.CliLoginError
