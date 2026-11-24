@@ -160,10 +160,18 @@ def _bundled_executable(ctx: AuthContext) -> str:
 
 
 def _executable(ctx: AuthContext) -> str:
-    """The Claude Code binary to drive, or a clear operator-facing error."""
+    """The Claude Code binary to drive, or a clear operator-facing error.
+
+    An ACP lane names its build with ``CLAUDE_CODE_EXECUTABLE``; a direct CLI
+    lane names it with ``cli_argv``.  Both must sign in with the binary that
+    will serve the lane, or the panel writes a profile the lane never reads.
+    """
     custom = _acp_env(ctx).get("CLAUDE_CODE_EXECUTABLE")
     if custom:
         return custom
+    declared = _declared_command(ctx)
+    if declared:
+        return declared
     bundled = _bundled_executable(ctx)
     if bundled:
         return bundled
@@ -179,12 +187,27 @@ def _executable(ctx: AuthContext) -> str:
     )
 
 
+def _declared_command(ctx: AuthContext) -> str:
+    """The direct CLI lane's command, when the provider declares one.
+
+    The ACP lane names its build with ``CLAUDE_CODE_EXECUTABLE`` in
+    ``acp_env``.  The ``claude--messages`` lane names the same build with
+    ``cli_argv``; the admin sign-in must drive that binary, not whichever
+    ``claude`` happens to be on the gateway's ``PATH``.
+    """
+    raw = (ctx.config or {}).get("cli_argv")
+    if isinstance(raw, (list, tuple)) and raw and isinstance(raw[0], str):
+        return raw[0]
+    return ""
+
+
 def _status_key(ctx: AuthContext) -> str:
     env = _acp_env(ctx)
     return "\x00".join(
         (
             ctx.provider,
             env.get("CLAUDE_CODE_EXECUTABLE", ""),
+            _declared_command(ctx),
             env.get("CLAUDE_CONFIG_DIR", ""),
         )
     )

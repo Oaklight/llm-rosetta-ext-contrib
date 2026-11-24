@@ -239,6 +239,21 @@ def test_the_adapters_bundled_cli_is_preferred(
     assert exchange_module.EXCHANGE.needs_interactive_setup(ctx) is True
 
 
+def test_a_direct_cli_lane_signs_in_with_its_declared_command(
+    exchange_module, cli: Path
+):
+    """The panel must drive the binary the lane will start, not PATH's."""
+    ctx = AuthContext(
+        provider="claude",
+        config={
+            "cli_argv": [str(cli)],
+            "acp_env": {"CLAUDE_CONFIG_DIR": "/tmp/claude-profile"},
+        },
+    )
+
+    assert exchange_module._executable(ctx) == str(cli)
+
+
 def test_complete_passes_the_code_and_verifies_status(exchange_module, cli: Path):
     exchange = exchange_module.EXCHANGE
     ctx = _ctx(cli)

@@ -41,8 +41,11 @@ class TestWhatTheShimDeclares:
         """Without this the CLI starts with no credential (measured 401)."""
         assert shim().connection.cli_args == ("--setting-sources", "user")
 
-    def test_the_lane_identifies_itself_to_the_cli(self):
-        assert shim().connection.cli_env == {"CLAUDE_CODE_ENTRYPOINT": "llm-rosetta"}
+    def test_the_lane_identifies_itself_and_owns_its_profile(self):
+        assert shim().connection.cli_env == {
+            "CLAUDE_CODE_ENTRYPOINT": "llm-rosetta",
+            "CLAUDE_CONFIG_DIR": "{acp_home}/claude",
+        }
 
     def test_billing_and_backend_variables_are_kept_out_of_the_lane(self):
         assert shim().connection.cli_env_unset == CLAUDE_ENV_UNSET
@@ -57,13 +60,20 @@ class TestWhatTheShimDeclares:
         assert connection.keyless is True
         assert not connection.api_key_env
 
-    def test_vision_and_reasoning_are_on_by_default(self):
-        """Both were measured live on CLI 2.1.299."""
-        assert shim().default_capabilities == ("text", "vision", "reasoning")
+    def test_vision_reasoning_and_tools_are_on_by_default(self):
+        """All three were measured live on CLI 2.1.299.
 
-    def test_tools_stay_off_until_the_definition_reaches_upstream(self):
-        """A live request with a tool degraded to text, not a tool_use block."""
-        assert "tools" not in shim().default_capabilities
+        Image blocks and thinking blocks pass through unchanged. A client tool
+        reaches the model on the relay's rewrite: the CLI itself runs with
+        ``--tools ""``, reports the model's ``tool_use`` block and ends the
+        turn with ``stop_reason: tool_use``.
+        """
+        assert shim().default_capabilities == (
+            "text",
+            "vision",
+            "reasoning",
+            "tools",
+        )
 
     def test_the_vendor_title_and_logo_are_inherited(self):
         assert shim().group_label == "Anthropic (Claude)"

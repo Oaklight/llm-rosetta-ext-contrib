@@ -6,18 +6,21 @@
 # `claude auth login --claudeai` on the gateway host (`--console` signs in for
 # API billing instead).  The vendor manifest declares the lane keyless.
 #
-# Each turn's CLI points ANTHROPIC_BASE_URL at a per-turn loopback relay.  The
-# relay forwards the CLI's one upstream request, drops the CLI's per-request
-# annotation messages from the replayed prefix, and moves the cache breakpoint
-# onto the turn's last block.  Measured on CLI 2.1.299: over four turns the
-# cache-read share rose from a flat 17.4% to 49.9%.
+# Tools travel on the relay's rewrite, not through the CLI's own tool set: the
+# host's `tools` and `tool_choice` are copied onto the CLI's upstream body, so
+# the model can emit a `tool_use`.  The CLI runs with `--tools ""`, so it
+# cannot execute that call; it reports the block and ends the turn (measured
+# on 2.1.299: `stop_reason: tool_use`, the assistant message intact).  The
+# next request's `tool_result` replays in the history like any other block.
 #
-# Tools are not declared yet.  The CLI builds the request, and the transport
-# does not inject the host's `tools` into it: a live request with a tool
-# degraded to text rather than a `tool_use` block.  Tool history (`tool_use`
-# / `tool_result`) does replay unchanged, so the gap is only the outbound
-# definition.  Declare `capabilities: [text, vision, reasoning, tools]` on a
-# model only after that path is fixed and measured.
+# Every turn's CLI points ANTHROPIC_BASE_URL at a per-turn loopback relay.  The
+# relay forwards the CLI's one upstream request, drops the CLI's per-request
+# annotation messages from the replayed prefix, restores the host's tools, and
+# moves the cache breakpoint onto the turn's last block.  Measured on CLI
+# 2.1.299: in a four-turn conversation with a ~7k-token system prompt, turns
+# two to four each read the same 6,838-token prefix from cache — 69% of the
+# probe's input tokens.  (Prompt caching only engages above the model's
+# minimum cacheable length, so a small prompt reports zero either way.)
 #
 # The CLI's own tool set is off (`--tools ""`), session persistence is off,
 # and one turn is one process.  A gateway deployment should cap concurrency
@@ -30,9 +33,9 @@ logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/claud
 
 # Images ride through the replay unchanged and a live request against the
 # admin panel's test image answered correctly.  Thinking blocks come back from
-# the CLI's own stream events (measured on 2.1.299).  Tools stay off until the
-# outbound definition reaches the upstream body; see the header.
-default_capabilities: [text, vision, reasoning]
+# the CLI's own stream events (measured on 2.1.299).  Tools reach the model
+# through the relay rewrite; see the header.
+default_capabilities: [text, vision, reasoning, tools]
 
 connection:
   # The lane is reached by starting a process, not by dialing this host.  It
@@ -43,7 +46,7 @@ connection:
   # The vendor's command.  An absolute path is fine when the binary is not on
   # the gateway's PATH; a provider entry may point at another install.
   cli_argv: ["claude"]
-  # Load the user settings that hold the login helper.  Without this the CLI
+  # Load user settings from this lane's own profile.  Without this the CLI
   # starts with no credential: measured on 2.1.299, the upstream answered 401.
   # The transport's private --settings file still pins ANTHROPIC_BASE_URL to
   # the relay, so a user settings file cannot point the CLI at another host.
@@ -55,6 +58,10 @@ connection:
   # rate effect is not reproduced here, so do not promise a number.
   cli_env:
     CLAUDE_CODE_ENTRYPOINT: llm-rosetta
+    # Keep the official login in this lane's profile, as the ACP lane does.
+    # Without it the CLI reads the gateway process's ~/.claude, which may hold
+    # an API billing helper instead of the subscription login the panel shows.
+    CLAUDE_CONFIG_DIR: "{acp_home}/claude"
   # The gateway process usually carries Anthropic billing or backend settings.
   # Claude Code gives them precedence over the stored subscription, so remove
   # them: otherwise the lane silently bills the API, calls another host, or
@@ -86,9 +93,9 @@ hint_msg:
     cloud backend selectors from the lane's environment, so a gateway process
     that exports them still uses the stored subscription rather than API
     billing or another provider. Each request starts one `claude` process
-    (about 250 MB), so cap concurrency per lane. Images and thinking blocks
-    work; tool history replays, but a tool definition is not yet sent
-    upstream, so do not give a model on this lane the tools capability.
+    (about 250 MB), so cap concurrency per lane. Images, thinking blocks and
+    client tools work: the tool definitions travel on the relay's rewrite and
+    the CLI reports the model's call back unchanged.
     Anthropic's terms may not allow driving the CLI from another client; use
     an account you can afford to lose. A provider entry may set cli_upstream
     to send the request through an organization gateway instead of Anthropic's
@@ -100,7 +107,7 @@ hint_msg:
     ANTHROPIC_API_KEY、ANTHROPIC_BASE_URL、模型覆盖项以及云后端选择项，
     因此即使网关进程导出了这些变量，仍会使用已保存的订阅，而不是 API 计费或其他供应商。
     每个请求启动一个 `claude` 进程（约 250 MB），请按通道限制并发。
-    图片与思考块可用；工具历史可以回放，但工具定义尚未发送到上游，
-    因此不要给本通道的模型声明 tools 能力。Anthropic 的条款可能不允许从其他客户端
+    图片、思考块与客户端工具均可用：工具定义由 relay 改写写入请求体，
+    CLI 会原样返回模型的工具调用。Anthropic 的条款可能不允许从其他客户端
     驱动该 CLI，请只使用可以承受损失的账号。provider 条目可设置 cli_upstream，
     让请求经过组织网关而不是 Anthropic 的 API。
