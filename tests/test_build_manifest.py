@@ -351,12 +351,19 @@ def test_the_cli_refuses_a_tag_that_is_not_the_package_version(tmp_path: Path):
 
 _LOAD_ARCHIVE = textwrap.dedent(
     """
+    import importlib.abc
     import sys
     from pathlib import Path
-    # The gateway does not install this distribution; drop it so the load
-    # proves the archive is self-contained.  llm-rosetta stays importable.
-    drop = Path(sys.argv[2]).resolve()
-    sys.path[:] = [p for p in sys.path if Path(p or ".").resolve() != drop]
+
+    class _BlockDistribution(importlib.abc.MetaPathFinder):
+        # CI installs the wheel, so block the name outright: the archive's
+        # fallback must run even when site-packages could answer.
+        def find_spec(self, name, path=None, target=None):
+            if name.split(".")[0] == "llm_rosetta_shim_contrib":
+                raise ModuleNotFoundError(f"No module named {name!r}", name=name)
+            return None
+
+    sys.meta_path.insert(0, _BlockDistribution())
     from llm_rosetta.api import list_shims, staging_registry
     from llm_rosetta.contracts.shim import load_providers_from_dir
     with staging_registry():
@@ -374,7 +381,7 @@ def test_each_archive_loads_with_core_in_a_fresh_interpreter(vendor, tmp_path: P
         safe = {"filter": "data"} if hasattr(tarfile, "data_filter") else {}
         tar.extractall(tmp_path, **safe)
     proc = subprocess.run(
-        [sys.executable, "-c", _LOAD_ARCHIVE, str(tmp_path / "providers"), str(_ROOT / "src")],
+        [sys.executable, "-c", _LOAD_ARCHIVE, str(tmp_path / "providers")],
         capture_output=True,
         text=True,
         check=True,
@@ -395,6 +402,17 @@ def test_a_vendor_that_imports_a_package_helper_ships_it():
     assert "providers/_vendor_cli.py" not in archives.archive_members(
         archives.build_archive("llm7", _ROOT)
     )
+
+
+def test_the_helper_is_found_by_import_not_by_text(tree: Path):
+    """A comment must not ship the helper; either import spelling must."""
+    note = archives.providers_dir(tree) / "llm7" / "notes.py"
+    note.write_text("# llm_rosetta_shim_contrib._vendor_cli\n", encoding="utf-8")
+    assert archives.shared_helpers("llm7", tree) == {}
+    note.write_text(
+        "from llm_rosetta_shim_contrib import _vendor_cli\n", encoding="utf-8"
+    )
+    assert list(archives.shared_helpers("llm7", tree)) == ["_vendor_cli.py"]
 
 
 def test_contrib_shares_no_shim_name_with_the_installed_core(capsys):
