@@ -186,6 +186,24 @@ declare the other capabilities explicitly:
 }
 ```
 
+## Allowance
+
+`agy acp` turns carry only token counts, so the Quota card is filled by the
+vendor CLI itself. The shim declares `quota.local`, and the gateway runs the
+same CLI with the lane's profile:
+
+```
+agy -p "/usage" --output-format json
+```
+
+`{acp_argv0}` expands to the lane's declared `acp.argv[0]`, so the read follows
+the install the lane uses. Print mode does not accept `--gemini-dir`; the
+profile is passed as `ANTIGRAVITY_APP_DATA_DIR={acp_home}` instead, which is
+why an entry override must keep that variable (or leave `env` unnamed and
+inherit it). If `argv[0]` is a wrapper script, the arguments
+`-p /usage --output-format json` go to the wrapper, which must forward them to
+`agy` unchanged.
+
 ## Limitations
 
 - `acp.harden: false` turns the gateway-owned profile off for a custom `agy`
