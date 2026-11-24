@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import http.client
 import json
 import os
 import sys
@@ -75,8 +76,11 @@ def _request(
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", "replace")[:800]
         raise CheckError(f"{exc.code} from {url}: {detail}") from exc
-    except urllib.error.URLError as exc:
-        raise CheckError(f"cannot reach {url}: {exc.reason}") from exc
+    except (TimeoutError, OSError) as exc:
+        reason = getattr(exc, "reason", exc)
+        raise CheckError(f"cannot reach {url}: {reason}") from exc
+    except http.client.HTTPException as exc:
+        raise CheckError(f"{url} sent an incomplete reply: {exc}") from exc
     try:
         payload = json.loads(raw)
     except ValueError as exc:
@@ -103,6 +107,10 @@ def tool_use_of(payload: dict[str, Any]) -> dict[str, Any]:
         raise CheckError("the turn has no content blocks")
     for block in content:
         if isinstance(block, dict) and block.get("type") == "tool_use":
+            if not isinstance(block.get("id"), str) or not block["id"]:
+                raise CheckError("a tool_use block has no id")
+            if not isinstance(block.get("name"), str) or not block["name"]:
+                raise CheckError("a tool_use block has no name")
             return block
     raise CheckError(f"no tool_use in {json.dumps(content)[:500]}")
 
@@ -237,7 +245,32 @@ def _check_tool_set_change(
     model: str,
     timeout: float,
 ) -> None:
-    payload = _messages(
+    """A tool added between requests must be callable, not just answered."""
+    prompt = "Call the noop tool. Do not answer in text."
+    first = _messages(
+        base,
+        key,
+        session,
+        {
+            "model": model,
+            "max_tokens": 256,
+            "messages": [{"role": "user", "content": prompt}],
+            "tools": [ECHO, NOOP],
+        },
+        timeout,
+    )
+    if first.get("stop_reason") != "tool_use":
+        raise CheckError(
+            "the changed tool set did not expose noop; the turn stopped at "
+            f"{first.get('stop_reason')!r}: {text_of(first)[:300]!r}"
+        )
+    call = tool_use_of(first)
+    if call.get("name") != NOOP["name"]:
+        raise CheckError(
+            f"the changed tool set called {call.get('name')!r}, not 'noop'"
+        )
+
+    second = _messages(
         base,
         key,
         session,
@@ -245,18 +278,29 @@ def _check_tool_set_change(
             "model": model,
             "max_tokens": 256,
             "messages": [
-                {"role": "user", "content": "Reply with just the word: ready"}
+                {"role": "user", "content": prompt},
+                {"role": "assistant", "content": first["content"]},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": call["id"],
+                            "content": "ok",
+                        }
+                    ],
+                },
             ],
             "tools": [ECHO, NOOP],
         },
         timeout,
     )
-    if payload.get("stop_reason") != "end_turn":
+    if second.get("stop_reason") != "end_turn":
         raise CheckError(
-            f"the changed tool set stopped at {payload.get('stop_reason')!r}"
+            f"the changed-set result stopped at {second.get('stop_reason')!r}"
         )
-    if not text_of(payload):
-        raise CheckError("the changed tool set produced no text answer")
+    if not text_of(second):
+        raise CheckError("the changed-set result produced no text answer")
 
 
 def _check_quota(
@@ -275,14 +319,22 @@ def _check_quota(
     entries = payload.get("credentials")
     if not isinstance(entries, list) or not entries:
         raise CheckError("quota has no credential reading")
-    windows = entries[0].get("reading", {}).get("windows")
-    if not isinstance(windows, list) or not windows:
-        raise CheckError("quota has no windows")
-    return ", ".join(
-        f"{window.get('name')} {window.get('used_percent')}%"
-        for window in windows
-        if isinstance(window, dict)
-    )
+    lines: list[str] = []
+    for index, entry in enumerate(entries):
+        reading = entry.get("reading") if isinstance(entry, dict) else None
+        if not isinstance(reading, dict) or reading.get("status") != "ok":
+            raise CheckError(f"quota credential {index} has no good reading")
+        windows = reading.get("windows")
+        if not isinstance(windows, list) or not windows:
+            raise CheckError(f"quota credential {index} has no windows")
+        label = entry.get("credential") or f"credential {index}"
+        detail = ", ".join(
+            f"{window.get('name')} {window.get('used_percent')}%"
+            for window in windows
+            if isinstance(window, dict)
+        )
+        lines.append(f"{label}: {detail}")
+    return "; ".join(lines)
 
 
 def _image_block(path: Path) -> dict[str, Any]:

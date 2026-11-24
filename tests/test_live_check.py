@@ -39,6 +39,16 @@ def test_a_tool_use_block_is_found_between_text_blocks():
     assert _live().tool_use_of(payload)["id"] == "call_1"
 
 
+def test_a_tool_use_without_an_id_is_refused():
+    with pytest.raises(_live().CheckError, match="no id"):
+        _live().tool_use_of({"content": [{"type": "tool_use", "name": "echo"}]})
+
+
+def test_a_tool_use_without_a_name_is_refused():
+    with pytest.raises(_live().CheckError, match="no name"):
+        _live().tool_use_of({"content": [{"type": "tool_use", "id": "call_1"}]})
+
+
 def test_a_text_only_turn_is_not_a_tool_call():
     with pytest.raises(_live().CheckError, match="no tool_use"):
         _live().tool_use_of({"content": [{"type": "text", "text": "ping"}]})
