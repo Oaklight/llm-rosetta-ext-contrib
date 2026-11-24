@@ -148,6 +148,14 @@ class TestAntigravityUsageProbe:
         with pytest.raises(QuotaProbeError, match="Not logged in"):
             self.probe.parse_local(payload)
 
+    @pytest.mark.parametrize(
+        ("body", "name"),
+        [("not json at all", "str"), ([1, 2], "list"), (None, "NoneType")],
+    )
+    def test_a_non_object_payload_names_its_type(self, body, name):
+        with pytest.raises(QuotaProbeError, match=f"printed a {name}"):
+            self.probe.parse_local(body)
+
     def test_an_unknown_window_key_still_reports_the_group(self):
         payload = {
             "groups": [
