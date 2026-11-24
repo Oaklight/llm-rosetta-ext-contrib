@@ -353,6 +353,10 @@ _LOAD_ARCHIVE = textwrap.dedent(
     """
     import sys
     from pathlib import Path
+    # The gateway does not install this distribution; drop it so the load
+    # proves the archive is self-contained.  llm-rosetta stays importable.
+    drop = Path(sys.argv[2]).resolve()
+    sys.path[:] = [p for p in sys.path if Path(p or ".").resolve() != drop]
     from llm_rosetta.api import list_shims, staging_registry
     from llm_rosetta.contracts.shim import load_providers_from_dir
     with staging_registry():
@@ -370,13 +374,27 @@ def test_each_archive_loads_with_core_in_a_fresh_interpreter(vendor, tmp_path: P
         safe = {"filter": "data"} if hasattr(tarfile, "data_filter") else {}
         tar.extractall(tmp_path, **safe)
     proc = subprocess.run(
-        [sys.executable, "-c", _LOAD_ARCHIVE, str(tmp_path / "providers")],
+        [sys.executable, "-c", _LOAD_ARCHIVE, str(tmp_path / "providers"), str(_ROOT / "src")],
         capture_output=True,
         text=True,
         check=True,
     )
     expected = sorted(n for n, _ in archives.declared_shims(vendor, _ROOT))
     assert proc.stdout.split() == expected
+
+
+def test_a_vendor_that_imports_a_package_helper_ships_it():
+    """An archive stands alone, so the helper its auth.py names must travel."""
+    helper = (archives.package_dir(_ROOT) / "_vendor_cli.py").read_bytes()
+    for vendor in ("antigravity", "claude"):
+        data = archives.build_archive(vendor, _ROOT)
+        with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
+            names = [m.name for m in tar.getmembers() if m.isfile()]
+            assert "providers/_vendor_cli.py" in names
+            assert tar.extractfile("providers/_vendor_cli.py").read() == helper
+    assert "providers/_vendor_cli.py" not in archives.archive_members(
+        archives.build_archive("llm7", _ROOT)
+    )
 
 
 def test_contrib_shares_no_shim_name_with_the_installed_core(capsys):

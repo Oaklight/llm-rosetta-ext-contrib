@@ -39,13 +39,32 @@ from llm_rosetta.contracts.auth import (
     BaseAuthExchange,
 )
 
-from llm_rosetta_shim_contrib._vendor_cli import (
-    CliLoginError,
-    begin_cli_login,
-    complete_cli_login,
-    run_capture,
-    subprocess_env,
-)
+try:
+    from llm_rosetta_shim_contrib._vendor_cli import (
+        CliLoginError,
+        begin_cli_login,
+        complete_cli_login,
+        run_capture,
+        subprocess_env,
+    )
+except ModuleNotFoundError as exc:  # a manifest archive ships the helper itself
+    if exc.name != "llm_rosetta_shim_contrib":
+        raise
+    import importlib.util
+
+    from pathlib import Path
+
+    _helper = Path(__file__).resolve().parents[1] / "_vendor_cli.py"
+    _spec = importlib.util.spec_from_file_location("_vendor_cli", _helper)
+    if _spec is None or _spec.loader is None:
+        raise
+    _module = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_module)
+    CliLoginError = _module.CliLoginError
+    begin_cli_login = _module.begin_cli_login
+    complete_cli_login = _module.complete_cli_login
+    run_capture = _module.run_capture
+    subprocess_env = _module.subprocess_env
 
 #: The CLI's own status is cheap but spawning it twice for one panel render is
 #: still wasteful; a short cache keeps the two calls consistent as well.
