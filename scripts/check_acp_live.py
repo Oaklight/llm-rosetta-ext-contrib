@@ -1,0 +1,400 @@
+#!/usr/bin/env python3
+"""Live-check one ACP lane through a running gateway.
+
+The unit tests drive a fake agent.  This script proves the path a gateway
+actually wires together: a request's tools reach the vendor CLI over the
+loopback MCP bridge, the call comes back as ``tool_use``, the client's result
+resumes the same turn, a changed tool set opens a fresh session, and the
+Quota card has a reading.
+
+It is a developer tool, not shipped.  It needs a running gateway and a lane
+that is already signed in; it sends real turns to the vendor's subscription.
+
+Usage::
+
+    python scripts/check_acp_live.py \
+        --provider claude-school --model claude-haiku-4-5
+
+    python scripts/check_acp_live.py \
+        --provider antigravity --model gemini-3.8-flash-low \
+        --image face.png
+
+The gateway's API key is read from ``--api-key`` or ``GATEWAY_API_KEY``.  The
+admin read is open on a loopback gateway; pass ``--admin-key`` when it is not.
+"""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import json
+import os
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+from typing import Any
+
+ECHO = {
+    "name": "echo",
+    "description": "Echo the given text back to the caller.",
+    "input_schema": {
+        "type": "object",
+        "properties": {"text": {"type": "string"}},
+        "required": ["text"],
+    },
+}
+
+NOOP = {
+    "name": "noop",
+    "description": "Do nothing and return ok.",
+    "input_schema": {"type": "object", "properties": {}},
+}
+
+
+class CheckError(RuntimeError):
+    """One live step did not hold."""
+
+
+def _request(
+    url: str,
+    *,
+    body: dict[str, Any] | None = None,
+    headers: dict[str, str] | None = None,
+    timeout: float = 180.0,
+) -> dict[str, Any]:
+    """Send one JSON request and return the decoded object."""
+    data = None if body is None else json.dumps(body).encode("utf-8")
+    request = urllib.request.Request(url, data=data, headers=headers or {})
+    if body is not None:
+        request.add_header("Content-Type", "application/json")
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", "replace")[:800]
+        raise CheckError(f"{exc.code} from {url}: {detail}") from exc
+    except urllib.error.URLError as exc:
+        raise CheckError(f"cannot reach {url}: {exc.reason}") from exc
+    try:
+        payload = json.loads(raw)
+    except ValueError as exc:
+        raise CheckError(f"{url} did not answer JSON: {raw[:300]!r}") from exc
+    if not isinstance(payload, dict):
+        raise CheckError(f"{url} answered {type(payload).__name__}, not an object")
+    return payload
+
+
+def _message_headers(key: str | None, session: str) -> dict[str, str]:
+    headers = {
+        "anthropic-version": "2023-06-01",
+        "x-claude-code-session-id": session,
+    }
+    if key:
+        headers["Authorization"] = f"Bearer {key}"
+    return headers
+
+
+def tool_use_of(payload: dict[str, Any]) -> dict[str, Any]:
+    """The first ``tool_use`` block, or raise when the turn did not call one."""
+    content = payload.get("content")
+    if not isinstance(content, list):
+        raise CheckError("the turn has no content blocks")
+    for block in content:
+        if isinstance(block, dict) and block.get("type") == "tool_use":
+            return block
+    raise CheckError(f"no tool_use in {json.dumps(content)[:500]}")
+
+
+def text_of(payload: dict[str, Any]) -> str:
+    """Join the text blocks of a reply."""
+    content = payload.get("content")
+    if not isinstance(content, list):
+        return ""
+    parts = [
+        block.get("text", "")
+        for block in content
+        if isinstance(block, dict) and block.get("type") == "text"
+    ]
+    return "".join(part for part in parts if isinstance(part, str)).strip()
+
+
+def _check_models(base: str, provider: str, model: str, timeout: float) -> None:
+    payload = _request(f"{base}/v1/models", timeout=timeout)
+    rows = payload.get("data")
+    if not isinstance(rows, list):
+        raise CheckError("the model list has no data")
+    match = next(
+        (row for row in rows if isinstance(row, dict) and row.get("id") == model),
+        None,
+    )
+    if match is None:
+        raise CheckError(f"{model!r} is not in the model list")
+    if match.get("owned_by") not in (None, provider):
+        raise CheckError(
+            f"{model!r} belongs to {match.get('owned_by')!r}, not {provider!r}"
+        )
+
+
+def _messages(
+    base: str,
+    key: str | None,
+    session: str,
+    body: dict[str, Any],
+    timeout: float,
+) -> dict[str, Any]:
+    return _request(
+        f"{base}/v1/messages",
+        body=body,
+        headers=_message_headers(key, session),
+        timeout=timeout,
+    )
+
+
+def _check_count_tokens(
+    base: str, key: str | None, session: str, model: str, timeout: float
+) -> int:
+    payload = _request(
+        f"{base}/v1/messages/count_tokens",
+        body={
+            "model": model,
+            "messages": [{"role": "user", "content": "Count this short sentence."}],
+        },
+        headers=_message_headers(key, session),
+        timeout=timeout,
+    )
+    count = payload.get("input_tokens")
+    if not isinstance(count, int) or count <= 0:
+        raise CheckError(f"count_tokens answered {count!r}")
+    return count
+
+
+def _check_tool_round_trip(
+    base: str,
+    key: str | None,
+    session: str,
+    model: str,
+    timeout: float,
+) -> None:
+    prompt = "Call the echo tool with text ping. Do not answer in text."
+    first = _messages(
+        base,
+        key,
+        session,
+        {
+            "model": model,
+            "max_tokens": 512,
+            "messages": [{"role": "user", "content": prompt}],
+            "tools": [ECHO],
+        },
+        timeout,
+    )
+    if first.get("stop_reason") != "tool_use":
+        raise CheckError(
+            f"the tool request stopped at {first.get('stop_reason')!r}: "
+            f"{text_of(first)[:300]!r}"
+        )
+    call = tool_use_of(first)
+    if call.get("name") != ECHO["name"]:
+        raise CheckError(f"the turn called {call.get('name')!r}, not 'echo'")
+
+    second = _messages(
+        base,
+        key,
+        session,
+        {
+            "model": model,
+            "max_tokens": 512,
+            "messages": [
+                {"role": "user", "content": prompt},
+                {"role": "assistant", "content": first["content"]},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": call["id"],
+                            "content": "ping",
+                        }
+                    ],
+                },
+            ],
+            "tools": [ECHO],
+        },
+        timeout,
+    )
+    if second.get("stop_reason") != "end_turn":
+        raise CheckError(f"the resumed turn stopped at {second.get('stop_reason')!r}")
+    if not text_of(second):
+        raise CheckError("the resumed turn has no text answer")
+
+
+def _check_tool_set_change(
+    base: str,
+    key: str | None,
+    session: str,
+    model: str,
+    timeout: float,
+) -> None:
+    payload = _messages(
+        base,
+        key,
+        session,
+        {
+            "model": model,
+            "max_tokens": 256,
+            "messages": [
+                {"role": "user", "content": "Reply with just the word: ready"}
+            ],
+            "tools": [ECHO, NOOP],
+        },
+        timeout,
+    )
+    if payload.get("stop_reason") != "end_turn":
+        raise CheckError(
+            f"the changed tool set stopped at {payload.get('stop_reason')!r}"
+        )
+    if not text_of(payload):
+        raise CheckError("the changed tool set produced no text answer")
+
+
+def _check_quota(
+    base: str, provider: str, admin_key: str | None, timeout: float
+) -> str:
+    headers = {"Authorization": f"Bearer {admin_key}"} if admin_key else {}
+    payload = _request(
+        f"{base}/admin/api/config/providers/{provider}/quota",
+        headers=headers,
+        timeout=timeout,
+    )
+    if payload.get("status") != "ok":
+        raise CheckError(
+            f"quota is {payload.get('status')!r}: {payload.get('reason') or 'no reason'}"
+        )
+    entries = payload.get("credentials")
+    if not isinstance(entries, list) or not entries:
+        raise CheckError("quota has no credential reading")
+    windows = entries[0].get("reading", {}).get("windows")
+    if not isinstance(windows, list) or not windows:
+        raise CheckError("quota has no windows")
+    return ", ".join(
+        f"{window.get('name')} {window.get('used_percent')}%"
+        for window in windows
+        if isinstance(window, dict)
+    )
+
+
+def _image_block(path: Path) -> dict[str, Any]:
+    suffix = path.suffix.lower()
+    media = {
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".gif": "image/gif",
+        ".webp": "image/webp",
+    }.get(suffix)
+    if media is None:
+        raise CheckError(f"unsupported image suffix: {path.suffix}")
+    return {
+        "type": "image",
+        "source": {
+            "type": "base64",
+            "media_type": media,
+            "data": base64.b64encode(path.read_bytes()).decode("ascii"),
+        },
+    }
+
+
+def _check_image(
+    base: str,
+    key: str | None,
+    session: str,
+    model: str,
+    image: Path,
+    timeout: float,
+) -> str:
+    payload = _messages(
+        base,
+        key,
+        session,
+        {
+            "model": model,
+            "max_tokens": 256,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        _image_block(image),
+                        {
+                            "type": "text",
+                            "text": "Describe this image in one sentence.",
+                        },
+                    ],
+                }
+            ],
+        },
+        timeout,
+    )
+    answer = text_of(payload)
+    if not answer:
+        raise CheckError("the image turn produced no text answer")
+    return answer
+
+
+def _step(name: str, detail: str) -> None:
+    print(f"ok   {name}: {detail}", flush=True)
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run the checks; return a process exit code."""
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--base-url", default="http://127.0.0.1:8000")
+    parser.add_argument("--provider", required=True)
+    parser.add_argument("--model", required=True)
+    parser.add_argument("--api-key", default=os.environ.get("GATEWAY_API_KEY"))
+    parser.add_argument("--admin-key", default=os.environ.get("GATEWAY_ADMIN_KEY"))
+    parser.add_argument("--session", default=f"live-acp-check-{int(time.time())}")
+    parser.add_argument("--image", type=Path)
+    parser.add_argument("--no-quota", action="store_true")
+    parser.add_argument("--timeout", type=float, default=180.0)
+    args = parser.parse_args(argv)
+    base = args.base_url.rstrip("/")
+
+    try:
+        _check_models(base, args.provider, args.model, args.timeout)
+        _step("models", args.model)
+        count = _check_count_tokens(
+            base, args.api_key, args.session, args.model, args.timeout
+        )
+        _step("count_tokens", f"{count} tokens (estimate or upstream)")
+        _check_tool_round_trip(
+            base, args.api_key, args.session, args.model, args.timeout
+        )
+        _step("tool call", "tool_use returned and the result resumed the turn")
+        _check_tool_set_change(
+            base, args.api_key, args.session, args.model, args.timeout
+        )
+        _step("tool set change", "a changed tool list answered in a fresh session")
+        if not args.no_quota:
+            windows = _check_quota(base, args.provider, args.admin_key, args.timeout)
+            _step("quota", windows)
+        if args.image is not None:
+            answer = _check_image(
+                base,
+                args.api_key,
+                args.session,
+                args.model,
+                args.image,
+                args.timeout,
+            )
+            _step("image", answer[:120])
+    except CheckError as exc:
+        print(f"FAIL {exc}", file=sys.stderr)
+        return 1
+    print("all checks passed", flush=True)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
