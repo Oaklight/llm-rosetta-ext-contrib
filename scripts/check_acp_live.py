@@ -20,7 +20,8 @@ Usage::
         --image face.png
 
 The gateway's API key is read from ``--api-key`` or ``GATEWAY_API_KEY``.  The
-admin read is open on a loopback gateway; pass ``--admin-key`` when it is not.
+admin read is open on a loopback gateway; pass ``--admin-key`` or
+``GATEWAY_ADMIN_KEY`` with the gateway's internal admin token when it is not.
 """
 
 from __future__ import annotations
@@ -52,6 +53,9 @@ NOOP = {
     "description": "Do nothing and return ok.",
     "input_schema": {"type": "object", "properties": {}},
 }
+
+#: An oversized screenshot turns a useful verdict into a gateway error.
+_MAX_IMAGE_BYTES = 4 << 20
 
 
 class CheckError(RuntimeError):
@@ -90,13 +94,17 @@ def _request(
     return payload
 
 
+def _api_headers(key: str | None) -> dict[str, str]:
+    """The bearer header a keyed gateway expects on the model and message paths."""
+    return {"Authorization": f"Bearer {key}"} if key else {}
+
+
 def _message_headers(key: str | None, session: str) -> dict[str, str]:
     headers = {
         "anthropic-version": "2023-06-01",
         "x-claude-code-session-id": session,
     }
-    if key:
-        headers["Authorization"] = f"Bearer {key}"
+    headers.update(_api_headers(key))
     return headers
 
 
@@ -128,8 +136,20 @@ def text_of(payload: dict[str, Any]) -> str:
     return "".join(part for part in parts if isinstance(part, str)).strip()
 
 
-def _check_models(base: str, provider: str, model: str, timeout: float) -> None:
-    payload = _request(f"{base}/v1/models", timeout=timeout)
+def owner_problem(match: dict[str, Any], provider: str) -> str | None:
+    """Why a listing row does not belong to the provider, or ``None``."""
+    owner = match.get("owned_by")
+    if owner == provider:
+        return None
+    if owner is None:
+        return f"{match.get('id')!r} has no owner; expected {provider!r}"
+    return f"{match.get('id')!r} belongs to {owner!r}, not {provider!r}"
+
+
+def _check_models(
+    base: str, key: str | None, provider: str, model: str, timeout: float
+) -> None:
+    payload = _request(f"{base}/v1/models", headers=_api_headers(key), timeout=timeout)
     rows = payload.get("data")
     if not isinstance(rows, list):
         raise CheckError("the model list has no data")
@@ -139,10 +159,9 @@ def _check_models(base: str, provider: str, model: str, timeout: float) -> None:
     )
     if match is None:
         raise CheckError(f"{model!r} is not in the model list")
-    if match.get("owned_by") not in (None, provider):
-        raise CheckError(
-            f"{model!r} belongs to {match.get('owned_by')!r}, not {provider!r}"
-        )
+    problem = owner_problem(match, provider)
+    if problem is not None:
+        raise CheckError(problem)
 
 
 def _messages(
@@ -206,6 +225,9 @@ def _check_tool_round_trip(
     call = tool_use_of(first)
     if call.get("name") != ECHO["name"]:
         raise CheckError(f"the turn called {call.get('name')!r}, not 'echo'")
+    arguments = call.get("input")
+    if not isinstance(arguments, dict) or arguments.get("text") != "ping":
+        raise CheckError(f"the turn called echo with {arguments!r}, not text 'ping'")
 
     second = _messages(
         base,
@@ -232,10 +254,15 @@ def _check_tool_round_trip(
         },
         timeout,
     )
+    answer = text_of(second)
     if second.get("stop_reason") != "end_turn":
         raise CheckError(f"the resumed turn stopped at {second.get('stop_reason')!r}")
-    if not text_of(second):
+    if not answer:
         raise CheckError("the resumed turn has no text answer")
+    if "ping" not in answer.lower():
+        raise CheckError(
+            f"the resumed turn did not use the tool result: {answer[:300]!r}"
+        )
 
 
 def _check_tool_set_change(
@@ -303,38 +330,62 @@ def _check_tool_set_change(
         raise CheckError("the changed-set result produced no text answer")
 
 
-def _check_quota(
-    base: str, provider: str, admin_key: str | None, timeout: float
-) -> str:
-    headers = {"Authorization": f"Bearer {admin_key}"} if admin_key else {}
-    payload = _request(
-        f"{base}/admin/api/config/providers/{provider}/quota",
-        headers=headers,
-        timeout=timeout,
-    )
+def quota_summary(payload: dict[str, Any]) -> str:
+    """Summarise every credential reading; fail only when none is good.
+
+    A lane may hold several credentials for rotation, so one exhausted
+    credential is not a broken lane.  Every entry is still reported: a bad
+    one becomes a ``[warn]`` in the output instead of a silent skip.
+    """
     if payload.get("status") != "ok":
         raise CheckError(
-            f"quota is {payload.get('status')!r}: {payload.get('reason') or 'no reason'}"
+            f"quota is {payload.get('status')!r}: "
+            f"{payload.get('reason') or 'no reason'}"
         )
     entries = payload.get("credentials")
     if not isinstance(entries, list) or not entries:
         raise CheckError("quota has no credential reading")
     lines: list[str] = []
+    warnings: list[str] = []
     for index, entry in enumerate(entries):
+        if isinstance(entry, dict):
+            label = entry.get("credential") or f"credential {index}"
+        else:
+            label = f"credential {index}"
         reading = entry.get("reading") if isinstance(entry, dict) else None
         if not isinstance(reading, dict) or reading.get("status") != "ok":
-            raise CheckError(f"quota credential {index} has no good reading")
+            warnings.append(f"{label}: no good reading")
+            continue
         windows = reading.get("windows")
         if not isinstance(windows, list) or not windows:
-            raise CheckError(f"quota credential {index} has no windows")
-        label = entry.get("credential") or f"credential {index}"
+            warnings.append(f"{label}: no windows")
+            continue
         detail = ", ".join(
             f"{window.get('name')} {window.get('used_percent')}%"
             for window in windows
             if isinstance(window, dict)
         )
         lines.append(f"{label}: {detail}")
-    return "; ".join(lines)
+    if not lines:
+        raise CheckError(
+            f"no credential has a quota reading ({'; '.join(warnings) or 'no entries'})"
+        )
+    summary = "; ".join(lines)
+    if warnings:
+        summary += " [warn] " + "; ".join(warnings)
+    return summary
+
+
+def _check_quota(
+    base: str, provider: str, admin_key: str | None, timeout: float
+) -> str:
+    headers = {"x-admin-token": admin_key} if admin_key else {}
+    payload = _request(
+        f"{base}/admin/api/config/providers/{provider}/quota",
+        headers=headers,
+        timeout=timeout,
+    )
+    return quota_summary(payload)
 
 
 def _image_block(path: Path) -> dict[str, Any]:
@@ -348,6 +399,11 @@ def _image_block(path: Path) -> dict[str, Any]:
     }.get(suffix)
     if media is None:
         raise CheckError(f"unsupported image suffix: {path.suffix}")
+    size = path.stat().st_size
+    if size > _MAX_IMAGE_BYTES:
+        raise CheckError(
+            f"{path} is {size} bytes; the image limit is {_MAX_IMAGE_BYTES}"
+        )
     return {
         "type": "image",
         "source": {
@@ -405,7 +461,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--provider", required=True)
     parser.add_argument("--model", required=True)
     parser.add_argument("--api-key", default=os.environ.get("GATEWAY_API_KEY"))
-    parser.add_argument("--admin-key", default=os.environ.get("GATEWAY_ADMIN_KEY"))
+    parser.add_argument(
+        "--admin-key",
+        default=os.environ.get("GATEWAY_ADMIN_KEY"),
+        help="the gateway's internal admin token (sent as x-admin-token)",
+    )
     parser.add_argument("--session", default=f"live-acp-check-{int(time.time())}")
     parser.add_argument("--image", type=Path)
     parser.add_argument("--no-quota", action="store_true")
@@ -414,7 +474,7 @@ def main(argv: list[str] | None = None) -> int:
     base = args.base_url.rstrip("/")
 
     try:
-        _check_models(base, args.provider, args.model, args.timeout)
+        _check_models(base, args.api_key, args.provider, args.model, args.timeout)
         _step("models", args.model)
         count = _check_count_tokens(
             base, args.api_key, args.session, args.model, args.timeout
@@ -427,7 +487,7 @@ def main(argv: list[str] | None = None) -> int:
         _check_tool_set_change(
             base, args.api_key, args.session, args.model, args.timeout
         )
-        _step("tool set change", "a changed tool list answered in a fresh session")
+        _step("tool set change", "a tool added between requests is callable")
         if not args.no_quota:
             windows = _check_quota(base, args.provider, args.admin_key, args.timeout)
             _step("quota", windows)
