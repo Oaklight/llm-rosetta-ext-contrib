@@ -88,7 +88,8 @@ The shim declares the vendor facts; a provider entry may override them:
       "cli_args": ["--setting-sources", "user"],
       "cli_env": { "CLAUDE_CODE_ENTRYPOINT": "my-gateway" },
       "cli_env_unset": ["ANTHROPIC_API_KEY"],
-      "cli_upstream": "https://gateway.example"
+      "cli_upstream": "https://gateway.example",
+      "cli_processes": 2
     }
   }
 }
@@ -101,6 +102,8 @@ The shim declares the vendor facts; a provider entry may override them:
 - `cli_env_unset` adds names to the shim's list.
 - `cli_upstream` sends the relay's request to an organization gateway instead
   of Anthropic's API. `https://` only, except a loopback host.
+- `cli_processes` is the number of CLI processes this provider may run at
+  once (default `1`). A turn over the cap queues; it does not fail.
 
 `CLAUDE_CODE_MAX_OUTPUT_TOKENS` in `cli_env` is the hard output ceiling
 (measured: 64 reaches the wire body as 64). The lane otherwise leaves
@@ -136,13 +139,18 @@ measurement.
 
 ## Operations
 
-- One `claude` process per request, roughly 250 MB. Cap concurrency per lane;
-  queue rather than fail.
+- One `claude` process per request, roughly 250 MB. `cli_processes` caps a
+  provider's concurrent turns; the rest queue rather than fail.
+- A turn fails when the CLI stays silent past the upstream timeout. Closing
+  the stream stops the whole process tree (`killpg` on POSIX, `taskkill /T` on
+  Windows).
 - One upstream request per host request. The relay refuses the CLI's recovery
   attempts locally (an upstream 401 admits one retry so the CLI can refresh its
   login).
-- The upstream status and `anthropic-ratelimit-*` headers are kept on the turn
-  for the quota card and the request log.
+- The request-log profile records the lane's own accounting: the CLI's native
+  `usage`, `total_cost_usd` (list-price equivalent), `modelUsage[*]`
+  (including `contextWindow`), the relay's `restored` flag, the upstream
+  status, and the `anthropic-ratelimit-*` headers.
 - Model ids are passed to `--model` verbatim: a `[1m]` suffix stays the CLI's
   own 1M opt-in, and an unknown id falls back to the CLI's 200K default.
 
