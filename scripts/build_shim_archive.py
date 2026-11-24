@@ -256,6 +256,10 @@ def shared_helpers(vendor: str, root: Path | None = None) -> dict[str, bytes]:
     """
     directory = vendor_dir(vendor, root)
     used: set[str] = set()
+    # Absolute imports only: the helper ships at the archive root and the
+    # sidecar's fallback loads it by path, so a relative import would name a
+    # file the archive does not have.  A new spelling this scan misses fails
+    # the archive-load test instead of shipping silently.
     for relative in shipped_files(directory):
         if not relative.endswith(".py"):
             continue
