@@ -120,3 +120,41 @@ def test_an_image_over_the_limit_is_refused(tmp_path, monkeypatch):
 
     with pytest.raises(live.CheckError, match="image limit is 4"):
         live._image_block(path)
+
+
+def _tool_round_trip_replies(answer, calls):
+    first = {
+        "stop_reason": "tool_use",
+        "content": [
+            {
+                "type": "tool_use",
+                "id": "call_1",
+                "name": "echo",
+                "input": {"text": "ping"},
+            }
+        ],
+    }
+    second = {"stop_reason": "end_turn", "content": [{"type": "text", "text": answer}]}
+    replies = iter([first, second])
+
+    def fake(*args):
+        calls.append(args)
+        return next(replies)
+
+    return fake
+
+
+def test_the_resumed_turn_must_read_the_tool_result_not_the_prompt(monkeypatch):
+    live = _live()
+    calls = []
+    monkeypatch.setattr(
+        live, "_messages", _tool_round_trip_replies(live._RESULT_NONCE, calls)
+    )
+    live._check_tool_round_trip("http://gateway", None, "session", "model", 1.0)
+
+    sent = calls[1][3]["messages"][-1]["content"][0]["content"]
+    assert sent == f"echo: {live._RESULT_NONCE}"
+
+    monkeypatch.setattr(live, "_messages", _tool_round_trip_replies("ping", []))
+    with pytest.raises(live.CheckError, match="did not use the tool result"):
+        live._check_tool_round_trip("http://gateway", None, "session", "model", 1.0)
