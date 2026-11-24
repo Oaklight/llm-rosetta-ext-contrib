@@ -161,7 +161,7 @@ python scripts/build_manifest.py --dry-run   # build and validate, print the man
 python scripts/check_core_collisions.py
 ```
 
-Requires Python >= 3.10 and `llm-rosetta >= 0.14.0.dev35` (the first core with `llm_rosetta.contracts`). The manifest builder needs Python 3.11+ (`tomllib`).
+Requires Python >= 3.10 and `llm-rosetta >= 0.14.0.dev40`. The manifest builder needs Python 3.11+ (`tomllib`).
 
 ### Live-check an ACP lane
 
@@ -179,8 +179,9 @@ python scripts/check_acp_live.py \
 ```
 
 It sends real turns to the subscription. The gateway API key comes from
-`--api-key` or `GATEWAY_API_KEY`; `--admin-key` is for a gateway whose admin
-port is not open on loopback.
+`--api-key` or `GATEWAY_API_KEY`. A gateway whose admin port is not open on
+loopback needs `--admin-key` (or `GATEWAY_ADMIN_KEY`) set to its internal
+admin token.
 
 ## License
 
