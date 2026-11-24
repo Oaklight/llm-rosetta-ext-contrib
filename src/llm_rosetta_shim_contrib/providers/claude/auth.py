@@ -54,8 +54,15 @@ except ModuleNotFoundError as exc:  # a manifest archive ships the helper itself
 
     from pathlib import Path
 
-    _helper = Path(__file__).resolve().parents[1] / "_vendor_cli.py"
-    if not _helper.is_file():
+    _helper = next(
+        (
+            parent / "_vendor_cli.py"
+            for parent in Path(__file__).resolve().parents
+            if (parent / "_vendor_cli.py").is_file()
+        ),
+        None,
+    )
+    if _helper is None:
         raise ModuleNotFoundError(
             "providers/_vendor_cli.py is missing from this archive",
             name="llm_rosetta_shim_contrib._vendor_cli",
