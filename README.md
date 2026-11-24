@@ -125,7 +125,7 @@ Each vendor has its own version, in its `[vendors.<vendor>]` table of the reposi
 
 A `v*` tag (equal to the package `__version__`) runs `.github/workflows/release.yml`, which runs `scripts/build_manifest.py --out <dist checkout> --previous <dist>/manifest.json` and pushes:
 
-- `dist/<version>/<vendor>.tar.gz` and `.sha256`, for each vendor version not yet published. The archive root is `providers/`, holding `providers/<vendor>/…` exactly as core's loader expects and a `providers/shims.yaml` for that vendor. Archives are byte-reproducible.
+- `dist/<version>/<vendor>.tar.gz` and `.sha256`, for each vendor version not yet published. The archive root is `providers/`, holding `providers/<vendor>/…` exactly as core's loader expects and a `providers/shims.yaml` for that vendor. A vendor whose sidecars import a package-level helper also carries that helper at `providers/`, so the archive loads without this distribution installed. Archives are byte-reproducible.
 - `dist/<release>/manifest.json` (immutable) and `dist/manifest.json` (latest).
 
 Published versions are append-only: a vendor whose version is already published keeps its record, and the build fails if its archive changed without a version bump. CI runs the same build as a dry run on every push and pull request, against the manifest already on `dist`. The release also attaches the new archives and the release manifest to a GitHub Release for the tag.

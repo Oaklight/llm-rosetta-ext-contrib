@@ -18,6 +18,14 @@ package's own to that vendor's entries::
     providers/<vendor>/<lane>/<type>/provider.yaml
     ...
 
+A vendor whose ``auth.py`` imports a package-level helper also carries a copy
+of that helper at ``providers/``::
+
+    providers/_vendor_cli.py
+
+The gateway loads the archive on its own, without this distribution installed,
+so the sidecar falls back to that copy when its normal package import fails.
+
 A gateway extracts it and loads ``providers/`` with core's
 ``load_providers_from_dir``, which is what the package's entry points call on
 the same tree.
@@ -58,6 +66,14 @@ PACKAGE = "llm_rosetta_shim_contrib"
 
 #: The selection file a gateway reads from the scan root.
 SHIMS_FILE = "shims.yaml"
+
+#: Package-level helpers a vendor's sidecars import by their installed module
+#: name.  An archive is loaded without this distribution installed, so a
+#: vendor that names one of these ships a copy at the archive root, where its
+#: sidecar falls back to it.
+SHARED_HELPERS = {
+    "_vendor_cli.py": "llm_rosetta_shim_contrib._vendor_cli",
+}
 
 #: Fixed metadata, so two builds of the same tree are byte-identical and the
 #: published digest means "these files", not "these files and this clock".
@@ -211,6 +227,28 @@ def vendor_shims_file(vendor: str, root: Path | None = None) -> bytes:
     return ("\n".join(lines) + "\n").encode("utf-8")
 
 
+def shared_helpers(vendor: str, root: Path | None = None) -> dict[str, bytes]:
+    """Return the package helpers *vendor* imports, keyed by archive name.
+
+    Only ``providers/`` is extracted beside a manifest install, and this
+    distribution is not installed there, so a sidecar that imports a
+    package-level helper would fail to load.  The archive therefore carries a
+    copy of each helper the vendor's files name, one level above the vendor
+    directory where the sidecar's fallback looks.
+    """
+    directory = vendor_dir(vendor, root)
+    used: set[str] = set()
+    for relative in shipped_files(directory):
+        text = (directory / relative).read_bytes()
+        for filename, module in SHARED_HELPERS.items():
+            if module.encode("utf-8") in text:
+                used.add(filename)
+    return {
+        filename: (package_dir(root) / filename).read_bytes()
+        for filename in sorted(used)
+    }
+
+
 def archive_contents(vendor: str, root: Path | None = None) -> dict[str, bytes]:
     """Return the archive's files, relative to ``providers/``, in archive order."""
     directory = vendor_dir(vendor, root)
@@ -218,6 +256,7 @@ def archive_contents(vendor: str, root: Path | None = None) -> dict[str, bytes]:
     if not any(name.endswith("provider.yaml") for name in files):
         raise ArchiveError(f"{directory}: no provider.yaml to archive")
     contents = {SHIMS_FILE: vendor_shims_file(vendor, root)}
+    contents.update(shared_helpers(vendor, root))
     for relative in files:
         contents[f"{vendor}/{relative}"] = (directory / relative).read_bytes()
     return contents
