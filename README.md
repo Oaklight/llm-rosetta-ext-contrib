@@ -163,6 +163,25 @@ python scripts/check_core_collisions.py
 
 Requires Python >= 3.10 and `llm-rosetta >= 0.14.0.dev35` (the first core with `llm_rosetta.contracts`). The manifest builder needs Python 3.11+ (`tomllib`).
 
+### Live-check an ACP lane
+
+The unit tests use a fake agent. To check a real signed-in lane through a
+running gateway — model list, token count, a tool call and its result, a
+changed tool set, the Quota card, and optionally an image — run:
+
+```bash
+python scripts/check_acp_live.py \
+    --base-url http://127.0.0.1:18790 \
+    --provider claude-school --model claude-haiku-4-5
+
+python scripts/check_acp_live.py \
+    --provider antigravity --model gemini-3.8-flash-low --image face.png
+```
+
+It sends real turns to the subscription. The gateway API key comes from
+`--api-key` or `GATEWAY_API_KEY`; `--admin-key` is for a gateway whose admin
+port is not open on loopback.
+
 ## License
 
 MIT.
