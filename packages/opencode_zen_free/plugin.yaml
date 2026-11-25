@@ -1,0 +1,14 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: opencode_zen_free
+name: OpenCode Zen
+version: 0.4.1
+maturity: beta
+tags: ["tier:free"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims: [opencode_zen_free--chat_completions]
+summary:
+  en: Keyless OpenCode Zen free lane over Chat Completions; injects the `read` tool declaration the lane's client gate requires and keeps only zero-cost models.
+  zh: OpenCode Zen 的无密钥免费通道(Chat Completions);注入该通道客户端校验所需的 `read` 工具声明,并只保留零成本模型。
