@@ -1,0 +1,9 @@
+name: xai
+model_type: llm
+format: chat_completions
+
+connection:
+  base_url: https://api.x.ai/v1
+reasoning:
+  effort_field: reasoning_effort
+  effort_range: [minimal, xhigh]
