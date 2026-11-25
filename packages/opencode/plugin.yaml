@@ -1,0 +1,14 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: opencode
+name: OpenCode
+version: 0.5.1
+maturity: beta
+tags: ["tier:subscription", "tier:paid"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims: [opencode--chat_completions, opencode--messages, opencode--open_responses]
+summary:
+  en: "OpenCode Go subscription and Zen balance lanes over chat_completions, open_responses and messages, with a Go allowance probe."
+  zh: "OpenCode Go 订阅与 Zen 余额通道,支持 chat_completions、open_responses、messages,含 Go 额度探测。"
