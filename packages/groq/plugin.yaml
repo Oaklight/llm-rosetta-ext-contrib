@@ -1,0 +1,15 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: groq
+name: Groq
+version: 0.5.1
+maturity: beta
+tags: ["tier:paid"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims:
+    - groq--chat_completions
+summary:
+  en: "Groq LPU inference on an OpenAI-compatible endpoint."
+  zh: "Groq LPU 推理(OpenAI 兼容端点)。"
