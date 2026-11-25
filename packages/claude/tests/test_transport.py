@@ -33,12 +33,15 @@ from llm_rosetta.contracts.transport import (
 from llm_rosetta_ext.claude.transport import ClaudeCliTransport
 from llm_rosetta_ext.claude.transport import transport as claude_cli
 from llm_rosetta_ext.claude.transport.transport import (
+    ClaudeOptions,
+    ClaudeOptionsError,
     _quota_update,
     _response_body,
     _signal_tree,
     build_frames,
     conversation_session_id,
     make_restorer,
+    parse_options,
 )
 from llm_rosetta_ext.claude.transport.relay import Relay, RelayError
 
@@ -302,12 +305,7 @@ class FakeProvider:
     keyless: bool = True
     base_url: str = "http://claude.local"
     timeout: float | None = None
-    cli_argv: tuple[str, ...] | None = None
-    cli_env: dict[str, str] = field(default_factory=dict)
-    cli_env_unset: tuple[str, ...] = ()
-    cli_args: tuple[str, ...] = ()
-    cli_upstream: str | None = None
-    cli_processes: int = 1
+    transport_options: Any = field(default_factory=dict)
 
 
 def _provider(
@@ -317,15 +315,21 @@ def _provider(
     unset: tuple[str, ...] = (),
     args: tuple[str, ...] = (),
     upstream: str | None = None,
+    processes: int | None = None,
 ) -> FakeProvider:
     """A keyless lane whose CLI is the fake one."""
-    return FakeProvider(
-        cli_argv=argv,
-        cli_env=env or {},
-        cli_env_unset=unset,
-        cli_args=args,
-        cli_upstream=upstream,
-    )
+    options: dict[str, Any] = {"argv": list(argv)}
+    if env:
+        options["env"] = env
+    if unset:
+        options["env_unset"] = list(unset)
+    if args:
+        options["args"] = list(args)
+    if upstream is not None:
+        options["upstream"] = upstream
+    if processes is not None:
+        options["processes"] = processes
+    return FakeProvider(transport_options=options)
 
 
 def _log(path: Path) -> list[dict]:
@@ -1121,6 +1125,28 @@ class TestTurn:
             await first.close()
             await transport.close()
 
+    async def test_the_processes_option_raises_the_cap(self, monkeypatch, tmp_path):
+        monkeypatch.setenv("FAKE_CLI_MODE", "stream")
+        log = tmp_path / "cli.jsonl"
+        monkeypatch.setenv("FAKE_CLI_LOG", str(log))
+        transport = ClaudeCliTransport(timeout=30)
+        provider = _provider(_write_cli(tmp_path), processes=2)
+
+        first = await asyncio.wait_for(
+            transport.send_streaming(provider, "", _turn()), timeout=10
+        )
+        second = await asyncio.wait_for(
+            transport.send_streaming(provider, "", _turn()), timeout=10
+        )
+        try:
+            await asyncio.sleep(0.4)
+            boots = [entry for entry in _log(log) if entry["kind"] == "boot"]
+            assert len(boots) == 2
+        finally:
+            await second.close()
+            await first.close()
+            await transport.close()
+
     async def test_two_providers_do_not_share_a_slot(self, monkeypatch, tmp_path):
         monkeypatch.setenv("FAKE_CLI_MODE", "stream")
         log = tmp_path / "cli.jsonl"
@@ -1227,6 +1253,84 @@ class TestTurn:
 
         with pytest.raises(UpstreamConnectionError, match="cannot start"):
             await transport.send_streaming(provider, "", _turn())
+
+
+class TestTransportOptions:
+    """The transport validates its own options; the host only passes them on."""
+
+    def test_no_options_means_the_defaults(self):
+        assert parse_options(FakeProvider()) == ClaudeOptions()
+
+    def test_every_option_is_read(self):
+        provider = FakeProvider(
+            transport_options={
+                "argv": ["claude"],
+                "args": ["--setting-sources", "user"],
+                "env": {"A": "1"},
+                "env_unset": ["ANTHROPIC_API_KEY"],
+                "upstream": "https://gw.example",
+                "processes": 3,
+            }
+        )
+
+        assert parse_options(provider) == ClaudeOptions(
+            argv=("claude",),
+            args=("--setting-sources", "user"),
+            env={"A": "1"},
+            env_unset=("ANTHROPIC_API_KEY",),
+            upstream="https://gw.example",
+            processes=3,
+        )
+
+    @pytest.mark.parametrize("bad", ["x", ["argv"], 7])
+    def test_non_object_options_are_refused(self, bad):
+        with pytest.raises(ClaudeOptionsError, match="must be an object"):
+            parse_options(FakeProvider(transport_options=bad))
+
+    def test_an_unknown_option_is_refused(self):
+        with pytest.raises(ClaudeOptionsError, match="unknown claude_cli"):
+            parse_options(FakeProvider(transport_options={"argvv": ["claude"]}))
+
+    @pytest.mark.parametrize(
+        ("key", "bad", "message"),
+        [
+            ("argv", [], "argv must be a non-empty list"),
+            ("argv", ["claude", 7], "argv must be a non-empty list"),
+            ("argv", "claude", "argv must be a non-empty list"),
+            ("args", "x", "args must be a list"),
+            ("args", ["ok", 7], "args must be a list"),
+            ("env", "A=1", "env must be a mapping"),
+            ("env", ["A=1"], "env must be a mapping"),
+            ("env", {"A": 7}, "env must map strings"),
+            ("env", {7: "1"}, "env must map strings"),
+            ("env_unset", "X", "env_unset must be a list"),
+            ("env_unset", ["ok", 7], "env_unset must be a list"),
+            ("upstream", "", "upstream must be a non-empty"),
+            ("upstream", "   ", "upstream must be a non-empty"),
+            ("upstream", 7, "upstream must be a non-empty"),
+            ("processes", 0, "processes must be an integer >= 1"),
+            ("processes", -1, "processes must be an integer >= 1"),
+            ("processes", "2", "processes must be an integer >= 1"),
+            ("processes", 1.5, "processes must be an integer >= 1"),
+            ("processes", True, "processes must be an integer >= 1"),
+        ],
+    )
+    def test_a_malformed_value_is_refused(self, key, bad, message):
+        provider = FakeProvider(transport_options={key: bad})
+
+        with pytest.raises(ClaudeOptionsError, match=message):
+            parse_options(provider)
+
+    async def test_a_bad_option_fails_the_turn_and_frees_the_slot(self):
+        transport = ClaudeCliTransport(timeout=5)
+        provider = FakeProvider(transport_options={"argv": []})
+
+        for _ in range(2):
+            with pytest.raises(UpstreamConnectionError, match="argv must be"):
+                await asyncio.wait_for(
+                    transport.send_streaming(provider, "", _turn()), timeout=5
+                )
+        await transport.close()
 
 
 class TestToolInjection:

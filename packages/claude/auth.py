@@ -40,45 +40,13 @@ from llm_rosetta.contracts.auth import (
     BaseAuthExchange,
 )
 
-try:
-    from llm_rosetta_shim_contrib._vendor_cli import (
-        CliLoginError,
-        begin_cli_login,
-        complete_cli_login,
-        run_capture,
-        subprocess_env,
-    )
-except ModuleNotFoundError as exc:  # a manifest archive ships the helper itself
-    if exc.name != "llm_rosetta_shim_contrib":
-        raise
-    import importlib.util
-
-    from pathlib import Path
-
-    _root = next(
-        (
-            parent
-            for parent in Path(__file__).resolve().parents
-            if parent.name == "providers"
-        ),
-        None,
-    )
-    _helper = None if _root is None else _root / "_vendor_cli.py"
-    if _helper is None or not _helper.is_file():
-        raise ModuleNotFoundError(
-            "providers/_vendor_cli.py is missing from this archive",
-            name="llm_rosetta_shim_contrib._vendor_cli",
-        ) from exc
-    _spec = importlib.util.spec_from_file_location("_vendor_cli", _helper)
-    if _spec is None or _spec.loader is None:
-        raise RuntimeError(f"cannot load {_helper}") from exc
-    _module = importlib.util.module_from_spec(_spec)
-    _spec.loader.exec_module(_module)
-    CliLoginError = _module.CliLoginError
-    begin_cli_login = _module.begin_cli_login
-    complete_cli_login = _module.complete_cli_login
-    run_capture = _module.run_capture
-    subprocess_env = _module.subprocess_env
+from llm_rosetta.contracts.cli_login import (
+    CliLoginError,
+    begin_cli_login,
+    complete_cli_login,
+    run_capture,
+    subprocess_env,
+)
 
 #: The CLI's own status is cheap but spawning it twice for one panel render is
 #: still wasteful; a short cache keeps the two calls consistent as well.
@@ -92,7 +60,7 @@ _STATUS_CACHE: dict[str, tuple[float, dict[str, Any] | None]] = {}
 #: what it asks for; a cloud selector (``CLAUDE_CODE_USE_BEDROCK`` and its
 #: siblings) moves the request to another provider entirely.  Any of them
 #: would make the panel's sign-in report a different account from the one the
-#: agent uses.  The shim's ``acp_env_unset`` and ``cli_env_unset`` declare the
+#: agent uses.  The shim's ``acp_env_unset`` and ``transport_options.env_unset`` declare the
 #: same names; ``tests/claude/test_registration.py`` asserts they match.
 CLAUDE_ENV_UNSET: tuple[str, ...] = (
     "ANTHROPIC_API_KEY",
@@ -114,12 +82,23 @@ CLAUDE_ENV_UNSET: tuple[str, ...] = (
 )
 
 
+def _transport_options(ctx: AuthContext) -> dict[str, Any]:
+    """The lane's effective ``transport_options``, or an empty mapping."""
+    raw = (ctx.config or {}).get("transport_options")
+    return raw if isinstance(raw, dict) else {}
+
+
 def _acp_env(ctx: AuthContext) -> dict[str, str]:
-    """The ``acp_env`` map the provider entry declares, if any."""
-    raw = (ctx.config or {}).get("acp_env")
-    if not isinstance(raw, dict):
-        return {}
-    return {str(k): str(v) for k, v in raw.items()}
+    """The lane's environment: ``acp_env``, then ``transport_options.env``.
+
+    An ACP lane declares its variables in ``acp_env``; the direct CLI lane
+    declares them in ``transport_options.env``, which wins.
+    """
+    merged: dict[str, str] = {}
+    for raw in ((ctx.config or {}).get("acp_env"), _transport_options(ctx).get("env")):
+        if isinstance(raw, dict):
+            merged.update({str(k): str(v) for k, v in raw.items()})
+    return merged
 
 
 def _cli_env(ctx: AuthContext) -> dict[str, str]:
@@ -163,7 +142,7 @@ def _executable(ctx: AuthContext) -> str:
     """The Claude Code binary to drive, or a clear operator-facing error.
 
     An ACP lane names its build with ``CLAUDE_CODE_EXECUTABLE``; a direct CLI
-    lane names it with ``cli_argv``.  Both must sign in with the binary that
+    lane names it with ``transport_options.argv``.  Both must sign in with the binary that
     will serve the lane, or the panel writes a profile the lane never reads.
     """
     custom = _acp_env(ctx).get("CLAUDE_CODE_EXECUTABLE")
@@ -192,10 +171,10 @@ def _declared_command(ctx: AuthContext) -> str:
 
     The ACP lane names its build with ``CLAUDE_CODE_EXECUTABLE`` in
     ``acp_env``.  The ``claude--messages`` lane names the same build with
-    ``cli_argv``; the admin sign-in must drive that binary, not whichever
+    ``transport_options.argv``; the admin sign-in must drive that binary, not whichever
     ``claude`` happens to be on the gateway's ``PATH``.
     """
-    raw = (ctx.config or {}).get("cli_argv")
+    raw = _transport_options(ctx).get("argv")
     if isinstance(raw, (list, tuple)) and raw and isinstance(raw[0], str):
         return raw[0]
     return ""

@@ -27,7 +27,7 @@ keeps the upstream status and rate-limit headers for the gateway.
 because its adaptive thinking shares that budget, so forwarding a host's small
 value would truncate a reply mid-thought; the field is ignored.  An operator
 that needs a hard ceiling sets ``CLAUDE_CODE_MAX_OUTPUT_TOKENS`` in the shim's
-``cli_env`` (measured on CLI 2.1.299: 64 reaches the wire body as 64, 32 as 32).
+the ``env`` option (measured on CLI 2.1.299: 64 reaches the wire body as 64, 32 as 32).
 """
 
 from __future__ import annotations
@@ -42,7 +42,8 @@ import tempfile
 import time
 import uuid
 from collections import deque
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Mapping
+from dataclasses import dataclass, field
 from typing import Any, Protocol, cast
 
 from llm_rosetta.contracts.transport import (
@@ -60,16 +61,129 @@ from .relay import Relay, RelayError
 class CliProvider(TransportProvider, Protocol):
     """The provider fields a direct-CLI lane reads.
 
-    The host's runtime provider carries these; they are the lane's own
-    options, not part of the common transport contract.
+    The lane's own settings arrive in ``transport_options``; :func:`parse_options`
+    validates them.
     """
 
-    cli_argv: tuple[str, ...] | None
-    cli_env: dict[str, str] | None
-    cli_env_unset: tuple[str, ...]
-    cli_args: tuple[str, ...]
-    cli_upstream: str | None
-    cli_processes: int
+
+class ClaudeOptionsError(ValueError):
+    """A ``transport_options`` value the ``claude_cli`` lane cannot use."""
+
+
+@dataclass(frozen=True)
+class ClaudeOptions:
+    """The validated ``transport_options`` of one ``claude_cli`` lane.
+
+    Attributes:
+        argv: The command to start, or ``None`` for :data:`DEFAULT_ARGV`.
+        args: Extra arguments appended after the transport's own flags.
+        env: Environment overrides layered over the gateway's own.
+        env_unset: Names removed from the inherited environment first.
+        upstream: Where the relay forwards, or ``None`` for Anthropic's API.
+        processes: How many CLI processes the provider may run at once.  A
+            turn holds one process for its whole life (~250 MB); requests
+            beyond the cap wait instead of failing.
+    """
+
+    argv: tuple[str, ...] | None = None
+    args: tuple[str, ...] = ()
+    env: dict[str, str] = field(default_factory=dict)
+    env_unset: tuple[str, ...] = ()
+    upstream: str | None = None
+    processes: int = 1
+
+
+def parse_options(provider_info: TransportProvider) -> ClaudeOptions:
+    """Validate a lane's ``transport_options`` and return them typed.
+
+    Args:
+        provider_info: The lane's resolved provider config.
+
+    Returns:
+        The validated options; defaults when the lane declares none.
+
+    Raises:
+        ClaudeOptionsError: The options are not an object, or a value has the
+            wrong shape.
+    """
+    name = provider_info.config_name
+    raw = provider_info.transport_options
+    if not isinstance(raw, Mapping):
+        raise ClaudeOptionsError(
+            f"Provider '{name}': transport_options must be an object, got {raw!r}"
+        )
+    known = {"argv", "args", "env", "env_unset", "upstream", "processes"}
+    unknown = sorted(set(raw) - known)
+    if unknown:
+        raise ClaudeOptionsError(
+            f"Provider '{name}': unknown claude_cli transport option(s) "
+            f"{', '.join(map(str, unknown))}; known: {', '.join(sorted(known))}"
+        )
+
+    argv = raw.get("argv")
+    if argv is not None and (
+        not isinstance(argv, (list, tuple))
+        or not argv
+        or not all(isinstance(part, str) and part for part in argv)
+    ):
+        raise ClaudeOptionsError(
+            f"Provider '{name}': argv must be a non-empty list of non-empty "
+            f"strings, got {argv!r}"
+        )
+
+    args = raw.get("args")
+    if args is not None and (
+        not isinstance(args, (list, tuple))
+        or not all(isinstance(part, str) for part in args)
+    ):
+        raise ClaudeOptionsError(
+            f"Provider '{name}': args must be a list of strings, got {args!r}"
+        )
+
+    env = raw.get("env")
+    if env is not None:
+        if not isinstance(env, Mapping):
+            raise ClaudeOptionsError(
+                f"Provider '{name}': env must be a mapping of environment "
+                f"names to strings, got {env!r}"
+            )
+        for key, value in env.items():
+            if not isinstance(key, str) or not isinstance(value, str):
+                raise ClaudeOptionsError(
+                    f"Provider '{name}': env must map strings to strings; "
+                    f"{key!r} has value {value!r}"
+                )
+
+    unset = raw.get("env_unset")
+    if unset is not None and (
+        not isinstance(unset, (list, tuple))
+        or not all(isinstance(part, str) and part for part in unset)
+    ):
+        raise ClaudeOptionsError(
+            f"Provider '{name}': env_unset must be a list of non-empty "
+            f"strings, got {unset!r}"
+        )
+
+    upstream = raw.get("upstream")
+    if upstream is not None and (not isinstance(upstream, str) or not upstream.strip()):
+        raise ClaudeOptionsError(
+            f"Provider '{name}': upstream must be a non-empty string, got {upstream!r}"
+        )
+
+    processes = raw.get("processes", 1)
+    if not isinstance(processes, int) or isinstance(processes, bool) or processes < 1:
+        raise ClaudeOptionsError(
+            f"Provider '{name}': processes must be an integer >= 1, got {processes!r}"
+        )
+
+    return ClaudeOptions(
+        argv=tuple(argv) if argv else None,
+        args=tuple(args or ()),
+        env=dict(env or {}),
+        env_unset=tuple(unset or ()),
+        upstream=upstream,
+        processes=processes,
+    )
 
 
 #: The command a shim that declares none gets.
@@ -100,7 +214,7 @@ _STREAM_EVENT = "stream_event"
 _DEFAULT_STOP_REASON = "end_turn"
 
 #: Environment the transport needs whatever the shim declares.  A shim's own
-#: ``cli_env`` value wins, because these are defaults.
+#: ``env`` value wins, because these are defaults.
 _FIXED_ENV: dict[str, str] = {
     # Native's session-title request is its own upstream call, and it races
     # the turn for the relay's one admitted request.  The gateway names the
@@ -404,7 +518,7 @@ def _without_cache_control(tools: list[Any]) -> list[Any]:
 
 
 def _spawn_argv(
-    provider_info: CliProvider,
+    options: ClaudeOptions,
     session_id: str,
     system_path: str | None,
     model: str,
@@ -413,7 +527,7 @@ def _spawn_argv(
     """The CLI argv for one turn.
 
     Args:
-        provider_info: The lane's resolved provider config.
+        options: The lane's validated options.
         session_id: The conversation's CLI session id.
         system_path: File the system prompt was written to, if any.
         model: The model the client named, when it named one.
@@ -422,7 +536,7 @@ def _spawn_argv(
     Returns:
         The full argv.
     """
-    argv = list(provider_info.cli_argv or DEFAULT_ARGV)
+    argv = list(options.argv or DEFAULT_ARGV)
     argv += [
         "-p",
         "--verbose",
@@ -449,23 +563,23 @@ def _spawn_argv(
         argv += ["--model", model]
     argv += ["--settings", settings_path]
     argv += ["--session-id", session_id]
-    argv += list(provider_info.cli_args)
+    argv += list(options.args)
     return argv
 
 
-def _spawn_env(provider_info: CliProvider) -> dict[str, str]:
+def _spawn_env(options: ClaudeOptions) -> dict[str, str]:
     """The CLI environment: the gateway's, minus the unset names, plus overrides.
 
     Args:
-        provider_info: The lane's resolved provider config.
+        options: The lane's validated options.
 
     Returns:
         The environment mapping for the child.
     """
     env = dict(os.environ)
-    for name in provider_info.cli_env_unset:
+    for name in options.env_unset:
         env.pop(name, None)
-    env.update({str(key): str(value) for key, value in provider_info.cli_env.items()})
+    env.update({str(key): str(value) for key, value in options.env.items()})
     for key, value in _FIXED_ENV.items():
         env.setdefault(key, value)
     return env
@@ -1216,14 +1330,16 @@ class ClaudeCliTransport(UpstreamTransport):
         # the gate is what keeps two providers from sharing a cap.
         self._gates: dict[str, tuple[int, asyncio.Semaphore]] = {}
 
-    def _gate(self, provider_info: CliProvider) -> asyncio.Semaphore:
+    def _gate(
+        self, provider_info: CliProvider, options: ClaudeOptions
+    ) -> asyncio.Semaphore:
         """The process-slot semaphore for *provider_info*.
 
-        A config reload may change ``cli_processes`` while turns are running.
+        A config reload may change ``processes`` while turns are running.
         A new limit replaces the gate; turns already holding the old one
         finish under it, and new turns queue on the new one.
         """
-        limit = provider_info.cli_processes
+        limit = options.processes
         name = provider_info.config_name
         held = self._gates.get(name)
         if held is None or held[0] != limit:
@@ -1389,14 +1505,18 @@ class ClaudeCliTransport(UpstreamTransport):
     ) -> _CliStream:
         """Wait for a process slot, then start one CLI process.
 
-        A turn beyond the provider's ``cli_processes`` waits here; it does not
+        A turn beyond the provider's ``processes`` option waits here; it does not
         fail.  The slot passes to the process and is released when the turn's
         stream closes.
         """
-        gate = self._gate(provider_info)
+        try:
+            options = parse_options(provider_info)
+        except ClaudeOptionsError as exc:
+            raise UpstreamConnectionError(str(exc)) from exc
+        gate = self._gate(provider_info, options)
         await gate.acquire()
         try:
-            return await self._start_turn(provider_info, body, gate)
+            return await self._start_turn(provider_info, options, body, gate)
         except BaseException:
             gate.release()
             raise
@@ -1404,6 +1524,7 @@ class ClaudeCliTransport(UpstreamTransport):
     async def _start_turn(
         self,
         provider_info: CliProvider,
+        options: ClaudeOptions,
         body: dict[str, Any],
         gate: asyncio.Semaphore,
     ) -> _CliStream:
@@ -1417,16 +1538,16 @@ class ClaudeCliTransport(UpstreamTransport):
             with open(system_path, "w", encoding="utf-8") as handle:
                 handle.write(system)
         argv = _spawn_argv(
-            provider_info,
+            options,
             session_id,
             system_path,
             str(body.get("model") or ""),
             os.path.join(workdir, "settings.json"),
         )
-        env = _spawn_env(provider_info)
+        env = _spawn_env(options)
         try:
             relay = Relay(
-                provider_info.cli_upstream,
+                options.upstream,
                 timeout=self._timeout,
                 rewrite=make_restorer(body),
             )

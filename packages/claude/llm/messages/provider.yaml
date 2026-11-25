@@ -43,46 +43,51 @@ connection:
   # the HTTP lanes) and is never opened.
   base_url: http://claude.local
   transport: claude_cli
-  # The vendor's command.  An absolute path is fine when the binary is not on
-  # the gateway's PATH; a provider entry may point at another install.
-  cli_argv: ["claude"]
-  # Load user settings from this lane's own profile.  Without this the CLI
-  # starts with no credential: measured on 2.1.299, the upstream answered 401.
-  # The transport's private --settings file still pins ANTHROPIC_BASE_URL to
-  # the relay, so a user settings file cannot point the CLI at another host.
-  cli_args: ["--setting-sources", "user"]
-  # `-p` rewrites an inherited entrypoint of "cli" to "sdk-cli".  A lane-
-  # specific value keeps the request tagged as this gateway.  Measured: the
-  # User-Agent suffix changes, while `x-app` stays `cli`.  The reference
-  # implementation reports a lower subscription burn for this bucket; that
-  # rate effect is not reproduced here, so do not promise a number.
-  cli_env:
-    CLAUDE_CODE_ENTRYPOINT: llm-rosetta
-    # Keep the official login in this lane's profile, as the ACP lane does.
-    # Without it the CLI reads the gateway process's ~/.claude, which may hold
-    # an API billing helper instead of the subscription login the panel shows.
-    CLAUDE_CONFIG_DIR: "{acp_home}/claude"
-  # The gateway process usually carries Anthropic billing or backend settings.
-  # Claude Code gives them precedence over the stored subscription, so remove
-  # them: otherwise the lane silently bills the API, calls another host, or
-  # moves to Bedrock/Vertex.  The list is CLAUDE_ENV_UNSET in auth.py.
-  cli_env_unset:
-    - ANTHROPIC_API_KEY
-    - ANTHROPIC_AUTH_TOKEN
-    - ANTHROPIC_BASE_URL
-    - ANTHROPIC_MODEL
-    - ANTHROPIC_SMALL_FAST_MODEL
-    - ANTHROPIC_DEFAULT_OPUS_MODEL
-    - ANTHROPIC_DEFAULT_SONNET_MODEL
-    - ANTHROPIC_DEFAULT_HAIKU_MODEL
-    - ANTHROPIC_CUSTOM_HEADERS
-    - CLAUDE_CODE_USE_BEDROCK
-    - CLAUDE_CODE_USE_VERTEX
-    - CLAUDE_CODE_USE_FOUNDRY
-    - CLAUDE_CODE_USE_ANTHROPIC_AWS
-    - CLAUDE_CODE_USE_ANTHROPIC_GOOGLE_CLOUD
-    - CLAUDE_CODE_USE_MANTLE
-    - CLAUDE_CODE_USE_GATEWAY
+  # The lane's own options.  The claude_cli transport reads and validates
+  # them; the gateway and core treat them as opaque.  A provider entry may
+  # set `transport_options` too and wins per key (a nested value, such as
+  # `env`, is replaced whole).
+  transport_options:
+    # The vendor's command.  An absolute path is fine when the binary is not on
+    # the gateway's PATH; a provider entry may point at another install.
+    argv: ["claude"]
+    # Load user settings from this lane's own profile.  Without this the CLI
+    # starts with no credential: measured on 2.1.299, the upstream answered 401.
+    # The transport's private --settings file still pins ANTHROPIC_BASE_URL to
+    # the relay, so a user settings file cannot point the CLI at another host.
+    args: ["--setting-sources", "user"]
+    # `-p` rewrites an inherited entrypoint of "cli" to "sdk-cli".  A lane-
+    # specific value keeps the request tagged as this gateway.  Measured: the
+    # User-Agent suffix changes, while `x-app` stays `cli`.  The reference
+    # implementation reports a lower subscription burn for this bucket; that
+    # rate effect is not reproduced here, so do not promise a number.
+    env:
+      CLAUDE_CODE_ENTRYPOINT: llm-rosetta
+      # Keep the official login in this lane's profile, as the ACP lane does.
+      # Without it the CLI reads the gateway process's ~/.claude, which may hold
+      # an API billing helper instead of the subscription login the panel shows.
+      CLAUDE_CONFIG_DIR: "{acp_home}/claude"
+    # The gateway process usually carries Anthropic billing or backend settings.
+    # Claude Code gives them precedence over the stored subscription, so remove
+    # them: otherwise the lane silently bills the API, calls another host, or
+    # moves to Bedrock/Vertex.  The list is CLAUDE_ENV_UNSET in auth.py.
+    env_unset:
+      - ANTHROPIC_API_KEY
+      - ANTHROPIC_AUTH_TOKEN
+      - ANTHROPIC_BASE_URL
+      - ANTHROPIC_MODEL
+      - ANTHROPIC_SMALL_FAST_MODEL
+      - ANTHROPIC_DEFAULT_OPUS_MODEL
+      - ANTHROPIC_DEFAULT_SONNET_MODEL
+      - ANTHROPIC_DEFAULT_HAIKU_MODEL
+      - ANTHROPIC_CUSTOM_HEADERS
+      - CLAUDE_CODE_USE_BEDROCK
+      - CLAUDE_CODE_USE_VERTEX
+      - CLAUDE_CODE_USE_FOUNDRY
+      - CLAUDE_CODE_USE_ANTHROPIC_AWS
+      - CLAUDE_CODE_USE_ANTHROPIC_GOOGLE_CLOUD
+      - CLAUDE_CODE_USE_MANTLE
+      - CLAUDE_CODE_USE_GATEWAY
 
 hint_msg:
   en: >-
@@ -100,9 +105,9 @@ hint_msg:
     client tools work: the tool definitions travel on the relay's rewrite and
     the CLI reports the model's call back unchanged.
     Anthropic's terms may not allow driving the CLI from another client; use
-    an account you can afford to lose. A provider entry may set cli_upstream
-    to send the request through an organization gateway instead of Anthropic's
-    API.
+    an account you can afford to lose. A provider entry may set
+    transport_options.upstream to send the request through an organization
+    gateway instead of Anthropic's API.
   zh: >-
     把官方 Claude Code CLI 当作模型客户端运行。本通道的代码是一个独立插件：
     先执行 `llm-rosetta-plugins install claude_cli` 并重启网关（缺少插件时，
@@ -114,5 +119,5 @@ hint_msg:
     每个请求启动一个 `claude` 进程（约 250 MB），请按通道限制并发。
     图片、思考块与客户端工具均可用：工具定义由 relay 改写写入请求体，
     CLI 会原样返回模型的工具调用。Anthropic 的条款可能不允许从其他客户端
-    驱动该 CLI，请只使用可以承受损失的账号。provider 条目可设置 cli_upstream，
+    驱动该 CLI，请只使用可以承受损失的账号。provider 条目可设置 transport_options.upstream，
     让请求经过组织网关而不是 Anthropic 的 API。
