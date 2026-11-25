@@ -19,11 +19,15 @@ dependencies = ["llm-rosetta>=0.14.0"]
 [project.entry-points."llm_rosetta.extensions"]
 claude = "llm_rosetta_ext_claude"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+# The folder is the package: no src/ and no inner directory.  The import name
+# is mapped onto "." and the packages are listed, so tests/ and the packaging
+# files stay out of the wheel.
+[tool.setuptools]
+package-dir = { "llm_rosetta_ext_claude" = "." }
+packages = ["llm_rosetta_ext_claude", "llm_rosetta_ext_claude.transport"]
 
 [tool.setuptools.package-data]
-llm_rosetta_ext_claude = ["plugin.yaml", "**/*.yaml"]
+llm_rosetta_ext_claude = ["plugin.yaml", "provider.yaml", "llm/*/provider.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

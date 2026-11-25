@@ -4,7 +4,8 @@ An extension is a directory ``packages/<id>/`` that holds ``plugin.yaml``.
 This script only looks at the file system (no YAML parser is needed):
 
 * ``pyproject.toml``, ``README.md``, ``tests/`` exist;
-* ``src/llm_rosetta_ext_<id>/`` exists, with ``-`` in the id mapped to ``_``;
+* ``__init__.py`` exists: the folder is the package, imported as
+  ``llm_rosetta_ext_<id>`` (``-`` in the id mapped to ``_``);
 * the id is not reserved.
 
 Run from the repo root: ``python scripts/check_layout.py``.
@@ -28,8 +29,7 @@ def problems(root: Path) -> list[str]:
         ext_id = folder.name
         if ext_id in RESERVED:
             found.append(f"{ext_id}: reserved id")
-        module = "llm_rosetta_ext_" + ext_id.replace("-", "_")
-        for rel in ("pyproject.toml", "README.md", "tests", f"src/{module}"):
+        for rel in ("pyproject.toml", "README.md", "tests", "__init__.py"):
             if not (folder / rel).exists():
                 found.append(f"{ext_id}: missing {rel}")
     return found
