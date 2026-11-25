@@ -1,0 +1,18 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: openrouter
+name: OpenRouter
+version: 0.5.1
+maturity: beta
+tags: ["tier:paid"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims:
+    - openrouter--chat_completions
+    - openrouter--messages
+    - openrouter--open_responses
+    - openrouter--rerank
+summary:
+  en: "OpenRouter aggregator: chat completions, messages, open responses and rerank lanes on one key."
+  zh: "OpenRouter 聚合服务:同一密钥下的 chat completions、messages、open responses 与 rerank 通道。"

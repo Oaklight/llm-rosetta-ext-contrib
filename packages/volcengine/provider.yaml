@@ -1,0 +1,7 @@
+# The vendor's display name and mark (the panel, and the manifest's
+# ``label`` / ``logo``); every leaf inherits them.
+group_label: Volcengine
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/volcengine.svg
+connection:
+  base_url: https://ark.cn-beijing.volces.com/api/v3
+  api_key_env: ARK_API_KEY

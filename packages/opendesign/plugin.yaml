@@ -1,0 +1,14 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: opendesign
+name: OpenDesign
+version: 0.3.2
+maturity: beta
+tags: ["tier:subscription", "auth:device"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims: [opendesign--chat_completions, opendesign--messages, opendesign--open_responses]
+summary:
+  en: "Open Design Cloud model gateway (Coding Plan) over chat_completions, open_responses and messages, with device sign-in and an allowance probe."
+  zh: "Open Design Cloud 模型网关(Coding Plan),支持 chat_completions、open_responses、messages 三种格式,含设备授权登录与额度探测。"

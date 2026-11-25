@@ -1,0 +1,15 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: moonshot
+name: Moonshot
+version: 0.5.1
+maturity: stable
+tags: ["tier:paid", "region:cn"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims:
+    - moonshot
+summary:
+  en: "Moonshot (Kimi) chat; api.moonshot.cn by default."
+  zh: "月之暗面 Moonshot(Kimi)聊天;默认 api.moonshot.cn。"

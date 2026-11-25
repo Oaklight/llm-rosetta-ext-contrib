@@ -1,0 +1,18 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: zai
+name: Z.ai
+version: 0.5.1
+maturity: stable
+tags: ["tier:paid"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims:
+    - zai--chat_completions
+    - zai--embedding
+    - zai--messages
+    - zai--rerank
+summary:
+  en: "Z.ai (Zhipu AI international): chat, messages, embeddings and rerank on one credential."
+  zh: "Z.ai(智谱国际站):同一凭据下的 chat、messages、embeddings 与 rerank。"

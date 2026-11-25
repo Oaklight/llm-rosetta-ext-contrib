@@ -1,0 +1,15 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: qwen
+name: Qwen
+version: 0.5.1
+maturity: stable
+tags: ["tier:paid", "region:cn"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims:
+    - qwen
+summary:
+  en: "Qwen on DashScope compatible mode (mainland endpoint by default)."
+  zh: "通义千问,DashScope 兼容模式(默认大陆端点)。"

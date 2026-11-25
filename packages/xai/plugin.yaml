@@ -1,0 +1,15 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: xai
+name: xAI
+version: 0.5.1
+maturity: stable
+tags: ["tier:paid"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims:
+    - xai
+summary:
+  en: "xAI Grok chat on an OpenAI-compatible endpoint."
+  zh: "xAI Grok 聊天(OpenAI 兼容端点)。"

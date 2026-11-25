@@ -1,0 +1,17 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: siliconflow
+name: SiliconFlow
+version: 0.5.1
+maturity: beta
+tags: ["tier:paid", "region:cn"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims:
+    - siliconflow--chat_completions
+    - siliconflow--embedding
+    - siliconflow--rerank
+summary:
+  en: "SiliconFlow: chat, embeddings and rerank on one credential (mainland endpoint)."
+  zh: "SiliconFlow:同一凭据下的 chat、embeddings 与 rerank(大陆端点)。"

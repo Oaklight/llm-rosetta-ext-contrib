@@ -1,0 +1,9 @@
+# NVIDIA NIM — hosted open-weight models from build.nvidia.com, signed with a
+# developer-program key.  One credential for every endpoint.
+# The vendor's display name and mark (the panel, and the manifest's
+# ``label`` / ``logo``); every leaf inherits them.
+group_label: NVIDIA
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/nvidia.svg
+connection:
+  base_url: https://integrate.api.nvidia.com/v1
+  api_key_env: NVIDIA_API_KEY

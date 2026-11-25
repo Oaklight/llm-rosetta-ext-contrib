@@ -1,0 +1,8 @@
+# ``openrouter--messages`` answers on ``https://openrouter.ai/api`` while the
+# other lanes carry ``/api/v1``, so ``base_url`` stays on each leaf.
+# The vendor's display name and mark (the panel, and the manifest's
+# ``label`` / ``logo``); every leaf inherits them.
+group_label: OpenRouter
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/openrouter.svg
+connection:
+  api_key_env: OPENROUTER_API_KEY

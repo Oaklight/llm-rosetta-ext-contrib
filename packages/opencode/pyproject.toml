@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-rosetta-ext-opencode"
+version = "0.5.1"
+description = "llm-rosetta extension: OpenCode Go and Zen as a provider, over chat_completions, open_responses and messages"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Oaklight" }]
+# Standard library only beyond core: an extension must run where pip is absent.
+dependencies = ["llm-rosetta>=0.14.0"]
+
+[project.entry-points."llm_rosetta.extensions"]
+opencode = "llm_rosetta_ext.opencode"
+
+# The folder is the package: no src/ and no inner directory.  The import name
+# is mapped onto "." and the packages are listed, so tests/ and the packaging
+# files stay out of the wheel.  The shim tree's folders hold no __init__.py,
+# so the data files the loader reads are named below.
+[tool.setuptools]
+package-dir = { "llm_rosetta_ext.opencode" = "." }
+packages = ["llm_rosetta_ext.opencode"]
+
+[tool.setuptools.package-data]
+"llm_rosetta_ext.opencode" = ["plugin.yaml", "provider.yaml", "llm/*/provider.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

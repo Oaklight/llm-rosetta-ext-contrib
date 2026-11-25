@@ -1,0 +1,7 @@
+# The vendor's display name and mark (the panel, and the manifest's
+# ``label`` / ``logo``); every leaf inherits them.
+group_label: Zhipu
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/zhipu.svg
+connection:
+  base_url: https://open.bigmodel.cn/api/paas/v4
+  api_key_env: ZHIPU_API_KEY
