@@ -21,10 +21,10 @@ groq = "llm_rosetta_ext.groq"
 # files stay out of the wheel.
 [tool.setuptools]
 package-dir = { "llm_rosetta_ext.groq" = "." }
-packages = ["llm_rosetta_ext.groq", "llm_rosetta_ext.groq.build.lib.llm_rosetta_ext.groq", "llm_rosetta_ext.groq.build.lib.llm_rosetta_ext.groq.build.lib.llm_rosetta_ext.groq"]
+packages = ["llm_rosetta_ext.groq"]
 
 [tool.setuptools.package-data]
-"llm_rosetta_ext.groq" = ["plugin.yaml", "build/lib/llm_rosetta_ext/groq/build/lib/llm_rosetta_ext/groq/llm/provider.yaml", "build/lib/llm_rosetta_ext/groq/build/lib/llm_rosetta_ext/groq/llm/transforms.py", "build/lib/llm_rosetta_ext/groq/build/lib/llm_rosetta_ext/groq/provider.yaml", "build/lib/llm_rosetta_ext/groq/llm/provider.yaml", "build/lib/llm_rosetta_ext/groq/llm/transforms.py", "build/lib/llm_rosetta_ext/groq/provider.yaml", "llm/provider.yaml", "llm/transforms.py", "provider.yaml"]
+"llm_rosetta_ext.groq" = ["llm/provider.yaml", "llm/transforms.py", "plugin.yaml", "provider.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

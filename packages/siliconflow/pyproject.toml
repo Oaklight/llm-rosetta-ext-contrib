@@ -21,10 +21,10 @@ siliconflow = "llm_rosetta_ext.siliconflow"
 # files stay out of the wheel.
 [tool.setuptools]
 package-dir = { "llm_rosetta_ext.siliconflow" = "." }
-packages = ["llm_rosetta_ext.siliconflow", "llm_rosetta_ext.siliconflow.build.lib.llm_rosetta_ext.siliconflow", "llm_rosetta_ext.siliconflow.build.lib.llm_rosetta_ext.siliconflow.build.lib.llm_rosetta_ext.siliconflow"]
+packages = ["llm_rosetta_ext.siliconflow"]
 
 [tool.setuptools.package-data]
-"llm_rosetta_ext.siliconflow" = ["plugin.yaml", "build/lib/llm_rosetta_ext/siliconflow/build/lib/llm_rosetta_ext/siliconflow/embeddings/provider.yaml", "build/lib/llm_rosetta_ext/siliconflow/build/lib/llm_rosetta_ext/siliconflow/embeddings/transforms.py", "build/lib/llm_rosetta_ext/siliconflow/build/lib/llm_rosetta_ext/siliconflow/llm/provider.yaml", "build/lib/llm_rosetta_ext/siliconflow/build/lib/llm_rosetta_ext/siliconflow/llm/transforms.py", "build/lib/llm_rosetta_ext/siliconflow/build/lib/llm_rosetta_ext/siliconflow/provider.yaml", "build/lib/llm_rosetta_ext/siliconflow/build/lib/llm_rosetta_ext/siliconflow/rerank/provider.yaml", "build/lib/llm_rosetta_ext/siliconflow/build/lib/llm_rosetta_ext/siliconflow/rerank/transforms.py", "build/lib/llm_rosetta_ext/siliconflow/embeddings/provider.yaml", "build/lib/llm_rosetta_ext/siliconflow/embeddings/transforms.py", "build/lib/llm_rosetta_ext/siliconflow/llm/provider.yaml", "build/lib/llm_rosetta_ext/siliconflow/llm/transforms.py", "build/lib/llm_rosetta_ext/siliconflow/provider.yaml", "build/lib/llm_rosetta_ext/siliconflow/rerank/provider.yaml", "build/lib/llm_rosetta_ext/siliconflow/rerank/transforms.py", "embeddings/provider.yaml", "embeddings/transforms.py", "llm/provider.yaml", "llm/transforms.py", "provider.yaml", "rerank/provider.yaml", "rerank/transforms.py"]
+"llm_rosetta_ext.siliconflow" = ["embeddings/provider.yaml", "embeddings/transforms.py", "llm/provider.yaml", "llm/transforms.py", "plugin.yaml", "provider.yaml", "rerank/provider.yaml", "rerank/transforms.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

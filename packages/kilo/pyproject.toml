@@ -21,10 +21,11 @@ kilo = "llm_rosetta_ext.kilo"
 # files stay out of the wheel.
 [tool.setuptools]
 package-dir = { "llm_rosetta_ext.kilo" = "." }
-packages = ["llm_rosetta_ext.kilo", "llm_rosetta_ext.kilo.llm", "llm_rosetta_ext.kilo.build.lib.llm_rosetta_ext.kilo", "llm_rosetta_ext.kilo.build.lib.llm_rosetta_ext.kilo.llm", "llm_rosetta_ext.kilo.build.lib.llm_rosetta_ext.kilo.build.lib.llm_rosetta_ext.kilo", "llm_rosetta_ext.kilo.build.lib.llm_rosetta_ext.kilo.build.lib.llm_rosetta_ext.kilo.llm"]
+packages = ["llm_rosetta_ext.kilo", "llm_rosetta_ext.kilo.llm"]
 
 [tool.setuptools.package-data]
-"llm_rosetta_ext.kilo" = ["plugin.yaml", "build/lib/llm_rosetta_ext/kilo/build/lib/llm_rosetta_ext/kilo/llm/provider.yaml", "build/lib/llm_rosetta_ext/kilo/build/lib/llm_rosetta_ext/kilo/provider.yaml", "build/lib/llm_rosetta_ext/kilo/llm/provider.yaml", "build/lib/llm_rosetta_ext/kilo/provider.yaml", "llm/provider.yaml", "provider.yaml"]
+"llm_rosetta_ext.kilo" = ["plugin.yaml", "provider.yaml"]
+"llm_rosetta_ext.kilo.llm" = ["provider.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

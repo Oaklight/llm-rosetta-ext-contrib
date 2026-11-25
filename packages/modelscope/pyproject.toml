@@ -21,10 +21,10 @@ modelscope = "llm_rosetta_ext.modelscope"
 # files stay out of the wheel.
 [tool.setuptools]
 package-dir = { "llm_rosetta_ext.modelscope" = "." }
-packages = ["llm_rosetta_ext.modelscope", "llm_rosetta_ext.modelscope.build.lib.llm_rosetta_ext.modelscope", "llm_rosetta_ext.modelscope.build.lib.llm_rosetta_ext.modelscope.build.lib.llm_rosetta_ext.modelscope"]
+packages = ["llm_rosetta_ext.modelscope"]
 
 [tool.setuptools.package-data]
-"llm_rosetta_ext.modelscope" = ["plugin.yaml", "build/lib/llm_rosetta_ext/modelscope/build/lib/llm_rosetta_ext/modelscope/llm/provider.yaml", "build/lib/llm_rosetta_ext/modelscope/build/lib/llm_rosetta_ext/modelscope/provider.yaml", "build/lib/llm_rosetta_ext/modelscope/llm/provider.yaml", "build/lib/llm_rosetta_ext/modelscope/provider.yaml", "llm/provider.yaml", "provider.yaml"]
+"llm_rosetta_ext.modelscope" = ["llm/provider.yaml", "plugin.yaml", "provider.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

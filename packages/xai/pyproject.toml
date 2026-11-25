@@ -21,10 +21,10 @@ xai = "llm_rosetta_ext.xai"
 # files stay out of the wheel.
 [tool.setuptools]
 package-dir = { "llm_rosetta_ext.xai" = "." }
-packages = ["llm_rosetta_ext.xai", "llm_rosetta_ext.xai.build.lib.llm_rosetta_ext.xai", "llm_rosetta_ext.xai.build.lib.llm_rosetta_ext.xai.build.lib.llm_rosetta_ext.xai"]
+packages = ["llm_rosetta_ext.xai"]
 
 [tool.setuptools.package-data]
-"llm_rosetta_ext.xai" = ["plugin.yaml", "build/lib/llm_rosetta_ext/xai/build/lib/llm_rosetta_ext/xai/llm/provider.yaml", "build/lib/llm_rosetta_ext/xai/build/lib/llm_rosetta_ext/xai/llm/transforms.py", "build/lib/llm_rosetta_ext/xai/build/lib/llm_rosetta_ext/xai/provider.yaml", "build/lib/llm_rosetta_ext/xai/llm/provider.yaml", "build/lib/llm_rosetta_ext/xai/llm/transforms.py", "build/lib/llm_rosetta_ext/xai/provider.yaml", "llm/provider.yaml", "llm/transforms.py", "provider.yaml"]
+"llm_rosetta_ext.xai" = ["llm/provider.yaml", "llm/transforms.py", "plugin.yaml", "provider.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

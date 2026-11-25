@@ -21,10 +21,10 @@ qwen = "llm_rosetta_ext.qwen"
 # files stay out of the wheel.
 [tool.setuptools]
 package-dir = { "llm_rosetta_ext.qwen" = "." }
-packages = ["llm_rosetta_ext.qwen", "llm_rosetta_ext.qwen.build.lib.llm_rosetta_ext.qwen", "llm_rosetta_ext.qwen.build.lib.llm_rosetta_ext.qwen.build.lib.llm_rosetta_ext.qwen"]
+packages = ["llm_rosetta_ext.qwen"]
 
 [tool.setuptools.package-data]
-"llm_rosetta_ext.qwen" = ["plugin.yaml", "build/lib/llm_rosetta_ext/qwen/build/lib/llm_rosetta_ext/qwen/llm/provider.yaml", "build/lib/llm_rosetta_ext/qwen/build/lib/llm_rosetta_ext/qwen/llm/transforms.py", "build/lib/llm_rosetta_ext/qwen/build/lib/llm_rosetta_ext/qwen/provider.yaml", "build/lib/llm_rosetta_ext/qwen/llm/provider.yaml", "build/lib/llm_rosetta_ext/qwen/llm/transforms.py", "build/lib/llm_rosetta_ext/qwen/provider.yaml", "llm/provider.yaml", "llm/transforms.py", "provider.yaml"]
+"llm_rosetta_ext.qwen" = ["llm/provider.yaml", "llm/transforms.py", "plugin.yaml", "provider.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

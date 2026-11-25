@@ -21,10 +21,10 @@ moonshot = "llm_rosetta_ext.moonshot"
 # files stay out of the wheel.
 [tool.setuptools]
 package-dir = { "llm_rosetta_ext.moonshot" = "." }
-packages = ["llm_rosetta_ext.moonshot", "llm_rosetta_ext.moonshot.build.lib.llm_rosetta_ext.moonshot", "llm_rosetta_ext.moonshot.build.lib.llm_rosetta_ext.moonshot.build.lib.llm_rosetta_ext.moonshot"]
+packages = ["llm_rosetta_ext.moonshot"]
 
 [tool.setuptools.package-data]
-"llm_rosetta_ext.moonshot" = ["plugin.yaml", "build/lib/llm_rosetta_ext/moonshot/build/lib/llm_rosetta_ext/moonshot/llm/provider.yaml", "build/lib/llm_rosetta_ext/moonshot/build/lib/llm_rosetta_ext/moonshot/llm/transforms.py", "build/lib/llm_rosetta_ext/moonshot/build/lib/llm_rosetta_ext/moonshot/provider.yaml", "build/lib/llm_rosetta_ext/moonshot/llm/provider.yaml", "build/lib/llm_rosetta_ext/moonshot/llm/transforms.py", "build/lib/llm_rosetta_ext/moonshot/provider.yaml", "llm/provider.yaml", "llm/transforms.py", "provider.yaml"]
+"llm_rosetta_ext.moonshot" = ["llm/provider.yaml", "llm/transforms.py", "plugin.yaml", "provider.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

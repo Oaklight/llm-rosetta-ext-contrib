@@ -21,10 +21,12 @@ volcengine = "llm_rosetta_ext.volcengine"
 # files stay out of the wheel.
 [tool.setuptools]
 package-dir = { "llm_rosetta_ext.volcengine" = "." }
-packages = ["llm_rosetta_ext.volcengine", "llm_rosetta_ext.volcengine.llm.chat_completions", "llm_rosetta_ext.volcengine.llm.open_responses", "llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine", "llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine.llm.chat_completions", "llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine.llm.open_responses", "llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine", "llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine.llm.chat_completions", "llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine.llm.open_responses"]
+packages = ["llm_rosetta_ext.volcengine", "llm_rosetta_ext.volcengine.llm.chat_completions", "llm_rosetta_ext.volcengine.llm.open_responses"]
 
 [tool.setuptools.package-data]
-"llm_rosetta_ext.volcengine" = ["plugin.yaml", "build/lib/llm_rosetta_ext/volcengine/build/lib/llm_rosetta_ext/volcengine/embeddings/provider.yaml", "build/lib/llm_rosetta_ext/volcengine/build/lib/llm_rosetta_ext/volcengine/llm/chat_completions/provider.yaml", "build/lib/llm_rosetta_ext/volcengine/build/lib/llm_rosetta_ext/volcengine/llm/open_responses/provider.yaml", "build/lib/llm_rosetta_ext/volcengine/build/lib/llm_rosetta_ext/volcengine/provider.yaml", "build/lib/llm_rosetta_ext/volcengine/embeddings/provider.yaml", "build/lib/llm_rosetta_ext/volcengine/llm/chat_completions/provider.yaml", "build/lib/llm_rosetta_ext/volcengine/llm/open_responses/provider.yaml", "build/lib/llm_rosetta_ext/volcengine/provider.yaml", "embeddings/provider.yaml", "llm/chat_completions/provider.yaml", "llm/open_responses/provider.yaml", "provider.yaml"]
+"llm_rosetta_ext.volcengine" = ["embeddings/provider.yaml", "plugin.yaml", "provider.yaml"]
+"llm_rosetta_ext.volcengine.llm.chat_completions" = ["provider.yaml"]
+"llm_rosetta_ext.volcengine.llm.open_responses" = ["provider.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

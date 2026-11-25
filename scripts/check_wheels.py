@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -72,8 +73,17 @@ def check(folder: Path, work: Path) -> list[str]:
     problems: list[str] = []
     out = work / folder.name
     out.mkdir()
+    # The folder is the package, so a build writes ``build/`` and ``*.egg-info``
+    # inside it, and a second build would pick those up as package content.
+    # Build from a clean copy so a developer's earlier builds cannot matter.
+    source = out / "src" / folder.name
+    shutil.copytree(
+        folder,
+        source,
+        ignore=shutil.ignore_patterns("build", "*.egg-info", "__pycache__", "*.pyc"),
+    )
     build = subprocess.run(
-        [sys.executable, "-m", "pip", "wheel", "--no-deps", "-q", "-w", str(out), str(folder)],
+        [sys.executable, "-m", "pip", "wheel", "--no-deps", "-q", "-w", str(out), str(source)],
         capture_output=True,
         text=True,
     )

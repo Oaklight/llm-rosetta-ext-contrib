@@ -21,10 +21,10 @@ zhipu = "llm_rosetta_ext.zhipu"
 # files stay out of the wheel.
 [tool.setuptools]
 package-dir = { "llm_rosetta_ext.zhipu" = "." }
-packages = ["llm_rosetta_ext.zhipu", "llm_rosetta_ext.zhipu.build.lib.llm_rosetta_ext.zhipu", "llm_rosetta_ext.zhipu.build.lib.llm_rosetta_ext.zhipu.build.lib.llm_rosetta_ext.zhipu"]
+packages = ["llm_rosetta_ext.zhipu"]
 
 [tool.setuptools.package-data]
-"llm_rosetta_ext.zhipu" = ["plugin.yaml", "build/lib/llm_rosetta_ext/zhipu/build/lib/llm_rosetta_ext/zhipu/embeddings/provider.yaml", "build/lib/llm_rosetta_ext/zhipu/build/lib/llm_rosetta_ext/zhipu/llm/provider.yaml", "build/lib/llm_rosetta_ext/zhipu/build/lib/llm_rosetta_ext/zhipu/llm/transforms.py", "build/lib/llm_rosetta_ext/zhipu/build/lib/llm_rosetta_ext/zhipu/provider.yaml", "build/lib/llm_rosetta_ext/zhipu/build/lib/llm_rosetta_ext/zhipu/rerank/provider.yaml", "build/lib/llm_rosetta_ext/zhipu/embeddings/provider.yaml", "build/lib/llm_rosetta_ext/zhipu/llm/provider.yaml", "build/lib/llm_rosetta_ext/zhipu/llm/transforms.py", "build/lib/llm_rosetta_ext/zhipu/provider.yaml", "build/lib/llm_rosetta_ext/zhipu/rerank/provider.yaml", "embeddings/provider.yaml", "llm/provider.yaml", "llm/transforms.py", "provider.yaml", "rerank/provider.yaml"]
+"llm_rosetta_ext.zhipu" = ["embeddings/provider.yaml", "llm/provider.yaml", "llm/transforms.py", "plugin.yaml", "provider.yaml", "rerank/provider.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

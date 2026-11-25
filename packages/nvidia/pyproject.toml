@@ -21,10 +21,10 @@ nvidia = "llm_rosetta_ext.nvidia"
 # files stay out of the wheel.
 [tool.setuptools]
 package-dir = { "llm_rosetta_ext.nvidia" = "." }
-packages = ["llm_rosetta_ext.nvidia", "llm_rosetta_ext.nvidia.build.lib.llm_rosetta_ext.nvidia", "llm_rosetta_ext.nvidia.build.lib.llm_rosetta_ext.nvidia.build.lib.llm_rosetta_ext.nvidia"]
+packages = ["llm_rosetta_ext.nvidia"]
 
 [tool.setuptools.package-data]
-"llm_rosetta_ext.nvidia" = ["plugin.yaml", "build/lib/llm_rosetta_ext/nvidia/build/lib/llm_rosetta_ext/nvidia/llm/provider.yaml", "build/lib/llm_rosetta_ext/nvidia/build/lib/llm_rosetta_ext/nvidia/provider.yaml", "build/lib/llm_rosetta_ext/nvidia/llm/provider.yaml", "build/lib/llm_rosetta_ext/nvidia/provider.yaml", "llm/provider.yaml", "provider.yaml"]
+"llm_rosetta_ext.nvidia" = ["llm/provider.yaml", "plugin.yaml", "provider.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

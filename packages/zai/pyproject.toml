@@ -21,10 +21,10 @@ zai = "llm_rosetta_ext.zai"
 # files stay out of the wheel.
 [tool.setuptools]
 package-dir = { "llm_rosetta_ext.zai" = "." }
-packages = ["llm_rosetta_ext.zai", "llm_rosetta_ext.zai.build.lib.llm_rosetta_ext.zai", "llm_rosetta_ext.zai.build.lib.llm_rosetta_ext.zai.build.lib.llm_rosetta_ext.zai"]
+packages = ["llm_rosetta_ext.zai"]
 
 [tool.setuptools.package-data]
-"llm_rosetta_ext.zai" = ["plugin.yaml", "build/lib/llm_rosetta_ext/zai/build/lib/llm_rosetta_ext/zai/embeddings/provider.yaml", "build/lib/llm_rosetta_ext/zai/build/lib/llm_rosetta_ext/zai/llm/chat_completions/provider.yaml", "build/lib/llm_rosetta_ext/zai/build/lib/llm_rosetta_ext/zai/llm/messages/provider.yaml", "build/lib/llm_rosetta_ext/zai/build/lib/llm_rosetta_ext/zai/provider.yaml", "build/lib/llm_rosetta_ext/zai/build/lib/llm_rosetta_ext/zai/rerank/provider.yaml", "build/lib/llm_rosetta_ext/zai/embeddings/provider.yaml", "build/lib/llm_rosetta_ext/zai/llm/chat_completions/provider.yaml", "build/lib/llm_rosetta_ext/zai/llm/messages/provider.yaml", "build/lib/llm_rosetta_ext/zai/provider.yaml", "build/lib/llm_rosetta_ext/zai/rerank/provider.yaml", "embeddings/provider.yaml", "llm/chat_completions/provider.yaml", "llm/messages/provider.yaml", "provider.yaml", "rerank/provider.yaml"]
+"llm_rosetta_ext.zai" = ["embeddings/provider.yaml", "llm/chat_completions/provider.yaml", "llm/messages/provider.yaml", "plugin.yaml", "provider.yaml", "rerank/provider.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

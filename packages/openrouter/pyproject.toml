@@ -21,10 +21,12 @@ openrouter = "llm_rosetta_ext.openrouter"
 # files stay out of the wheel.
 [tool.setuptools]
 package-dir = { "llm_rosetta_ext.openrouter" = "." }
-packages = ["llm_rosetta_ext.openrouter", "llm_rosetta_ext.openrouter.llm.chat_completions", "llm_rosetta_ext.openrouter.llm.messages", "llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter", "llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter.llm.chat_completions", "llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter.llm.messages", "llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter", "llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter.llm.chat_completions", "llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter.llm.messages"]
+packages = ["llm_rosetta_ext.openrouter", "llm_rosetta_ext.openrouter.llm.chat_completions", "llm_rosetta_ext.openrouter.llm.messages"]
 
 [tool.setuptools.package-data]
-"llm_rosetta_ext.openrouter" = ["plugin.yaml", "build/lib/llm_rosetta_ext/openrouter/build/lib/llm_rosetta_ext/openrouter/llm/chat_completions/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/build/lib/llm_rosetta_ext/openrouter/llm/messages/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/build/lib/llm_rosetta_ext/openrouter/llm/open_responses/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/build/lib/llm_rosetta_ext/openrouter/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/build/lib/llm_rosetta_ext/openrouter/rerank/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/llm/chat_completions/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/llm/messages/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/llm/open_responses/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/rerank/provider.yaml", "llm/chat_completions/provider.yaml", "llm/messages/provider.yaml", "llm/open_responses/provider.yaml", "provider.yaml", "rerank/provider.yaml"]
+"llm_rosetta_ext.openrouter" = ["llm/open_responses/provider.yaml", "plugin.yaml", "provider.yaml", "rerank/provider.yaml"]
+"llm_rosetta_ext.openrouter.llm.chat_completions" = ["provider.yaml"]
+"llm_rosetta_ext.openrouter.llm.messages" = ["provider.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
