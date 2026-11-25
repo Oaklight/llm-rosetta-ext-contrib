@@ -33,7 +33,7 @@ jobs:
           # rewrite it to HTTPS, which the runner can clone without a key.
           git config --global url."https://github.com/".insteadOf "git@github.com:"
           pip install "$CORE"
-          python -c "import llm_rosetta.contracts.transport" || pip install "$CORE_LANE"
+          python -c "import llm_rosetta.contracts.transport" || pip install --force-reinstall --no-deps "$CORE_LANE"
       - name: Install the shim package
         # Not editable: the tests run against what a wheel ships (entry points,
         # package data), and the floor (a development core) may not be on
