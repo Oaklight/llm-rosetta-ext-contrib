@@ -1,0 +1,22 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: claude
+name: Anthropic Claude (official CLI)
+version: 0.1.0
+maturity: experimental
+tags: ["tier:subscription", "auth:cli"]
+homepage: https://github.com/Oaklight/llm-rosetta-ext-contrib/tree/main/packages/claude
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims: ["claude--acp", "claude--messages"]
+  transports: ["claude_cli"]
+external:
+  - name: claude
+    check: ["claude", "--version"]
+    minimum: "2.1.299"
+    install_hint: "npm install -g @anthropic-ai/claude-code"
+platforms: ["linux", "darwin"]
+summary:
+  en: Drives the official Claude Code CLI (ACP adapter or loopback relay) as a model lane; the gateway never holds a token.
+  zh: 把官方 Claude Code CLI(ACP 适配器或 loopback relay)当作模型通道驱动,网关不持有令牌。
