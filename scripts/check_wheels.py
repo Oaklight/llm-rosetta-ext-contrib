@@ -28,6 +28,8 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import _plugin_text  # noqa: E402
 NOT_SHIPPED = {"pyproject.toml", "README.md"}
 NOT_SHIPPED_DIRS = {"tests", "build", "__pycache__"}
 
@@ -59,14 +61,9 @@ def expected_files(folder: Path) -> set[str]:
 
 
 def declared_shims(folder: Path) -> list[str]:
-    text = (folder / "plugin.yaml").read_text(encoding="utf-8")
-    match = re.search(r"^\s*shims:\s*\[([^\]]*)\]", text, re.MULTILINE)
-    if match:
-        return [s.strip().strip("\"'") for s in match.group(1).split(",") if s.strip()]
-    block = re.search(r"^\s*shims:\s*\n((?:\s+-\s+\S+\n?)+)", text, re.MULTILINE)
-    if block:
-        return [s.strip("\"'") for s in re.findall(r"-\s+(\S+)", block.group(1))]
-    return []
+    return _plugin_text.flat_list(
+        (folder / "plugin.yaml").read_text(encoding="utf-8"), "shims"
+    )
 
 
 def check(folder: Path, work: Path) -> list[str]:

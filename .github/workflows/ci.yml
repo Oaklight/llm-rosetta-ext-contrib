@@ -12,4 +12,5 @@ jobs:
         with:
           python-version: "3.12"
       - run: python scripts/check_layout.py
+      - run: python scripts/gen_readme_table.py --check
   # TODO: per-package test jobs, selected by the changed packages/<id> paths.

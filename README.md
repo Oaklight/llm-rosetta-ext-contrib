@@ -35,16 +35,38 @@ Where pip is absent (the Nuitka binary, a slimmed image), the gateway installs t
 
 ## Extensions
 
-| Id | Provides | Maturity |
-|---|---|---|
-| [`claude`](packages/claude) | shims `claude--acp`, `claude--messages`; transport `claude_cli` | experimental |
+<!-- extensions:start -->
+| Id | Name | Provides | Maturity | Tags |
+|---|---|---|---|---|
+| [`antigravity`](packages/antigravity) | Google (Antigravity) | shims `antigravity--acp` | beta | `tier:subscription`, `auth:cli` |
+| [`claude`](packages/claude) | Anthropic Claude (official CLI) | shims `claude--acp`, `claude--messages`; transport `claude_cli` | experimental | `tier:subscription`, `auth:cli` |
+| [`groq`](packages/groq) | Groq | shims `groq--chat_completions` | beta | `tier:paid` |
+| [`kilo`](packages/kilo) | Kilo | shims `kilo--chat_completions` | beta | `tier:paid` |
+| [`kilo_free`](packages/kilo_free) | Kilo (Free) | shims `kilo_free--chat_completions` | beta | `tier:free` |
+| [`llm7`](packages/llm7) | LLM7.io | shims `llm7--chat_completions` | beta | `tier:free` |
+| [`modelscope`](packages/modelscope) | ModelScope | shims `modelscope--chat_completions` | beta | `tier:paid`, `region:cn` |
+| [`moonshot`](packages/moonshot) | Moonshot | shims `moonshot` | stable | `tier:paid`, `region:cn` |
+| [`nvidia`](packages/nvidia) | NVIDIA | shims `nvidia--chat_completions` | beta | `tier:paid` |
+| [`openai_chatgpt`](packages/openai_chatgpt) | OpenAI (ChatGPT plan) | shims `openai_chatgpt--open_responses` | beta | `tier:subscription`, `auth:oauth` |
+| [`opencode`](packages/opencode) | OpenCode | shims `opencode--chat_completions`, `opencode--messages`, `opencode--open_responses` | beta | `tier:subscription`, `tier:paid` |
+| [`opencode_zen_free`](packages/opencode_zen_free) | OpenCode Zen | shims `opencode_zen_free--chat_completions` | beta | `tier:free` |
+| [`opendesign`](packages/opendesign) | OpenDesign | shims `opendesign--chat_completions`, `opendesign--messages`, `opendesign--open_responses` | beta | `tier:subscription`, `auth:device` |
+| [`openrouter`](packages/openrouter) | OpenRouter | shims `openrouter--chat_completions`, `openrouter--messages`, `openrouter--open_responses`, `openrouter--rerank` | beta | `tier:paid` |
+| [`ovhcloud`](packages/ovhcloud) | OVHcloud | shims `ovhcloud--chat_completions` | beta | `tier:free` |
+| [`qwen`](packages/qwen) | Qwen | shims `qwen` | stable | `tier:paid`, `region:cn` |
+| [`siliconflow`](packages/siliconflow) | SiliconFlow | shims `siliconflow--chat_completions`, `siliconflow--embedding`, `siliconflow--rerank` | beta | `tier:paid`, `region:cn` |
+| [`volcengine`](packages/volcengine) | Volcengine | shims `volcengine--chat_completions`, `volcengine--embedding`, `volcengine--open_responses` | stable | `tier:paid`, `region:cn` |
+| [`xai`](packages/xai) | xAI | shims `xai` | stable | `tier:paid` |
+| [`zai`](packages/zai) | Z.ai | shims `zai--chat_completions`, `zai--embedding`, `zai--messages`, `zai--rerank` | stable | `tier:paid` |
+| [`zhipu`](packages/zhipu) | Zhipu | shims `zhipu`, `zhipu--embedding`, `zhipu--rerank` | stable | `tier:paid`, `region:cn` |
+<!-- extensions:end -->
 
-This table is generated from `plugin.yaml` files once the index builder exists.
+This table is generated from the `plugin.yaml` files by `scripts/gen_readme_table.py`; CI fails when it is stale.
 
-## Open items
+## Status
 
-1. Core needs the `llm_rosetta.extensions` entry point and the `plugin.yaml` contract (`llm_rosetta.contracts`).
-2. `ConnectionConfig.cli_*` fields should become a generic `transport_options`.
-3. `claude/auth.py` uses a CLI-login helper that lived at the root of the old contrib package; it must move to core or be vendored.
-4. Index builder: wheels per `<id>/vX.Y.Z` tag, sha256, generated README table.
-5. Per-package CI and a smoke test against the Nuitka binary.
+All twenty-one extensions load through `llm-rosetta ext` (`scripts/check_wheels.py` builds each wheel from a clean copy, unzips it with the standard library and loads it with core). Still open:
+
+1. Release automation: per-extension wheels on `<id>/vX.Y.Z` tags, a generated index with sha256 for gateways that install by id.
+2. Per-package test jobs in CI (they need a core that has `llm_rosetta.extensions`).
+3. A smoke test against the Nuitka gateway binary.
