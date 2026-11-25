@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-rosetta-ext-openrouter"
+version = "0.5.1"
+description = "llm-rosetta extension: OpenRouter shims"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Oaklight" }]
+# Standard library only beyond core: an extension must run where pip is absent.
+dependencies = ["llm-rosetta>=0.14.0"]
+
+[project.entry-points."llm_rosetta.extensions"]
+openrouter = "llm_rosetta_ext.openrouter"
+
+# The folder is the package: no src/ and no inner directory.  The import name
+# is mapped onto "." and the packages are listed, so tests/ and the packaging
+# files stay out of the wheel.
+[tool.setuptools]
+package-dir = { "llm_rosetta_ext.openrouter" = "." }
+packages = ["llm_rosetta_ext.openrouter", "llm_rosetta_ext.openrouter.llm.chat_completions", "llm_rosetta_ext.openrouter.llm.messages", "llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter", "llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter.llm.chat_completions", "llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter.llm.messages", "llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter", "llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter.llm.chat_completions", "llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter.build.lib.llm_rosetta_ext.openrouter.llm.messages"]
+
+[tool.setuptools.package-data]
+"llm_rosetta_ext.openrouter" = ["plugin.yaml", "build/lib/llm_rosetta_ext/openrouter/build/lib/llm_rosetta_ext/openrouter/llm/chat_completions/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/build/lib/llm_rosetta_ext/openrouter/llm/messages/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/build/lib/llm_rosetta_ext/openrouter/llm/open_responses/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/build/lib/llm_rosetta_ext/openrouter/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/build/lib/llm_rosetta_ext/openrouter/rerank/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/llm/chat_completions/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/llm/messages/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/llm/open_responses/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/provider.yaml", "build/lib/llm_rosetta_ext/openrouter/rerank/provider.yaml", "llm/chat_completions/provider.yaml", "llm/messages/provider.yaml", "llm/open_responses/provider.yaml", "provider.yaml", "rerank/provider.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
