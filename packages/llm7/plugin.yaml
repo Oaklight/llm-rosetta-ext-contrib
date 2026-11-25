@@ -1,0 +1,14 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: llm7
+name: LLM7.io
+version: 0.4.1
+maturity: beta
+tags: ["tier:free"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims: [llm7--chat_completions]
+summary:
+  en: Anonymous LLM7.io free gateway over Chat Completions, with the reasoning rename and the turbo-tier model filter.
+  zh: LLM7.io 的匿名免费网关(Chat Completions),含 reasoning 字段重命名与 turbo 档模型过滤。

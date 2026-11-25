@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-rosetta-ext-llm7"
+version = "0.4.1"
+description = "llm-rosetta extension: LLM7.io free tier (shim)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Oaklight" }]
+# Standard library only beyond core: an extension must run where pip is absent.
+dependencies = ["llm-rosetta>=0.14.0"]
+
+[project.entry-points."llm_rosetta.extensions"]
+llm7 = "llm_rosetta_ext.llm7"
+
+# The folder is the package: no src/ and no inner directory.
+[tool.setuptools]
+package-dir = { "llm_rosetta_ext.llm7" = "." }
+packages = ["llm_rosetta_ext.llm7"]
+
+[tool.setuptools.package-data]
+"llm_rosetta_ext.llm7" = ["plugin.yaml", "provider.yaml", "llm/provider.yaml", "llm/transforms.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
