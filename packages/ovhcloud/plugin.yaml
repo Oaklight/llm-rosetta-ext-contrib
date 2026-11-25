@@ -1,0 +1,14 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: ovhcloud
+name: OVHcloud
+version: 0.4.1
+maturity: beta
+tags: ["tier:free"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims: [ovhcloud--chat_completions]
+summary:
+  en: Anonymous OVHcloud AI Endpoints free tier over Chat Completions, with the reasoning rename and no model filter.
+  zh: OVHcloud AI Endpoints 的匿名免费档(Chat Completions),含 reasoning 字段重命名,不过滤模型。
