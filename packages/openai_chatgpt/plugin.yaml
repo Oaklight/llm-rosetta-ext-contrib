@@ -1,0 +1,14 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: openai_chatgpt
+name: OpenAI (ChatGPT plan)
+version: 0.5.1
+maturity: beta
+tags: ["tier:subscription", "auth:oauth"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims: [openai_chatgpt--open_responses]
+summary:
+  en: "Sign in with ChatGPT: serves the ChatGPT plan allowance over Open Responses, with an OAuth exchange and an in-band quota probe."
+  zh: "使用 ChatGPT 登录:通过 Open Responses 提供 ChatGPT 套餐额度,含 OAuth 登录交换与带内额度探测。"
