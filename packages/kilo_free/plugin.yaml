@@ -1,0 +1,14 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: kilo_free
+name: Kilo (Free)
+version: 0.4.1
+maturity: beta
+tags: ["tier:free"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims: [kilo_free--chat_completions]
+summary:
+  en: Keyless Kilo Code free pool over Chat Completions, listing only the models the upstream marks free.
+  zh: Kilo Code 的无密钥免费池(Chat Completions),只列出上游标记为免费的模型。
