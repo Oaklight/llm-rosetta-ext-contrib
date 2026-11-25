@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-rosetta-ext-kilo"
+version = "0.5.1"
+description = "llm-rosetta extension: Kilo shims"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Oaklight" }]
+# Standard library only beyond core: an extension must run where pip is absent.
+dependencies = ["llm-rosetta>=0.14.0"]
+
+[project.entry-points."llm_rosetta.extensions"]
+kilo = "llm_rosetta_ext.kilo"
+
+# The folder is the package: no src/ and no inner directory.  The import name
+# is mapped onto "." and the packages are listed, so tests/ and the packaging
+# files stay out of the wheel.
+[tool.setuptools]
+package-dir = { "llm_rosetta_ext.kilo" = "." }
+packages = ["llm_rosetta_ext.kilo", "llm_rosetta_ext.kilo.llm", "llm_rosetta_ext.kilo.build.lib.llm_rosetta_ext.kilo", "llm_rosetta_ext.kilo.build.lib.llm_rosetta_ext.kilo.llm", "llm_rosetta_ext.kilo.build.lib.llm_rosetta_ext.kilo.build.lib.llm_rosetta_ext.kilo", "llm_rosetta_ext.kilo.build.lib.llm_rosetta_ext.kilo.build.lib.llm_rosetta_ext.kilo.llm"]
+
+[tool.setuptools.package-data]
+"llm_rosetta_ext.kilo" = ["plugin.yaml", "build/lib/llm_rosetta_ext/kilo/build/lib/llm_rosetta_ext/kilo/llm/provider.yaml", "build/lib/llm_rosetta_ext/kilo/build/lib/llm_rosetta_ext/kilo/provider.yaml", "build/lib/llm_rosetta_ext/kilo/llm/provider.yaml", "build/lib/llm_rosetta_ext/kilo/provider.yaml", "llm/provider.yaml", "provider.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

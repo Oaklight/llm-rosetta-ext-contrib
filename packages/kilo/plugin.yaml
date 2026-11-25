@@ -1,0 +1,15 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: kilo
+name: Kilo
+version: 0.5.1
+maturity: beta
+tags: ["tier:paid"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims:
+    - kilo--chat_completions
+summary:
+  en: "Kilo paid gateway (OpenAI Chat Completions endpoint); always sends a credential."
+  zh: "Kilo 付费网关(OpenAI Chat Completions 端点);始终携带凭据。"

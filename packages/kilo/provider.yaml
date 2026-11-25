@@ -1,0 +1,10 @@
+# Kilo — the paid gateway.  The free pool that needs no credential is a
+# separate, externally published shim (``kilo_free--chat_completions``), so
+# this leaf always authenticates: a provider on it without a key is refused
+# rather than silently sent upstream unauthenticated.
+group_label: Kilo
+logo: https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.104.0/icons/kilocode.svg
+connection:
+  base_url: https://api.kilo.ai/api/gateway
+  api_key_env: KILO_API_KEY
+  models_path: /models
