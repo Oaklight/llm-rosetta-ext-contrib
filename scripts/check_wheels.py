@@ -62,10 +62,10 @@ def declared_shims(folder: Path) -> list[str]:
     text = (folder / "plugin.yaml").read_text(encoding="utf-8")
     match = re.search(r"^\s*shims:\s*\[([^\]]*)\]", text, re.MULTILINE)
     if match:
-        return [s.strip() for s in match.group(1).split(",") if s.strip()]
+        return [s.strip().strip("\"'") for s in match.group(1).split(",") if s.strip()]
     block = re.search(r"^\s*shims:\s*\n((?:\s+-\s+\S+\n?)+)", text, re.MULTILINE)
     if block:
-        return re.findall(r"-\s+(\S+)", block.group(1))
+        return [s.strip("\"'") for s in re.findall(r"-\s+(\S+)", block.group(1))]
     return []
 
 
