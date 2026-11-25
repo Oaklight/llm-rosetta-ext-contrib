@@ -1,0 +1,14 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: antigravity
+name: Google (Antigravity)
+version: 0.5.6
+maturity: beta
+tags: ["tier:subscription", "auth:cli"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims: [antigravity--acp]
+summary:
+  en: "Drives the local agy CLI over ACP as a keyless model lane; agy holds the Google sign-in."
+  zh: "通过 ACP 驱动本地 agy CLI 作为无密钥模型通道,Google 登录由 agy 保管。"
