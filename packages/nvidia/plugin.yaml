@@ -1,0 +1,15 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: nvidia
+name: NVIDIA
+version: 0.5.1
+maturity: beta
+tags: ["tier:paid"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims:
+    - nvidia--chat_completions
+summary:
+  en: "NVIDIA NIM hosted open-weight models (build.nvidia.com) on one developer-program key."
+  zh: "NVIDIA NIM 托管的开源权重模型(build.nvidia.com),一个开发者计划密钥通用。"
