@@ -5,7 +5,7 @@ This script only looks at the file system (no YAML parser is needed):
 
 * ``pyproject.toml``, ``README.md``, ``tests/`` exist;
 * ``__init__.py`` exists: the folder is the package, imported as
-  ``llm_rosetta_ext_<id>`` (``-`` in the id mapped to ``_``);
+  ``llm_rosetta_ext.<id>`` (a namespace package; ``-`` in the id mapped to ``_``);
 * the id is not reserved.
 
 Run from the repo root: ``python scripts/check_layout.py``.

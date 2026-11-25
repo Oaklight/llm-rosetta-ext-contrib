@@ -16,7 +16,7 @@ packages/
     pyproject.toml       own name and version; pip installs it
     plugin.yaml          kind, version, maturity, requires, provides, external
     README.md
-    __init__.py          the folder is the package (imported as llm_rosetta_ext_<id>)
+    __init__.py          the folder is the package (imported as llm_rosetta_ext.<id>, a PEP 420 namespace package)
     provider.yaml        shim tree (llm/<format>/provider.yaml)
     auth.py quota.py     sidecars (optional)
     transport/           a lane's code (optional)

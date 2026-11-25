@@ -17,17 +17,17 @@ dependencies = ["llm-rosetta>=0.14.0"]
 # reads plugin.yaml beside it, checks `requires`, registers the provider tree
 # and the declared transports.  See the repo README, "Open items".
 [project.entry-points."llm_rosetta.extensions"]
-claude = "llm_rosetta_ext_claude"
+claude = "llm_rosetta_ext.claude"
 
 # The folder is the package: no src/ and no inner directory.  The import name
 # is mapped onto "." and the packages are listed, so tests/ and the packaging
 # files stay out of the wheel.
 [tool.setuptools]
-package-dir = { "llm_rosetta_ext_claude" = "." }
-packages = ["llm_rosetta_ext_claude", "llm_rosetta_ext_claude.transport"]
+package-dir = { "llm_rosetta_ext.claude" = "." }
+packages = ["llm_rosetta_ext.claude", "llm_rosetta_ext.claude.transport"]
 
 [tool.setuptools.package-data]
-llm_rosetta_ext_claude = ["plugin.yaml", "provider.yaml", "llm/*/provider.yaml"]
+"llm_rosetta_ext.claude" = ["plugin.yaml", "provider.yaml", "llm/*/provider.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

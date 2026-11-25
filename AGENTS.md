@@ -4,7 +4,7 @@ Rules for coding agents working in this repository.
 
 ## Shape
 
-- An extension is `packages/<id>/` with `plugin.yaml`, `pyproject.toml`, `README.md`, `__init__.py` (the folder is the package, imported as `llm_rosetta_ext_<id>`) and `tests/`.
+- An extension is `packages/<id>/` with `plugin.yaml`, `pyproject.toml`, `README.md`, `__init__.py` (the folder is the package, imported as `llm_rosetta_ext.<id>`; the parent `llm_rosetta_ext` is a PEP 420 namespace and must never get an `__init__.py`) and `tests/`.
 - One pull request changes one extension. Repo-level files (`scripts/`, `skills/`, CI) go in their own pull request.
 - Run `python scripts/check_layout.py` before you push.
 

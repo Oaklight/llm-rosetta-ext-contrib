@@ -30,9 +30,9 @@ from llm_rosetta.contracts.transport import (
     UpstreamConnectionError,
     UpstreamTimeoutError,
 )
-from llm_rosetta_ext_claude.transport import ClaudeCliTransport
-from llm_rosetta_ext_claude.transport import transport as claude_cli
-from llm_rosetta_ext_claude.transport.transport import (
+from llm_rosetta_ext.claude.transport import ClaudeCliTransport
+from llm_rosetta_ext.claude.transport import transport as claude_cli
+from llm_rosetta_ext.claude.transport.transport import (
     _quota_update,
     _response_body,
     _signal_tree,
@@ -40,7 +40,7 @@ from llm_rosetta_ext_claude.transport.transport import (
     conversation_session_id,
     make_restorer,
 )
-from llm_rosetta_ext_claude.transport.relay import Relay, RelayError
+from llm_rosetta_ext.claude.transport.relay import Relay, RelayError
 
 #: A minimal stand-in for ``claude``: it reads every frame, notes what it saw,
 #: then answers according to ``FAKE_CLI_MODE``.
