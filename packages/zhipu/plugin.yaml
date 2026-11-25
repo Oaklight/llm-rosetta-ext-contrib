@@ -1,0 +1,17 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: zhipu
+name: Zhipu
+version: 0.5.1
+maturity: stable
+tags: ["tier:paid", "region:cn"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims:
+    - zhipu
+    - zhipu--embedding
+    - zhipu--rerank
+summary:
+  en: "Zhipu AI mainland platform (open.bigmodel.cn): GLM chat, embeddings and rerank."
+  zh: "智谱 AI 大陆平台(open.bigmodel.cn):GLM chat、embeddings 与 rerank。"
