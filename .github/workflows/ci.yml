@@ -35,7 +35,7 @@ jobs:
         # from resolving it again.
         run: |
           pip install --no-deps .
-          pip install pytest pyyaml
+          pip install pytest pytest-asyncio pyyaml
       - name: Run tests
         run: pytest tests -q
 

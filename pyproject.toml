@@ -27,11 +27,22 @@ classifiers = [
 # them, and 0.14.0.dev35, the first core with ``llm_rosetta.contracts``, the
 # only core surface this package imports.  The published manifest gates
 # gateways the same way, through ``requires: {surface, ir}``.
+#
+# The transport also imports ``llm_rosetta.contracts.transport``: raise this
+# floor to the first core release that ships it before publishing this
+# package, or a wheel can install against a core without the module.
 dependencies = ["llm-rosetta>=0.14.0.dev40"]
 
 [project.urls]
 Repository = "https://github.com/Oaklight/llm-rosetta-shim-contrib"
 Upstream = "https://github.com/Oaklight/llm-rosetta"
+
+# The process lane a shim names in ``connection.transport``.  The gateway
+# discovers the transport by this entry-point name; the implementation imports
+# only ``llm_rosetta.contracts.transport``, never the gateway.  It ships in
+# this package because only the Claude shim declares the lane.
+[project.entry-points."llm_rosetta_gateway.transports"]
+claude_cli = "llm_rosetta_shim_contrib.transports:ClaudeCliTransport"
 
 # One entry point per vendor directory, named after it.  Core calls each one
 # inside its own try, so a vendor that fails to load does not stop the others.
@@ -70,6 +81,8 @@ llm_rosetta_shim_contrib = ["providers/**/*.yaml", "providers/**/*.py", "provide
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# The transport tests drive an asyncio subprocess, as the gateway's do.
+asyncio_mode = "auto"
 # Each vendor keeps its tests under tests/<vendor>/, and two vendors may use the
 # same module name (test_registration.py); importlib mode keeps them apart.
 addopts = "--import-mode=importlib"
