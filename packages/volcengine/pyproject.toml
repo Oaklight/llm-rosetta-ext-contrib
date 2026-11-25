@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-rosetta-ext-volcengine"
+version = "0.5.1"
+description = "llm-rosetta extension: Volcengine shims"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Oaklight" }]
+# Standard library only beyond core: an extension must run where pip is absent.
+dependencies = ["llm-rosetta>=0.14.0"]
+
+[project.entry-points."llm_rosetta.extensions"]
+volcengine = "llm_rosetta_ext.volcengine"
+
+# The folder is the package: no src/ and no inner directory.  The import name
+# is mapped onto "." and the packages are listed, so tests/ and the packaging
+# files stay out of the wheel.
+[tool.setuptools]
+package-dir = { "llm_rosetta_ext.volcengine" = "." }
+packages = ["llm_rosetta_ext.volcengine", "llm_rosetta_ext.volcengine.llm.chat_completions", "llm_rosetta_ext.volcengine.llm.open_responses", "llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine", "llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine.llm.chat_completions", "llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine.llm.open_responses", "llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine", "llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine.llm.chat_completions", "llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine.build.lib.llm_rosetta_ext.volcengine.llm.open_responses"]
+
+[tool.setuptools.package-data]
+"llm_rosetta_ext.volcengine" = ["plugin.yaml", "build/lib/llm_rosetta_ext/volcengine/build/lib/llm_rosetta_ext/volcengine/embeddings/provider.yaml", "build/lib/llm_rosetta_ext/volcengine/build/lib/llm_rosetta_ext/volcengine/llm/chat_completions/provider.yaml", "build/lib/llm_rosetta_ext/volcengine/build/lib/llm_rosetta_ext/volcengine/llm/open_responses/provider.yaml", "build/lib/llm_rosetta_ext/volcengine/build/lib/llm_rosetta_ext/volcengine/provider.yaml", "build/lib/llm_rosetta_ext/volcengine/embeddings/provider.yaml", "build/lib/llm_rosetta_ext/volcengine/llm/chat_completions/provider.yaml", "build/lib/llm_rosetta_ext/volcengine/llm/open_responses/provider.yaml", "build/lib/llm_rosetta_ext/volcengine/provider.yaml", "embeddings/provider.yaml", "llm/chat_completions/provider.yaml", "llm/open_responses/provider.yaml", "provider.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

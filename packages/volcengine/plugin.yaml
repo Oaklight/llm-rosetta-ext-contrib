@@ -1,0 +1,17 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: volcengine
+name: Volcengine
+version: 0.5.1
+maturity: stable
+tags: ["tier:paid", "region:cn"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims:
+    - volcengine--chat_completions
+    - volcengine--embedding
+    - volcengine--open_responses
+summary:
+  en: "Volcengine ARK: chat completions, open responses and embeddings (China mainland endpoint)."
+  zh: "火山引擎 ARK:chat completions、open responses 与 embeddings(中国大陆端点)。"
