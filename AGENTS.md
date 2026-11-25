@@ -12,7 +12,7 @@ Rules for coding agents working in this repository.
 
 - An extension imports only the standard library and `llm_rosetta.contracts.*`. Never `llm_rosetta_gateway`, never a private core name, never another extension.
 - No third-party dependencies. The gateway may run where pip is absent, so an extension must work from a plain unzip.
-- A shim name is `<vendor>` or starts with `<vendor>--`. It must not equal a core built-in shim name.
+- The id is the vendor key and the import name: lowercase letters, digits and underscores (`kilo_free`, not `kilo-free`). A shim name is `<id>`, `<id>--<name>` or `<id>_<lane>--<name>` (`alcf_sophia--chat_completions` under `alcf`). It must not equal a core built-in shim name; ids are unique across extension repositories.
 
 ## Manifest (draft schema)
 
