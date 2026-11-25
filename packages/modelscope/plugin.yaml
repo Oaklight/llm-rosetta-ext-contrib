@@ -1,0 +1,15 @@
+# One manifest per extension folder.  Draft schema: see AGENTS.md.
+id: modelscope
+name: ModelScope
+version: 0.5.1
+maturity: beta
+tags: ["tier:paid", "region:cn"]
+requires:
+  surface: 1
+  ir: 1
+provides:
+  shims:
+    - modelscope--chat_completions
+summary:
+  en: "ModelScope API-Inference: Alibaba's model hub behind an OpenAI-compatible gateway."
+  zh: "ModelScope API-Inference:阿里模型社区的 OpenAI 兼容推理网关。"
