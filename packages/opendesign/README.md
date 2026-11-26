@@ -13,7 +13,7 @@ pip install "git+https://github.com/Oaklight/llm-rosetta-ext-contrib@opendesign/
 ## Requirements
 
 - Python >= 3.10
-- `llm-rosetta >= 0.14.0` (`plugin.yaml` records `requires: {surface: 1, ir: 1}`)
+- `llm-rosetta >= 0.14.0.dev40` (`plugin.yaml` records `requires: {surface: 1, ir: 1}`)
 
 ## Configure a provider
 

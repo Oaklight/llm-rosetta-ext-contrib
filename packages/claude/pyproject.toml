@@ -11,7 +11,7 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Oaklight" }]
 # Standard library only beyond core: an extension must run where pip is absent.
-dependencies = ["llm-rosetta>=0.14.0"]
+dependencies = ["llm-rosetta>=0.14.0.dev40"]
 
 # PROPOSED (not in core yet): one entry point that points at the package; core
 # reads plugin.yaml beside it, checks `requires`, registers the provider tree

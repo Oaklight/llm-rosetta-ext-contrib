@@ -13,7 +13,7 @@ permissions:
   contents: write
 
 env:
-  CORE_SPEC: "llm-rosetta>=0.14.0.dev0"
+  CORE_SPEC: "llm-rosetta>=0.14.0.dev40"
   CORE_INDEX: "https://test.pypi.org/simple/"
 
 jobs:

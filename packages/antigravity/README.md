@@ -20,7 +20,7 @@ pip install "git+https://github.com/Oaklight/llm-rosetta-ext-contrib@antigravity
 ## Requirements
 
 - Python >= 3.10
-- `llm-rosetta >= 0.14.0` (the first core whose exchanges may be
+- `llm-rosetta >= 0.14.0.dev40` (the first core whose exchanges may be
   vendor-managed, whose ACP lanes get a persistent home, and which reads
   `acp.argv` plus the three-state `acp.harden`; see Oaklight/llm-rosetta#1681,
   #1683 and #1684)
