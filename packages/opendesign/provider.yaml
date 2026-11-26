@@ -18,7 +18,7 @@
 # The vendor's display name and mark (the panel, and the manifest's
 # ``label`` / ``logo``); every leaf inherits them.
 group_label: OpenDesign
-logo: https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-shim-contrib@main/assets/opendesign.svg
+logo: https://cdn.jsdelivr.net/gh/Oaklight/llm-rosetta-ext-contrib@main/packages/opendesign/assets/opendesign.svg
 
 connection:
   base_url: https://amr-link.open-design.ai/v1

@@ -25,7 +25,7 @@ package-dir = { "llm_rosetta_ext.opendesign" = "." }
 packages = ["llm_rosetta_ext.opendesign"]
 
 [tool.setuptools.package-data]
-"llm_rosetta_ext.opendesign" = ["plugin.yaml", "provider.yaml", "llm/*/provider.yaml"]
+"llm_rosetta_ext.opendesign" = ["assets/opendesign.svg", "plugin.yaml", "provider.yaml", "llm/*/provider.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
