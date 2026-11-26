@@ -2,14 +2,12 @@
 
 Community extensions for [llm-rosetta](https://github.com/Oaklight/llm-rosetta): vendor shims, sign-in exchanges and transports that do not ship with core. Each extension is one self-contained folder under `packages/`.
 
-> Draft layout under review. Nothing here is published, and core does not load this format yet (see *Open items*).
-
 ## Layout
 
 ```
 README.md  AGENTS.md  CONTRIBUTING.md
 skills/                  guidance for coding agents (new-extension, review-extension)
-scripts/                 repo-level checks and, later, the index builder
+scripts/                 repo-level checks and the index builder
 .github/workflows/       CI, selected per changed package
 packages/
   <id>/                  one extension; owned by its author
@@ -28,10 +26,13 @@ An extension is a `packages/<id>/` folder that holds `plugin.yaml`. Extensions n
 ## Install
 
 ```bash
-pip install "git+https://github.com/Oaklight/llm-rosetta-ext-contrib@claude/v0.1.0#subdirectory=packages/claude"
+llm-rosetta ext install claude        # newest compatible version, by id
+llm-rosetta ext install claude --version 0.1.0
+llm-rosetta ext update                # every installed extension
+llm-rosetta ext install https://…/llm_rosetta_ext_claude-0.1.0-py3-none-any.whl --sha256 <digest>
 ```
 
-Where pip is absent (the Nuitka binary, a slimmed image), the gateway installs the same wheel with a standard-library installer into its data directory. One format, two installers.
+An id is looked up in this repository's latest release (`index.json`, written by the *Release* workflow: each wheel with its sha256, `Requires-Python` and what it needs from core). Point `--index` or `$LLM_ROSETTA_EXTENSION_INDEX` at another index (a URL or a file) to install from a fork or a local mirror. The standard-library installer needs no pip, so it works in the Nuitka binary too; `pip install` of a wheel works as well.
 
 ## Extensions
 
@@ -65,8 +66,6 @@ This table is generated from the `plugin.yaml` files by `scripts/gen_readme_tabl
 
 ## Status
 
-All twenty-one extensions load through `llm-rosetta ext` (`scripts/check_wheels.py` builds each wheel from a clean copy, unzips it with the standard library and loads it with core). Still open:
+All twenty-one extensions load through `llm-rosetta ext`. CI builds each wheel from a clean copy, loads it with core (`scripts/check_wheels.py`), runs `llm-rosetta ext check` and the tests of the changed packages. The *Release* workflow (`.github/workflows/release.yml`, run by hand with a tag) publishes the wheels and `index.json`; it has not been run yet.
 
-1. Release automation: per-extension wheels on `<id>/vX.Y.Z` tags, a generated index with sha256 for gateways that install by id.
-2. Per-package test jobs in CI (they need a core that has `llm_rosetta.extensions`).
-3. A smoke test against the Nuitka gateway binary.
+Still open: a smoke test against the Nuitka gateway binary.

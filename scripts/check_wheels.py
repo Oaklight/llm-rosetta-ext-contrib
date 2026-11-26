@@ -20,7 +20,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -30,6 +29,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _plugin_text  # noqa: E402
+from _wheel import BuildError, build_wheel  # noqa: E402
+
 NOT_SHIPPED = {"pyproject.toml", "README.md"}
 NOT_SHIPPED_DIRS = {"tests", "build", "__pycache__"}
 
@@ -70,24 +71,11 @@ def check(folder: Path, work: Path) -> list[str]:
     problems: list[str] = []
     out = work / folder.name
     out.mkdir()
-    # The folder is the package, so a build writes ``build/`` and ``*.egg-info``
-    # inside it, and a second build would pick those up as package content.
-    # Build from a clean copy so a developer's earlier builds cannot matter.
-    source = out / "src" / folder.name
-    shutil.copytree(
-        folder,
-        source,
-        ignore=shutil.ignore_patterns("build", "*.egg-info", "__pycache__", "*.pyc"),
-    )
-    build = subprocess.run(
-        [sys.executable, "-m", "pip", "wheel", "--no-deps", "-q", "-w", str(out), str(source)],
-        capture_output=True,
-        text=True,
-    )
-    wheels = list(out.glob("*.whl"))
-    if build.returncode != 0 or len(wheels) != 1:
-        return [f"{folder.name}: wheel build failed: {build.stderr.strip()[-400:]}"]
-    with zipfile.ZipFile(wheels[0]) as archive:
+    try:
+        wheel = build_wheel(folder, out)
+    except BuildError as exc:
+        return [str(exc)]
+    with zipfile.ZipFile(wheel) as archive:
         names = {n for n in archive.namelist() if n.startswith("llm_rosetta_ext/")}
         target = out / "site"
         archive.extractall(target)

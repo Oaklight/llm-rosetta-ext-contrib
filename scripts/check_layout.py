@@ -9,7 +9,11 @@ This script only looks at the file system (no YAML parser is needed):
   and ``plugin.yaml`` declares it;
 * ``__init__.py`` exists: the folder is the package (a namespace package
   member);
-* the id is not reserved.
+* the id is not reserved;
+* ``requires-python`` is :data:`CORE_PYTHON_FLOOR`, the floor of llm-rosetta
+  core, so an extension never claims an interpreter core does not support (the
+  installer refuses a wheel whose ``Requires-Python`` the running interpreter
+  fails).  Change it together with core's own ``requires-python``.
 
 Run from the repo root: ``python scripts/check_layout.py``.
 """
@@ -22,6 +26,9 @@ from pathlib import Path
 
 RESERVED = {"scripts", "skills", "docs", "tests", "packages", "core", "contrib"}
 ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
+
+#: Core's ``requires-python``.
+CORE_PYTHON_FLOOR = ">=3.10"
 
 
 def problems(root: Path) -> list[str]:
@@ -46,6 +53,18 @@ def problems(root: Path) -> list[str]:
         for rel in ("pyproject.toml", "README.md", "tests", "__init__.py"):
             if not (folder / rel).exists():
                 found.append(f"{ext_id}: missing {rel}")
+        pyproject = folder / "pyproject.toml"
+        if pyproject.is_file():
+            floor = re.search(
+                r'^requires-python\s*=\s*"([^"]*)"',
+                pyproject.read_text(encoding="utf-8"),
+                re.MULTILINE,
+            )
+            if floor is None or floor.group(1) != CORE_PYTHON_FLOOR:
+                found.append(
+                    f"{ext_id}: requires-python must be {CORE_PYTHON_FLOOR!r} "
+                    f"(core's floor), not {floor.group(1) if floor else 'missing'!r}"
+                )
     return found
 
 
