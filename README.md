@@ -32,7 +32,7 @@ llm-rosetta ext update                # every installed extension
 llm-rosetta ext install https://…/llm_rosetta_ext_claude-0.1.0-py3-none-any.whl --sha256 <digest>
 ```
 
-An id is looked up in this repository's latest release (`index.json`, written by the *Release* workflow: each wheel with its sha256, `Requires-Python` and what it needs from core). Point `--index` or `$LLM_ROSETTA_EXTENSION_INDEX` at another index (a URL or a file) to install from a fork or a local mirror. The standard-library installer needs no pip, so it works in the Nuitka binary too; `pip install` of a wheel works as well.
+An id is looked up in this repository's latest release (`index.json`, written by the *Release* workflow: each wheel with its sha256, `Requires-Python` and what it needs from core, plus what a listing shows: name, maturity, tags, shims, logo and the commit it was built from. Every field is generated from `plugin.yaml`, the vendor `provider.yaml`, the wheel and git; nothing in the index is written by hand). Point `--index` or `$LLM_ROSETTA_EXTENSION_INDEX` at another index (a URL or a file) to install from a fork or a local mirror. The standard-library installer needs no pip, so it works in the Nuitka binary too; `pip install` of a wheel works as well.
 
 ## Extensions
 

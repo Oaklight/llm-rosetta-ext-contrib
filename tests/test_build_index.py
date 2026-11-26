@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -78,6 +79,59 @@ class TestSelect:
         assert changed.select(["packages/zzz/x.py"], self.ids) == []
 
 
+class TestDerived:
+    """Every field of an entry comes from a source file, none is written by hand."""
+
+    def test_the_vendor_logo_is_read_from_the_wheels_provider_yaml(self, tmp_path):
+        import zipfile
+
+        wheel = tmp_path / "w.whl"
+        with zipfile.ZipFile(wheel, "w") as z:
+            z.writestr(
+                "llm_rosetta_ext/x/provider.yaml",
+                "connection:\n  base_url: https://x\nlogo: 'https://h.example/x.svg'  # mark\n"
+                "lane:\n  logo: https://h.example/lane.svg\n",
+            )
+        assert build_index.vendor_logo(wheel, "x") == "https://h.example/x.svg"
+
+    def test_no_logo_line_means_no_logo(self, tmp_path):
+        import zipfile
+
+        wheel = tmp_path / "w.whl"
+        with zipfile.ZipFile(wheel, "w") as z:
+            z.writestr("llm_rosetta_ext/x/provider.yaml", "connection:\n  base_url: https://x\n")
+        assert build_index.vendor_logo(wheel, "x") is None
+        with zipfile.ZipFile(tmp_path / "e.whl", "w") as z:
+            z.writestr("llm_rosetta_ext/x/other.txt", "")
+        assert build_index.vendor_logo(tmp_path / "e.whl", "x") is None
+
+    @pytest.mark.parametrize(
+        ("repository", "expected"),
+        [
+            ("Oaklight/llm-rosetta-ext-contrib", "contrib"),
+            ("Oaklight/llm-rosetta-shim-argonne", "argonne"),
+            ("Oaklight/Some Repo", ""),
+        ],
+    )
+    def test_the_source_comes_from_the_repository_name(
+        self, monkeypatch, repository, expected
+    ):
+        monkeypatch.setenv("GITHUB_REPOSITORY", repository)
+        assert build_index.default_source() == expected
+
+    def test_source_date_epoch_fixes_the_timestamp(self, monkeypatch):
+        monkeypatch.setenv("SOURCE_DATE_EPOCH", "86400")
+        assert build_index.timestamp() == "1970-01-02T00:00:00Z"
+
+    def test_the_timestamp_is_rfc3339_utc(self, monkeypatch):
+        monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+        assert re.match(r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$", build_index.timestamp())
+
+    def test_the_last_commit_of_a_folder_is_a_git_sha(self):
+        sha = build_index.last_commit(Path(__file__).resolve().parents[1] / "packages" / "llm7")
+        assert sha is None or re.match(r"^[0-9a-f]{40}$", sha)
+
+
 @pytest.fixture(scope="module")
 def built(tmp_path_factory):
     out = tmp_path_factory.mktemp("dist")
@@ -120,3 +174,55 @@ class TestBuilt:
         assert code == 0
         document = json.loads((out / "index.json").read_text())
         assert sorted(document["extensions"]) == ["llm7", "moonshot"]
+
+
+class TestListingFields:
+    def test_an_entry_carries_what_a_listing_shows(self, built):
+        """Compare with the source files, read here by a different route."""
+        from llm_rosetta._vendor.yaml import load
+        from llm_rosetta.contracts.extension import parse_extension_manifest
+
+        document = json.loads((built / "index.json").read_text())
+        for ext_id in ("moonshot", "llm7"):
+            folder = Path(__file__).resolve().parents[1] / "packages" / ext_id
+            manifest = parse_extension_manifest(
+                load((folder / "plugin.yaml").read_text(encoding="utf-8"))
+            )
+            (entry,) = document["extensions"][ext_id]
+            assert entry["name"] == manifest.name
+            assert entry["maturity"] == manifest.maturity
+            assert entry["tags"] == list(manifest.tags) and entry["tags"]
+            assert entry["shims"] == list(manifest.shims)
+            vendor = load((folder / "provider.yaml").read_text(encoding="utf-8")) or {}
+            assert entry.get("logo") == vendor.get("logo")
+            assert re.match(r"^[0-9a-f]{40}$", entry.get("commit", "0" * 40))
+
+    def test_a_vendor_with_a_logo_gets_one(self, built):
+        document = json.loads((built / "index.json").read_text())
+        assert document["extensions"]["moonshot"][0]["logo"].startswith("https://")
+
+    def test_the_header_names_the_source_and_the_time(self, built):
+        document = json.loads((built / "index.json").read_text())
+        assert document["source"] and re.match(r"^\d{4}-", document["generated_at"])
+
+    def test_the_core_parser_reads_every_field(self, built):
+        from llm_rosetta.extensions import load_index
+
+        index = load_index(str(built / "index.json"))
+        entry = index["moonshot"][0]
+        assert entry.name and entry.shims == ("moonshot",) and entry.maturity
+        assert index.generated_at.endswith("Z") and index.source
+
+    def test_the_dropped_fields_are_not_written(self, built):
+        document = json.loads((built / "index.json").read_text())
+        dropped = {"archive", "repo", "conformance", "promoted_to", "since"}
+        assert not dropped & set(document)
+        for entries in document["extensions"].values():
+            assert not dropped & set(entries[0])
+
+    def test_merge_writes_the_header_when_given(self):
+        merged = build_index.merge(
+            None, {"a": _entry("0.1.0")}, source="contrib", generated_at="2026-11-26T00:00:00Z"
+        )
+        assert (merged["source"], merged["generated_at"]) == ("contrib", "2026-11-26T00:00:00Z")
+        assert "source" not in build_index.merge(None, {"a": _entry("0.1.0")})
