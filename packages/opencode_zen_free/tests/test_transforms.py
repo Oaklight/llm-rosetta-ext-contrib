@@ -8,13 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from llm_rosetta.api import (
-    get_model_list_transform,
-    get_shim,
-    restore_registry,
-    snapshot_registry,
-    staging_registry,
-)
+from llm_rosetta.api import get_model_list_transform, get_shim, staging_registry
+from llm_rosetta.testing import restore_registry, snapshot_registry
 from llm_rosetta.contracts.shim import load_providers_from_dir
 
 #: ``packages/``: the parent of this extension's folder.

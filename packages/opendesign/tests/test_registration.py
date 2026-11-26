@@ -6,13 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from llm_rosetta.api import (
-    get_shim,
-    load_providers_from_dir,
-    restore_registry,
-    snapshot_registry,
-    staging_registry,
-)
+from llm_rosetta.api import get_shim, load_providers_from_dir, staging_registry
+from llm_rosetta.testing import restore_registry, snapshot_registry
 
 
 def register_vendor(vendor: str) -> None:

@@ -14,12 +14,8 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import pytest
-from llm_rosetta.api import (
-    load_providers_from_dir,
-    restore_registry,
-    snapshot_registry,
-    staging_registry,
-)
+from llm_rosetta.api import load_providers_from_dir, staging_registry
+from llm_rosetta.testing import restore_registry, snapshot_registry
 
 _PACKAGES = Path(__file__).resolve().parents[2]
 _FOLDER = _PACKAGES / "opencode"

@@ -6,7 +6,8 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import pytest
-from llm_rosetta.api import restore_registry, snapshot_registry, staging_registry
+from llm_rosetta.api import staging_registry
+from llm_rosetta.testing import restore_registry, snapshot_registry
 from llm_rosetta.contracts.shim import load_providers_from_dir
 
 #: The ``packages`` directory: the parent of this extension's folder.
