@@ -34,7 +34,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: python -m pip install --pre "$CORE_SPEC" pytest --extra-index-url "$CORE_INDEX"
+      - run: python -m pip install --pre "$CORE_SPEC" pytest pytest-asyncio pyyaml --extra-index-url "$CORE_INDEX"
       - name: Check every folder and every wheel
         run: |
           for folder in packages/*/; do llm-rosetta ext check "$folder" --no-build; done
