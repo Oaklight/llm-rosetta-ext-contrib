@@ -1,7 +1,7 @@
 # One manifest per extension folder.  Draft schema: see AGENTS.md.
 id: claude
 name: Anthropic Claude (official CLI)
-version: 0.1.0
+version: 0.1.1
 maturity: experimental
 tags: ["tier:subscription", "auth:cli"]
 homepage: https://github.com/Oaklight/llm-rosetta-ext-contrib/tree/main/packages/claude
