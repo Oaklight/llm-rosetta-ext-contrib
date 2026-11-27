@@ -4,4 +4,7 @@ from __future__ import annotations
 
 from .transport import ClaudeCliTransport
 
-__all__ = ["ClaudeCliTransport"]
+#: The transport ids this extension provides, as the gateway reads them.
+TRANSPORTS = {"claude_cli": ClaudeCliTransport}
+
+__all__ = ["TRANSPORTS", "ClaudeCliTransport"]

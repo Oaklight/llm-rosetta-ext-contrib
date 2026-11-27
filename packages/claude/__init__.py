@@ -12,4 +12,4 @@ The extension imports only ``llm_rosetta.contracts`` and the standard library.
 from __future__ import annotations
 
 __all__ = ["__version__"]
-__version__ = "0.1.0"
+__version__ = "0.1.1"
