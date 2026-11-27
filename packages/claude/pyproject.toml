@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llm-rosetta-ext-claude"
-version = "0.1.0"
+version = "0.1.1"
 description = "llm-rosetta extension: Anthropic Claude through the official CLI (shim + transport)"
 readme = "README.md"
 requires-python = ">=3.10"
